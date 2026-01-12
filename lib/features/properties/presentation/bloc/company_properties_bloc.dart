@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_state/core/constants/ui_constants.dart';
 import 'package:real_state/core/handle_errors/error_mapper.dart';
+import 'package:real_state/core/utils/single_flight_guard.dart';
 import 'package:real_state/features/categories/data/models/property_filter.dart';
 import 'package:real_state/features/models/entities/location_area.dart';
 import 'package:real_state/features/models/entities/property.dart';
@@ -16,7 +17,8 @@ import 'package:real_state/features/properties/presentation/bloc/property_mutati
 import 'company_properties_event.dart';
 import 'company_properties_state.dart';
 
-class CompanyPropertiesBloc extends Bloc<CompanyPropertiesEvent, CompanyPropertiesState> {
+class CompanyPropertiesBloc
+    extends Bloc<CompanyPropertiesEvent, CompanyPropertiesState> {
   final GetCompanyPropertiesPageUseCase _getCompanyPage;
   final LocationAreaRemoteDataSource _areaDs;
   final PropertyMutationsBloc _mutations;
@@ -30,7 +32,9 @@ class CompanyPropertiesBloc extends Bloc<CompanyPropertiesEvent, CompanyProperti
     on<CompanyPropertiesFilterChanged>(_onFilterChanged);
 
     _mutationSub = _mutations.mutationStream.listen((event) {
-      if (event.ownerScope != null && event.ownerScope != PropertyOwnerScope.company) return;
+      if (event.ownerScope != null &&
+          event.ownerScope != PropertyOwnerScope.company)
+        return;
       if (state is CompanyPropertiesLoadSuccess) {
         final currentFilter = (state as CompanyPropertiesLoadSuccess).filter;
         if (currentFilter?.locationAreaId != null &&
@@ -49,106 +53,119 @@ class CompanyPropertiesBloc extends Bloc<CompanyPropertiesEvent, CompanyProperti
     CompanyPropertiesStarted event,
     Emitter<CompanyPropertiesState> emit,
   ) async {
-    await _load(emit, filter: event.filter, reset: true);
+    await _runGuardedRequest(
+      isRefresh: true,
+      job: () => _load(emit, filter: event.filter, reset: true),
+    );
   }
 
   Future<void> _onRefreshed(
     CompanyPropertiesRefreshed event,
     Emitter<CompanyPropertiesState> emit,
   ) async {
-    await _load(emit, filter: event.filter, reset: true);
+    await _runGuardedRequest(
+      isRefresh: true,
+      job: () => _load(emit, filter: event.filter, reset: true),
+    );
   }
 
   Future<void> _onFilterChanged(
     CompanyPropertiesFilterChanged event,
     Emitter<CompanyPropertiesState> emit,
   ) async {
-    await _load(emit, filter: event.filter, reset: true);
+    await _runGuardedRequest(
+      isRefresh: true,
+      job: () => _load(emit, filter: event.filter, reset: true),
+    );
   }
 
+  final SingleFlightGuard _requestGuard = SingleFlightGuard();
+  bool _isRefreshing = false;
   bool _isLoadingMore = false;
 
   Future<void> _onLoadMore(
     CompanyPropertiesLoadMore event,
     Emitter<CompanyPropertiesState> emit,
   ) async {
-    final current = state;
-    if (current is! CompanyPropertiesLoadSuccess &&
-        current is! CompanyPropertiesLoadMoreInProgress &&
-        current is! CompanyPropertiesFailure) {
-      return;
-    }
+    await _runGuardedRequest(
+      isRefresh: false,
+      job: () async {
+        final current = state;
+        if (current is! CompanyPropertiesLoadSuccess &&
+            current is! CompanyPropertiesLoadMoreInProgress &&
+            current is! CompanyPropertiesFailure) {
+          return;
+        }
 
-    final List<Property> items;
-    final DocumentSnapshot<Map<String, dynamic>>? lastDoc;
-    final bool hasMore;
-    final Map<String, LocationArea> areaNames;
-    final PropertyFilter? filter;
+        final List<Property> items;
+        final DocumentSnapshot<Map<String, dynamic>>? lastDoc;
+        final bool hasMore;
+        final Map<String, LocationArea> areaNames;
+        final PropertyFilter? filter;
 
-    if (current is CompanyPropertiesLoadSuccess) {
-      items = current.items;
-      lastDoc = current.lastDoc;
-      hasMore = current.hasMore;
-      areaNames = current.areaNames;
-      filter = current.filter;
-    } else if (current is CompanyPropertiesLoadMoreInProgress) {
-      items = current.items;
-      lastDoc = current.lastDoc;
-      hasMore = current.hasMore;
-      areaNames = current.areaNames;
-      filter = current.filter;
-    } else {
-      final data = current as CompanyPropertiesFailure;
-      items = data.items;
-      lastDoc = data.lastDoc;
-      hasMore = data.hasMore;
-      areaNames = data.areaNames;
-      filter = data.filter;
-    }
+        if (current is CompanyPropertiesLoadSuccess) {
+          items = current.items;
+          lastDoc = current.lastDoc;
+          hasMore = current.hasMore;
+          areaNames = current.areaNames;
+          filter = current.filter;
+        } else if (current is CompanyPropertiesLoadMoreInProgress) {
+          items = current.items;
+          lastDoc = current.lastDoc;
+          hasMore = current.hasMore;
+          areaNames = current.areaNames;
+          filter = current.filter;
+        } else {
+          final data = current as CompanyPropertiesFailure;
+          items = data.items;
+          lastDoc = data.lastDoc;
+          hasMore = data.hasMore;
+          areaNames = data.areaNames;
+          filter = data.filter;
+        }
 
-    if (!hasMore || _isLoadingMore) return;
+        if (!hasMore) return;
 
-    _isLoadingMore = true;
-    emit(
-      CompanyPropertiesLoadMoreInProgress(
-        items: items,
-        lastDoc: lastDoc,
-        hasMore: hasMore,
-        areaNames: areaNames,
-        filter: filter,
-      ),
+        emit(
+          CompanyPropertiesLoadMoreInProgress(
+            items: items,
+            lastDoc: lastDoc,
+            hasMore: hasMore,
+            areaNames: areaNames,
+            filter: filter,
+          ),
+        );
+        try {
+          final page = await _getCompanyPage(
+            startAfter: lastDoc,
+            limit: UiConstants.propertiesPageLimit,
+            filter: filter,
+          );
+          final mergedAreas = Map<String, LocationArea>.from(areaNames)
+            ..addAll(await _fetchAreaNamesFor(page.items));
+          emit(
+            CompanyPropertiesLoadSuccess(
+              items: [...items, ...page.items],
+              lastDoc: page.lastDocument,
+              hasMore: page.hasMore,
+              areaNames: mergedAreas,
+              filter: filter,
+            ),
+          );
+        } catch (e, st) {
+          emit(
+            CompanyPropertiesFailure(
+              message: mapErrorMessage(e, stackTrace: st),
+              items: items,
+              lastDoc: lastDoc,
+              hasMore: hasMore,
+              areaNames: areaNames,
+              filter: filter,
+            ),
+          );
+        }
+      },
     );
-    try {
-      final page = await _getCompanyPage(
-        startAfter: lastDoc,
-        limit: UiConstants.propertiesPageLimit,
-        filter: filter,
-      );
-      final mergedAreas = Map<String, LocationArea>.from(areaNames)
-        ..addAll(await _fetchAreaNamesFor(page.items));
-      emit(
-        CompanyPropertiesLoadSuccess(
-          items: [...items, ...page.items],
-          lastDoc: page.lastDocument,
-          hasMore: page.hasMore,
-          areaNames: mergedAreas,
-          filter: filter,
-        ),
-      );
-    } catch (e, st) {
-      emit(
-        CompanyPropertiesFailure(
-          message: mapErrorMessage(e, stackTrace: st),
-          items: items,
-          lastDoc: lastDoc,
-          hasMore: hasMore,
-          areaNames: areaNames,
-          filter: filter,
-        ),
-      );
-    } finally {
-      _isLoadingMore = false;
-    }
   }
 
   Future<void> _load(
@@ -182,7 +199,10 @@ class CompanyPropertiesBloc extends Bloc<CompanyPropertiesEvent, CompanyProperti
     }
 
     try {
-      final page = await _getCompanyPage(limit: UiConstants.propertiesPageLimit, filter: filter);
+      final page = await _getCompanyPage(
+        limit: UiConstants.propertiesPageLimit,
+        filter: filter,
+      );
       final areaNames = await _fetchAreaNamesFor(page.items);
       emit(
         CompanyPropertiesLoadSuccess(
@@ -221,7 +241,33 @@ class CompanyPropertiesBloc extends Bloc<CompanyPropertiesEvent, CompanyProperti
     }
   }
 
-  Future<Map<String, LocationArea>> _fetchAreaNamesFor(List<Property> props) async {
+  Future<bool> _runGuardedRequest({
+    required bool isRefresh,
+    required Future<void> Function() job,
+  }) async {
+    if (isRefresh && _isLoadingMore) return false;
+    if (!isRefresh && _isRefreshing) return false;
+    return _requestGuard.run(() async {
+      if (isRefresh) {
+        _isRefreshing = true;
+      } else {
+        _isLoadingMore = true;
+      }
+      try {
+        await job();
+      } finally {
+        if (isRefresh) {
+          _isRefreshing = false;
+        } else {
+          _isLoadingMore = false;
+        }
+      }
+    });
+  }
+
+  Future<Map<String, LocationArea>> _fetchAreaNamesFor(
+    List<Property> props,
+  ) async {
     final known = state is CompanyPropertiesLoadSuccess
         ? (state as CompanyPropertiesLoadSuccess).areaNames.keys.toSet()
         : <String>{};

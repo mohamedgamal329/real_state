@@ -35,12 +35,17 @@ class UsersRemoteDataSource {
     required String name,
     required UserRole role,
     String? phone,
+    String? jobTitle,
   }) async {
-    await _ensureOwnerWithCredentials();
+    final ownerSession = await _ensureOwnerWithCredentials();
     final secondaryAuth = await _secondaryAuth();
+    final trimmedEmail = email.trim();
+    final trimmedName = name.trim();
+    final trimmedJobTitle = jobTitle?.trim();
+    final jobTitleValue = (trimmedJobTitle?.isNotEmpty == true) ? trimmedJobTitle : null;
     try {
       final credential = await secondaryAuth.createUserWithEmailAndPassword(
-        email: email.trim(),
+        email: trimmedEmail,
         password: password,
       );
       final user = credential.user;
@@ -49,14 +54,27 @@ class UsersRemoteDataSource {
       }
       final timestamp = FieldValue.serverTimestamp();
       await firestore.collection(collection).doc(user.uid).set({
-        'email': email.trim(),
-        'name': name,
+        'email': trimmedEmail,
+        'name': trimmedName,
+        'jobTitle': jobTitleValue,
         'role': roleToString(role),
         'phone': phone,
+        'companyId': ownerSession.companyId,
+        'permissions': const [],
         'active': true,
         'createdAt': timestamp,
         'updatedAt': timestamp,
       });
+    } on FirebaseAuthException catch (e) {
+      switch (e.code) {
+        case 'email-already-in-use':
+          throw const LocalizedException('error_email_already_in_use');
+        case 'weak-password':
+          throw const LocalizedException('password_too_weak');
+        case 'invalid-email':
+          throw const LocalizedException('valid_email_required');
+      }
+      rethrow;
     } finally {
       await secondaryAuth.signOut();
     }
@@ -86,7 +104,7 @@ class UsersRemoteDataSource {
   }
 
   /// Returns (email, password) for the current owner after verifying active role.
-  Future<(String, String)> _ensureOwnerWithCredentials() async {
+  Future<_OwnerSession> _ensureOwnerWithCredentials() async {
     final owner = auth.currentUser;
     if (owner == null) throw const LocalizedException('error_auth_required');
 
@@ -103,7 +121,8 @@ class UsersRemoteDataSource {
     if (ownerEmail == null || ownerPassword == null) {
       throw const LocalizedException('error_owner_session');
     }
-    return (ownerEmail, ownerPassword);
+    final companyId = (data?['companyId'] as String?) ?? owner.uid;
+    return _OwnerSession(ownerEmail, ownerPassword, companyId);
   }
 
   Future<FirebaseAuth> _secondaryAuth() async {
@@ -119,4 +138,12 @@ class UsersRemoteDataSource {
     );
     return FirebaseAuth.instanceFor(app: app);
   }
+}
+
+class _OwnerSession {
+  final String email;
+  final String password;
+  final String companyId;
+
+  const _OwnerSession(this.email, this.password, this.companyId);
 }

@@ -4,7 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:real_state/core/components/base_gradient_page.dart';
 import 'package:real_state/core/components/custom_app_bar.dart';
-import 'package:real_state/core/widgets/selection_app_bar.dart';
+import 'package:real_state/features/properties/presentation/selection/property_selection_policy.dart';
+import 'package:real_state/features/properties/presentation/selection/selection_app_bar.dart';
 import 'package:real_state/features/categories/data/models/property_filter.dart';
 import 'package:real_state/features/categories/presentation/widgets/filter_bottom_sheet.dart';
 import 'package:real_state/features/models/entities/location_area.dart';
@@ -118,8 +119,11 @@ class _CompanyAreaPropertiesPageState extends State<CompanyAreaPropertiesPage> {
         appBar: _selectionMode
             ? SelectionAppBar(
                 selectedCount: _selected.length,
+                policy: const PropertySelectionPolicy(actions: [PropertyBulkAction.share]),
+                actionCallbacks: {
+                  PropertyBulkAction.share: () => _shareSelected(_currentItems),
+                },
                 onClearSelection: _clearSelection,
-                onShare: () => _shareSelected(_currentItems),
               )
             : CustomAppBar(title: widget.areaName),
         floatingActionButton: _selectionMode

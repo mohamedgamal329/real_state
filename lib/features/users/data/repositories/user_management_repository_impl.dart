@@ -15,6 +15,7 @@ class UserManagementRepositoryImpl implements UserManagementRepository {
     required String name,
     required UserRole role,
     String? phone,
+    String? jobTitle,
   }) async {
     return _remote.createUser(
       email: email,
@@ -22,6 +23,7 @@ class UserManagementRepositoryImpl implements UserManagementRepository {
       name: name,
       role: role,
       phone: phone,
+      jobTitle: jobTitle,
     );
   }
 

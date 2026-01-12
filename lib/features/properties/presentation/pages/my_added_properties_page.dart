@@ -4,7 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:real_state/core/components/base_gradient_page.dart';
 import 'package:real_state/core/components/custom_app_bar.dart';
-import 'package:real_state/core/widgets/selection_app_bar.dart';
+import 'package:real_state/features/properties/presentation/selection/property_selection_controller.dart';
+import 'package:real_state/features/properties/presentation/selection/property_selection_policy.dart';
+import 'package:real_state/features/properties/presentation/selection/selection_app_bar.dart';
 import 'package:real_state/features/auth/domain/repositories/auth_repository_domain.dart';
 import 'package:real_state/features/categories/data/models/property_filter.dart';
 import 'package:real_state/features/models/entities/property.dart';
@@ -27,13 +29,16 @@ class MyAddedPropertiesPage extends StatefulWidget {
 class _MyAddedPropertiesPageState extends State<MyAddedPropertiesPage> {
   late final PropertiesBloc _bloc;
   late final RefreshController _refreshController;
-  final Set<String> _selected = {};
+  late final PropertySelectionController _selectionController;
   List<Property> _currentItems = const [];
 
   @override
   void initState() {
     super.initState();
     _refreshController = RefreshController();
+    _selectionController = PropertySelectionController();
+
+    _selectionController.selectedIds.addListener(_onSelectionChanged);
 
     final userId = context.read<AuthRepositoryDomain>().currentUser?.id;
     final filter = PropertyFilter(createdBy: userId);
@@ -49,27 +54,25 @@ class _MyAddedPropertiesPageState extends State<MyAddedPropertiesPage> {
   void dispose() {
     _bloc.close();
     _refreshController.dispose();
+    _selectionController.selectedIds.removeListener(_onSelectionChanged);
+    _selectionController.dispose();
     super.dispose();
   }
 
-  bool get _selectionMode => _selected.isNotEmpty;
-
-  void _toggleSelection(String id) {
-    setState(() {
-      if (_selected.contains(id)) {
-        _selected.remove(id);
-      } else {
-        _selected.add(id);
-      }
-    });
-  }
+  bool get _selectionMode => _selectionController.isSelectionActive;
 
   void _clearSelection() {
-    setState(() => _selected.clear());
+    _selectionController.clear();
+  }
+
+  void _onSelectionChanged() {
+    if (!mounted) return;
+    setState(() {});
   }
 
   Future<void> _shareSelected() async {
-    final props = _currentItems.where((p) => _selected.contains(p.id)).toList();
+    final selectedIds = _selectionController.selectedIds.value;
+    final props = _currentItems.where((p) => selectedIds.contains(p.id)).toList();
     if (props.isEmpty) return;
     await shareMultiplePropertyPdfs(context: context, properties: props);
     _clearSelection();
@@ -82,9 +85,12 @@ class _MyAddedPropertiesPageState extends State<MyAddedPropertiesPage> {
       child: Scaffold(
         appBar: _selectionMode
             ? SelectionAppBar(
-                selectedCount: _selected.length,
+                selectedCount: _selectionController.selectedCount,
+                policy: const PropertySelectionPolicy(actions: [PropertyBulkAction.share]),
+                actionCallbacks: {
+                  PropertyBulkAction.share: _shareSelected,
+                },
                 onClearSelection: _clearSelection,
-                onShare: _shareSelected,
               )
             : CustomAppBar(title: 'my_added_properties'.tr()),
         body: BaseGradientPage(
@@ -122,12 +128,13 @@ class _MyAddedPropertiesPageState extends State<MyAddedPropertiesPage> {
                 errorMessage: state is PropertiesFailure ? state.message : null,
                 hasMore: loaded?.hasMore ?? false,
                 areaNames: loaded?.areaNames,
-                onRefresh: () => _bloc.add(const PropertiesRefreshed()),
+                onRefresh: () {
+                  _clearSelection();
+                  _bloc.add(const PropertiesRefreshed());
+                },
                 onLoadMore: () => _bloc.add(const PropertiesLoadMoreRequested()),
                 onRetry: () => _bloc.add(const PropertiesRetryRequested()),
-                selectionMode: _selectionMode,
-                selectedIds: _selected,
-                onToggleSelection: _toggleSelection,
+                selectionController: _selectionController,
                 emptyMessage: 'no_my_added_properties'.tr(),
               );
             },

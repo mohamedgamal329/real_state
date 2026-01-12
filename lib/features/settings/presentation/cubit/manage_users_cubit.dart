@@ -9,7 +9,6 @@ import 'package:real_state/features/users/domain/usecases/disable_user_usecase.d
 import 'package:real_state/features/users/domain/usecases/update_user_usecase.dart';
 import 'package:real_state/features/users/domain/repositories/user_management_repository.dart';
 import 'package:real_state/core/constants/user_role.dart';
-import 'dart:math';
 
 part 'manage_users_state.dart';
 
@@ -98,7 +97,9 @@ class ManageUsersCubit extends Cubit<ManageUsersState> {
   Future<void> create({
     required String email,
     required UserRole role,
-    String? name,
+    required String name,
+    required String jobTitle,
+    required String password,
   }) async {
     if (!_hasPermission()) return;
     final current = _dataState();
@@ -109,12 +110,12 @@ class ManageUsersCubit extends Cubit<ManageUsersState> {
       ),
     );
     try {
-      final tempPassword = _generateTempPassword();
       await _createUser(
         email: email,
-        password: tempPassword,
-        name: name ?? '',
+        password: password,
+        name: name,
         role: role,
+        jobTitle: jobTitle,
       );
       await load();
     } catch (e) {
@@ -126,13 +127,6 @@ class ManageUsersCubit extends Cubit<ManageUsersState> {
         ),
       );
     }
-  }
-
-  String _generateTempPassword() {
-    const chars =
-        'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#%&*';
-    final rand = Random.secure();
-    return List.generate(12, (_) => chars[rand.nextInt(chars.length)]).join();
   }
 
   _ManageUsersData _dataState() {

@@ -7,6 +7,7 @@ import 'package:real_state/core/components/app_skeletonizer.dart';
 import 'package:real_state/core/components/empty_state_widget.dart';
 import 'package:real_state/features/models/entities/location_area.dart';
 import 'package:real_state/features/models/entities/property.dart';
+import 'package:real_state/features/properties/presentation/selection/property_selection_controller.dart';
 import 'package:real_state/features/properties/presentation/utils/property_placeholders.dart';
 import 'package:real_state/features/properties/presentation/widgets/property_list_item.dart';
 
@@ -23,6 +24,7 @@ class PropertyPaginatedListView extends StatelessWidget {
     required this.onLoadMore,
     this.onRetry,
     this.selectionMode = false,
+    this.selectionController,
     this.selectedIds = const {},
     this.onToggleSelection,
     this.areaNames,
@@ -46,6 +48,7 @@ class PropertyPaginatedListView extends StatelessWidget {
   final bool selectionMode;
   final Set<String> selectedIds;
   final ValueChanged<String>? onToggleSelection;
+  final PropertySelectionController? selectionController;
 
   final Map<String, LocationArea>? areaNames;
   final String? startAreaName;
@@ -80,35 +83,54 @@ class PropertyPaginatedListView extends StatelessWidget {
       onLoading: onLoadMore,
       child: AppSkeletonizer(
         enabled: isLoading && items.isEmpty,
-        child: ListView.separated(
-          padding: padding,
-          itemCount: displayItems.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            final property = displayItems[index];
-            final resolvedAreaName = _resolveAreaName(context, property);
-
-            // Check for empty IDs on placeholders
-            if (property.id.isEmpty && isLoading) {
-              // Placeholder
-              return PropertyListItem(property: property, areaName: resolvedAreaName);
-            }
-
-            return PropertyListItem(
-              property: property,
-              areaName: resolvedAreaName,
-              canViewImages: canViewImages,
-              selectionMode: selectionMode,
-              selected: selectedIds.contains(property.id),
-              onSelectToggle: () => onToggleSelection?.call(property.id),
-              onLongPressSelect: () => onToggleSelection?.call(property.id),
-              onOpen: selectionMode
-                  ? () => onToggleSelection?.call(property.id)
-                  : () => context.push('/property/${property.id}'),
-            );
-          },
-        ),
+        child: selectionController != null
+            ? ValueListenableBuilder<Set<String>>(
+                valueListenable: selectionController!.selectedIds,
+                builder: (_, __, ___) => _buildListView(context, displayItems, isLoading),
+              )
+            : _buildListView(context, displayItems, isLoading),
       ),
+    );
+  }
+
+  Widget _buildListView(BuildContext context, List<Property> displayItems, bool isLoading) {
+    return ListView.separated(
+      padding: padding,
+      itemCount: displayItems.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final property = displayItems[index];
+        final resolvedAreaName = _resolveAreaName(context, property);
+
+        if (property.id.isEmpty && isLoading) {
+          return PropertyListItem(property: property, areaName: resolvedAreaName);
+        }
+
+        final controllerIsActive = selectionController?.isSelectionActive ?? false;
+        final effectiveSelectionMode = controllerIsActive || selectionMode;
+        final isSelected =
+            selectionController?.isSelected(property.id) ?? selectedIds.contains(property.id);
+        void handleSelection() {
+          if (selectionController != null) {
+            selectionController!.toggle(property.id);
+          } else {
+            onToggleSelection?.call(property.id);
+          }
+        }
+
+        return PropertyListItem(
+          property: property,
+          areaName: resolvedAreaName,
+          canViewImages: canViewImages,
+          selectionMode: effectiveSelectionMode,
+          selected: isSelected,
+          onSelectToggle: handleSelection,
+          onLongPressSelect: handleSelection,
+          onOpen: effectiveSelectionMode
+              ? handleSelection
+              : () => context.push('/property/${property.id}'),
+        );
+      },
     );
   }
 

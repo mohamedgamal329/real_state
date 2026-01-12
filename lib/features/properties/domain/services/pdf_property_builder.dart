@@ -5,9 +5,9 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:real_state/features/models/entities/property.dart';
 
 class PdfImageData {
-  final Uint8List bytes;
-  final double width;
-  final double height;
+   final Uint8List bytes;
+   final double width;
+   final double height;
 
   const PdfImageData({
     required this.bytes,
@@ -15,6 +15,14 @@ class PdfImageData {
     required this.height,
   });
 }
+
+const double _kPdfPadding = 36.0;
+const double _kPdfLogoSpacing = 24.0;
+const double _kPdfTitleFontSize = 34.0;
+const double _kPdfBodyFontSize = 18.0;
+const double _kPdfLineSpacing = 1.7;
+const double _kPdfDetailsLogoFactor = 0.25;
+const double _kPdfLogoPageLogoFactor = 0.45;
 
 class PdfPropertyBuilder {
   Future<Uint8List> build({
@@ -42,10 +50,6 @@ class PdfPropertyBuilder {
     _addLogoPage(
       doc: doc,
       logoBytes: logoBytes,
-      titleText: titleText,
-      descriptionText: descriptionText,
-      localeCode: localeCode,
-      arabicFont: arabicFont,
     );
 
     return doc.save();
@@ -54,10 +58,6 @@ class PdfPropertyBuilder {
   void _addLogoPage({
     required pw.Document doc,
     required Uint8List? logoBytes,
-    required String titleText,
-    required String descriptionText,
-    required String? localeCode,
-    required pw.Font? arabicFont,
   }) {
     if (logoBytes == null) return;
     doc.addPage(
@@ -67,12 +67,9 @@ class PdfPropertyBuilder {
           margin: pw.EdgeInsets.zero,
           buildBackground: (_) => pw.Container(color: pdf.PdfColors.grey900),
         ),
-        build: (_) => _buildInfoPage(
-          titleText: titleText,
-          descriptionText: descriptionText,
-          localeCode: localeCode,
-          arabicFont: arabicFont,
+        build: (_) => _buildLogoPage(
           logoBytes: logoBytes,
+          pageHeight: pdf.PdfPageFormat.a4.height,
         ),
       ),
     );
@@ -117,60 +114,48 @@ class PdfPropertyBuilder {
           margin: pw.EdgeInsets.zero,
           buildBackground: (_) => pw.Container(color: pdf.PdfColors.grey900),
         ),
-        build: (_) => _buildInfoPage(
+        build: (_) => _buildDetailsPage(
           titleText: titleText,
           descriptionText: descriptionText,
           localeCode: localeCode,
           arabicFont: arabicFont,
           logoBytes: logoBytes,
+          pageHeight: pdf.PdfPageFormat.a4.height,
         ),
       ),
     );
   }
 
-  pw.Widget _buildInfoPage({
+  pw.Widget _buildDetailsPage({
     required String titleText,
     required String descriptionText,
     required String? localeCode,
     required pw.Font? arabicFont,
     required Uint8List? logoBytes,
+    required double pageHeight,
   }) {
-    const horizontalPadding = 44.0;
-    const topPadding = 56.0;
-    const bottomPadding = 44.0;
-    const logoHeight = 72.0;
-    const logoSpacing = 20.0;
-    const titleSpacing = 12.0;
     final textColor = pdf.PdfColors.grey100;
     final accent = pdf.PdfColors.amber200;
     final arabicFontFallback = arabicFont != null ? [arabicFont] : null;
     final titleStyle = pw.TextStyle(
-      fontSize: 30,
+      fontSize: _kPdfTitleFontSize,
       fontWeight: pw.FontWeight.bold,
       color: accent,
-      letterSpacing: 0.15,
+      letterSpacing: 0.1,
       fontFallback: arabicFontFallback ?? const [],
     );
     final bodyStyle = pw.TextStyle(
-      fontSize: 16,
-      lineSpacing: 1.5,
+      fontSize: _kPdfBodyFontSize,
+      lineSpacing: _kPdfLineSpacing,
       color: textColor,
       fontFallback: arabicFontFallback ?? const [],
     );
     final isArabicLocale = localeCode?.toLowerCase().startsWith('ar') ?? false;
     final description = descriptionText.trim();
-    final layoutRtl =
-        isArabicLocale || _containsArabic(titleText) || _containsArabic(description);
-    final crossAxisAlignment =
-        layoutRtl ? pw.CrossAxisAlignment.end : pw.CrossAxisAlignment.start;
-    final logoAlignment =
-        layoutRtl ? pw.Alignment.topRight : pw.Alignment.topLeft;
-
+    final detailsLogoHeight = pageHeight * _kPdfDetailsLogoFactor;
     pw.Widget localizedText(
       String text, {
       pw.TextStyle? style,
-      bool underline = false,
-      pdf.PdfColor? color,
     }) {
       final resolvedStyle = style ?? bodyStyle;
       final hasArabicCharacters = _containsArabic(text);
@@ -178,51 +163,79 @@ class PdfPropertyBuilder {
       final effectiveStyle = resolvedStyle.copyWith(
         font: needsArabicFont && arabicFont != null ? arabicFont : resolvedStyle.font,
         fontFallback: arabicFontFallback ?? resolvedStyle.fontFallback,
-        decoration: underline ? pw.TextDecoration.underline : resolvedStyle.decoration,
-        color: color ?? resolvedStyle.color,
+        color: resolvedStyle.color,
       );
-      final textAlign =
-          needsArabicFont ? pw.TextAlign.right : pw.TextAlign.left;
-
+      final textDirection =
+          needsArabicFont ? pw.TextDirection.rtl : pw.TextDirection.ltr;
       return pw.Directionality(
-        textDirection: needsArabicFont ? pw.TextDirection.rtl : pw.TextDirection.ltr,
-        child: pw.Text(text, style: effectiveStyle, textAlign: textAlign),
+        textDirection: textDirection,
+        child: pw.Text(
+          text,
+          style: effectiveStyle,
+          textAlign: pw.TextAlign.center,
+        ),
       );
     }
 
     return pw.Container(
       width: double.infinity,
       height: double.infinity,
-      padding: const pw.EdgeInsets.fromLTRB(
-        horizontalPadding,
-        topPadding,
-        horizontalPadding,
-        bottomPadding,
+      padding: const pw.EdgeInsets.symmetric(
+        horizontal: _kPdfPadding,
+        vertical: _kPdfPadding,
       ),
-      child: pw.Column(
-        mainAxisSize: pw.MainAxisSize.max,
-        mainAxisAlignment: pw.MainAxisAlignment.start,
-        crossAxisAlignment: crossAxisAlignment,
-        children: [
-          if (logoBytes != null)
-            pw.Align(
-              alignment: logoAlignment,
-              child: pw.Image(
-                pw.MemoryImage(logoBytes),
-                height: logoHeight,
-                fit: pw.BoxFit.contain,
+      child: pw.Center(
+        child: pw.Column(
+          mainAxisSize: pw.MainAxisSize.min,
+          crossAxisAlignment: pw.CrossAxisAlignment.center,
+          children: [
+            if (logoBytes != null)
+              pw.Container(
+                height: detailsLogoHeight,
+                alignment: pw.Alignment.center,
+                child: pw.Image(
+                  pw.MemoryImage(logoBytes),
+                  height: detailsLogoHeight,
+                  fit: pw.BoxFit.contain,
+                ),
               ),
+            if (logoBytes != null) pw.SizedBox(height: _kPdfLogoSpacing),
+            localizedText(
+              titleText.isNotEmpty ? titleText : 'property',
+              style: titleStyle,
             ),
-          if (logoBytes != null) pw.SizedBox(height: logoSpacing),
-          localizedText(
-            titleText.isNotEmpty ? titleText : 'property',
-            style: titleStyle,
-          ),
-          if (description.isNotEmpty) ...[
-            pw.SizedBox(height: titleSpacing),
-            localizedText(description, style: bodyStyle),
+            if (description.isNotEmpty) ...[
+              pw.SizedBox(height: _kPdfLogoSpacing),
+              localizedText(description, style: bodyStyle),
+            ],
           ],
-        ],
+        ),
+      ),
+    );
+  }
+
+  pw.Widget _buildLogoPage({
+    required Uint8List? logoBytes,
+    required double pageHeight,
+  }) {
+    if (logoBytes == null) {
+      return pw.SizedBox.shrink();
+    }
+    final logoHeight = pageHeight * _kPdfLogoPageLogoFactor;
+    return pw.Container(
+      width: double.infinity,
+      height: double.infinity,
+      padding: pw.EdgeInsets.zero,
+      child: pw.Center(
+        child: pw.Container(
+          height: logoHeight,
+          alignment: pw.Alignment.center,
+          child: pw.Image(
+            pw.MemoryImage(logoBytes),
+            height: logoHeight,
+            fit: pw.BoxFit.contain,
+          ),
+        ),
       ),
     );
   }

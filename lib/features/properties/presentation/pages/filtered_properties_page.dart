@@ -7,7 +7,8 @@ import 'package:real_state/core/components/app_error_view.dart';
 import 'package:real_state/core/components/app_snackbar.dart';
 import 'package:real_state/core/components/base_gradient_page.dart';
 import 'package:real_state/core/components/custom_app_bar.dart';
-import 'package:real_state/core/widgets/selection_app_bar.dart';
+import 'package:real_state/features/properties/presentation/selection/property_selection_policy.dart';
+import 'package:real_state/features/properties/presentation/selection/selection_app_bar.dart';
 import 'package:real_state/features/categories/data/models/property_filter.dart';
 import 'package:real_state/features/models/entities/property.dart';
 import 'package:real_state/features/properties/data/datasources/location_area_remote_datasource.dart';
@@ -86,8 +87,11 @@ class _FilteredPropertiesPageState extends State<FilteredPropertiesPage> {
         appBar: _selectionMode
             ? SelectionAppBar(
                 selectedCount: _selected.length,
+                policy: const PropertySelectionPolicy(actions: [PropertyBulkAction.share]),
+                actionCallbacks: {
+                  PropertyBulkAction.share: _shareSelected,
+                },
                 onClearSelection: _clearSelection,
-                onShare: _shareSelected,
               )
             : CustomAppBar(
                 title: 'filtered_properties'.tr(),

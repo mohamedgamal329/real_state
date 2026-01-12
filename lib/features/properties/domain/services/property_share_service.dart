@@ -10,6 +10,8 @@ import 'package:real_state/features/models/entities/property.dart';
 import 'package:real_state/features/properties/domain/services/pdf_property_builder.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../models/property_share_progress.dart';
+
 class PropertyShareService {
   final BaseCacheManager _cacheManager;
   final PdfPropertyBuilder _pdfBuilder;
@@ -24,12 +26,15 @@ class PropertyShareService {
 
   Future<void> shareImagesOnly({
     required Property property,
+    PropertyShareProgressCallback? onProgress,
   }) async {
+    _reportProgress(onProgress, PropertyShareStage.preparingData);
     final urls = _collectImageUrls(property);
     if (urls.isEmpty) {
       throw const LocalizedException('no_images_to_share');
     }
     final files = <XFile>[];
+    _reportProgress(onProgress, PropertyShareStage.generatingPdf);
     for (final url in urls) {
       final file = await _loadImageFile(url);
       if (file != null) {
@@ -39,8 +44,10 @@ class PropertyShareService {
     if (files.isEmpty) {
       throw const LocalizedException('unable_load_images');
     }
+    _reportProgress(onProgress, PropertyShareStage.uploadingSharing);
     // ignore: deprecated_member_use
     await Share.shareXFiles(files, text: property.title ?? 'property'.tr());
+    _reportProgress(onProgress, PropertyShareStage.finalizing);
   }
 
   Future<void> sharePdf({
@@ -48,26 +55,33 @@ class PropertyShareService {
     String? localeCode,
     bool locationVisible = true,
     bool includeImages = true,
+    PropertyShareProgressCallback? onProgress,
   }) async {
+    _reportProgress(onProgress, PropertyShareStage.preparingData);
     final pdfBytes = await buildPdfBytes(
       property: property,
       localeCode: localeCode,
       includeImages: includeImages,
     );
+    _reportProgress(onProgress, PropertyShareStage.generatingPdf);
     await Printing.sharePdf(
       bytes: pdfBytes,
       filename: '${property.title ?? 'property'.tr()}.pdf',
     );
+    _reportProgress(onProgress, PropertyShareStage.uploadingSharing);
+    _reportProgress(onProgress, PropertyShareStage.finalizing);
   }
 
   Future<Uint8List> buildPdfBytes({
     required Property property,
     String? localeCode,
     bool includeImages = true,
+    PropertyShareProgressCallback? onProgress,
   }) async {
     final titleText =
         property.title?.isNotEmpty == true ? property.title! : 'property'.tr();
     final descriptionText = property.description ?? '';
+    _reportProgress(onProgress, PropertyShareStage.preparingData);
     final images = includeImages
         ? await _loadImagesOrThrow(_collectImageUrls(property))
         : const <PdfImageData>[];
@@ -83,6 +97,7 @@ class PropertyShareService {
       logoBytes: logoBytes,
       arabicFont: arabicFont,
     );
+    _reportProgress(onProgress, PropertyShareStage.generatingPdf);
     return pdfBytes;
   }
 
@@ -149,5 +164,16 @@ class PropertyShareService {
     } catch (_) {
       return null;
     }
+  }
+
+  void _reportProgress(
+    PropertyShareProgressCallback? onProgress,
+    PropertyShareStage stage,
+  ) {
+    if (onProgress == null) return;
+    onProgress(PropertyShareProgress(
+      stage: stage,
+      fraction: stage.defaultFraction(),
+    ));
   }
 }

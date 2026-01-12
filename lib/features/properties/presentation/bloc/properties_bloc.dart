@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:real_state/core/constants/ui_constants.dart';
 import 'package:real_state/core/handle_errors/error_mapper.dart';
+import 'package:real_state/core/utils/single_flight_guard.dart';
 import 'package:real_state/features/categories/data/models/property_filter.dart';
 import 'package:real_state/features/models/entities/location_area.dart';
 import 'package:real_state/features/models/entities/property.dart';
@@ -18,6 +19,8 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
   final LocationAreaRemoteDataSource _areaDs;
   final PropertyMutationsBloc _mutations;
   StreamSubscription<PropertyMutation>? _mutationSub;
+  final SingleFlightGuard _requestGuard = SingleFlightGuard();
+  bool _isRefreshing = false;
   bool _isLoadingMore = false;
   PropertyFilter? _currentFilter;
 
@@ -39,8 +42,13 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
     Emitter<PropertiesState> emit,
   ) async {
     _currentFilter = event.filter;
-    emit(PropertiesLoading(filter: _currentFilter));
-    await _loadPage(emit, filter: _currentFilter);
+    await _runGuardedRequest(
+      isRefresh: true,
+      job: () async {
+        emit(PropertiesLoading(filter: _currentFilter));
+        await _loadPage(emit, filter: _currentFilter);
+      },
+    );
   }
 
   Future<void> _onRefreshed(
@@ -48,24 +56,34 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
     Emitter<PropertiesState> emit,
   ) async {
     _currentFilter = event.filter ?? _currentFilter;
-    final current = _asLoaded(state);
-    if (current == null) {
-      emit(PropertiesLoading(filter: _currentFilter));
-      await _loadPage(emit, filter: _currentFilter);
-      return;
-    }
-    emit(PropertiesActionInProgress(current));
-    await _loadPage(emit, filter: _currentFilter, previous: current);
+    await _runGuardedRequest(
+      isRefresh: true,
+      job: () async {
+        final current = _asLoaded(state);
+        if (current == null) {
+          emit(PropertiesLoading(filter: _currentFilter));
+          await _loadPage(emit, filter: _currentFilter);
+          return;
+        }
+        emit(PropertiesActionInProgress(current));
+        await _loadPage(emit, filter: _currentFilter, previous: current);
+      },
+    );
   }
 
   Future<void> _onExternalMutation(
     PropertiesExternalMutationReceived event,
     Emitter<PropertiesState> emit,
   ) async {
-    final current = _asLoaded(state);
-    if (current == null) return;
-    emit(PropertiesActionInProgress(current));
-    await _loadPage(emit, filter: _currentFilter, previous: current);
+    await _runGuardedRequest(
+      isRefresh: true,
+      job: () async {
+        final current = _asLoaded(state);
+        if (current == null) return;
+        emit(PropertiesActionInProgress(current));
+        await _loadPage(emit, filter: _currentFilter, previous: current);
+      },
+    );
   }
 
   Future<void> _onRetry(
@@ -83,39 +101,43 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
     PropertiesLoadMoreRequested event,
     Emitter<PropertiesState> emit,
   ) async {
-    final current = _asLoaded(state);
-    if (current == null ||
-        !current.hasMore ||
-        _isLoadingMore ||
-        state is PropertiesActionInProgress) {
-      return;
-    }
-    _isLoadingMore = true;
-    try {
-      final page = await _repo.fetchPage(
-        startAfter: current.lastDoc,
-        limit: UiConstants.propertiesPageLimit,
-        filter: _currentFilter,
-      );
-      final items = List<Property>.from(current.items)..addAll(page.items);
-      final areaNames = Map<String, LocationArea>.from(current.areaNames)
-        ..addAll(await _fetchAreaNamesFor(page.items));
-      emit(
-        PropertiesLoaded(
-          items: items,
-          lastDoc: page.lastDocument,
-          hasMore: page.hasMore,
-          areaNames: areaNames,
-          filter: _currentFilter,
-        ),
-      );
-    } catch (e, st) {
-      emit(
-        PropertiesActionFailure(current, mapErrorMessage(e, stackTrace: st)),
-      );
-    } finally {
-      _isLoadingMore = false;
-    }
+    await _runGuardedRequest(
+      isRefresh: false,
+      job: () async {
+        final current = _asLoaded(state);
+        if (current == null ||
+            !current.hasMore ||
+            state is PropertiesActionInProgress) {
+          return;
+        }
+        try {
+          final page = await _repo.fetchPage(
+            startAfter: current.lastDoc,
+            limit: UiConstants.propertiesPageLimit,
+            filter: _currentFilter,
+          );
+          final items = List<Property>.from(current.items)..addAll(page.items);
+          final areaNames = Map<String, LocationArea>.from(current.areaNames)
+            ..addAll(await _fetchAreaNamesFor(page.items));
+          emit(
+            PropertiesLoaded(
+              items: items,
+              lastDoc: page.lastDocument,
+              hasMore: page.hasMore,
+              areaNames: areaNames,
+              filter: _currentFilter,
+            ),
+          );
+        } catch (e, st) {
+          emit(
+            PropertiesActionFailure(
+              current,
+              mapErrorMessage(e, stackTrace: st),
+            ),
+          );
+        }
+      },
+    );
   }
 
   Future<void> _loadPage(
@@ -152,6 +174,30 @@ class PropertiesBloc extends Bloc<PropertiesEvent, PropertiesState> {
         );
       }
     }
+  }
+
+  Future<bool> _runGuardedRequest({
+    required bool isRefresh,
+    required Future<void> Function() job,
+  }) async {
+    if (isRefresh && _isLoadingMore) return false;
+    if (!isRefresh && _isRefreshing) return false;
+    return _requestGuard.run(() async {
+      if (isRefresh) {
+        _isRefreshing = true;
+      } else {
+        _isLoadingMore = true;
+      }
+      try {
+        await job();
+      } finally {
+        if (isRefresh) {
+          _isRefreshing = false;
+        } else {
+          _isLoadingMore = false;
+        }
+      }
+    });
   }
 
   Future<Map<String, LocationArea>> _fetchAreaNamesFor(

@@ -13,6 +13,7 @@ import 'package:real_state/features/models/entities/access_request.dart';
 import 'package:real_state/features/models/entities/property.dart';
 import 'package:real_state/features/notifications/domain/repositories/notifications_repository.dart';
 import 'package:real_state/features/properties/data/repositories/properties_repository.dart';
+import 'package:real_state/features/properties/domain/models/property_share_progress.dart';
 import 'package:real_state/features/properties/domain/property_owner_scope.dart';
 import 'package:real_state/features/properties/domain/property_permissions.dart';
 import 'package:real_state/features/properties/domain/services/property_share_service.dart';
@@ -382,17 +383,36 @@ class PropertyDetailBloc extends Bloc<PropertyDetailEvent, PropertyDetailState> 
       );
       return;
     }
+
+    void progressReporter(PropertyShareProgress progress) {
+      _emitShareProgress(loaded, progress, emit);
+    }
+
+    emit(
+      PropertyDetailShareInProgress(
+        loaded,
+        PropertyShareProgress(
+          stage: PropertyShareStage.preparingData,
+          fraction: PropertyShareStage.preparingData.defaultFraction(),
+        ),
+      ),
+    );
+
     try {
-      await _shareService.shareImagesOnly(property: loaded.property);
+      await _shareService.shareImagesOnly(
+        property: loaded.property,
+        onProgress: progressReporter,
+      );
+      emit(PropertyDetailShareSuccess(loaded));
       emit(PropertyDetailActionSuccess(loaded));
     } catch (e, st) {
       emit(
-        PropertyDetailActionSuccess(
+        PropertyDetailShareFailure(
           loaded,
           message: mapErrorMessage(e, stackTrace: st),
-          isError: true,
         ),
       );
+      emit(PropertyDetailActionSuccess(loaded));
     }
   }
 
@@ -426,7 +446,19 @@ class PropertyDetailBloc extends Bloc<PropertyDetailEvent, PropertyDetailState> 
       );
       return;
     }
-    emit(PropertyDetailShareInProgress(loaded));
+    void progressReporter(PropertyShareProgress progress) {
+      _emitShareProgress(loaded, progress, emit);
+    }
+
+    emit(
+      PropertyDetailShareInProgress(
+        loaded,
+        PropertyShareProgress(
+          stage: PropertyShareStage.preparingData,
+          fraction: PropertyShareStage.preparingData.defaultFraction(),
+        ),
+      ),
+    );
     try {
       await _sharePropertyPdfUseCase(
         property: loaded.property,
@@ -436,6 +468,7 @@ class PropertyDetailBloc extends Bloc<PropertyDetailEvent, PropertyDetailState> 
         locationVisible: loaded.locationVisible,
         localeCode: event.context.locale.toString(),
         includeImages: includeImages,
+        onProgress: progressReporter,
       );
       emit(PropertyDetailShareSuccess(loaded));
       emit(PropertyDetailActionSuccess(loaded));
@@ -444,6 +477,14 @@ class PropertyDetailBloc extends Bloc<PropertyDetailEvent, PropertyDetailState> 
       emit(PropertyDetailShareFailure(loaded, message: mapErrorMessage(e, stackTrace: st)));
       emit(PropertyDetailActionSuccess(loaded));
     }
+  }
+
+  void _emitShareProgress(
+    PropertyDetailLoaded loaded,
+    PropertyShareProgress progress,
+    Emitter<PropertyDetailState> emit,
+  ) {
+    emit(PropertyDetailShareInProgress(loaded, progress));
   }
 
   void _onImagesLoadMore(PropertyImagesLoadMoreRequested event, Emitter<PropertyDetailState> emit) {

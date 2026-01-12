@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:real_state/core/constants/ui_constants.dart';
 import 'package:real_state/core/handle_errors/error_mapper.dart';
+import 'package:real_state/core/utils/single_flight_guard.dart';
 import 'package:real_state/features/models/entities/location_area.dart';
 import 'package:real_state/features/models/entities/property.dart';
 import 'package:real_state/features/properties/data/datasources/location_area_remote_datasource.dart';
@@ -18,6 +19,8 @@ class ArchivePropertiesBloc
   final LocationAreaRemoteDataSource _areaDs;
   final PropertyMutationsBloc _mutations;
   StreamSubscription<PropertyMutation>? _mutationSub;
+  final SingleFlightGuard _requestGuard = SingleFlightGuard();
+  bool _isRefreshing = false;
   bool _isLoadingMore = false;
 
   ArchivePropertiesBloc(this._repo, this._areaDs, this._mutations)
@@ -37,62 +40,73 @@ class ArchivePropertiesBloc
     ArchivePropertiesStarted event,
     Emitter<ArchivePropertiesState> emit,
   ) async {
-    emit(const ArchivePropertiesLoading());
-    await _loadPage(emit);
+    await _runGuardedRequest(
+      isRefresh: true,
+      job: () async {
+        emit(const ArchivePropertiesLoading());
+        await _loadPage(emit);
+      },
+    );
   }
 
   Future<void> _onRefreshed(
     ArchivePropertiesRefreshed event,
     Emitter<ArchivePropertiesState> emit,
   ) async {
-    final current = _asLoaded(state);
-    if (current == null) {
-      emit(const ArchivePropertiesLoading());
-      await _loadPage(emit);
-      return;
-    }
-    emit(ArchivePropertiesActionInProgress(current));
-    await _loadPage(emit, previous: current);
+    await _runGuardedRequest(
+      isRefresh: true,
+      job: () async {
+        final current = _asLoaded(state);
+        if (current == null) {
+          emit(const ArchivePropertiesLoading());
+          await _loadPage(emit);
+          return;
+        }
+        emit(ArchivePropertiesActionInProgress(current));
+        await _loadPage(emit, previous: current);
+      },
+    );
   }
 
   Future<void> _onLoadMore(
     ArchivePropertiesLoadMoreRequested event,
     Emitter<ArchivePropertiesState> emit,
   ) async {
-    final current = _asLoaded(state);
-    if (current == null ||
-        !current.hasMore ||
-        _isLoadingMore ||
-        state is ArchivePropertiesActionInProgress) {
-      return;
-    }
-    _isLoadingMore = true;
-    try {
-      final page = await _repo.fetchArchivedPage(
-        startAfter: current.lastDoc,
-        limit: UiConstants.propertiesPageLimit,
-      );
-      final items = List<Property>.from(current.items)..addAll(page.items);
-      final areaNames = Map<String, LocationArea>.from(current.areaNames)
-        ..addAll(await _fetchAreaNamesFor(page.items));
-      emit(
-        ArchivePropertiesLoaded(
-          items: items,
-          lastDoc: page.lastDocument,
-          hasMore: page.hasMore,
-          areaNames: areaNames,
-        ),
-      );
-    } catch (e, st) {
-      emit(
-        ArchivePropertiesActionFailure(
-          current,
-          mapErrorMessage(e, stackTrace: st),
-        ),
-      );
-    } finally {
-      _isLoadingMore = false;
-    }
+    await _runGuardedRequest(
+      isRefresh: false,
+      job: () async {
+        final current = _asLoaded(state);
+        if (current == null ||
+            !current.hasMore ||
+            state is ArchivePropertiesActionInProgress) {
+          return;
+        }
+        try {
+          final page = await _repo.fetchArchivedPage(
+            startAfter: current.lastDoc,
+            limit: UiConstants.propertiesPageLimit,
+          );
+          final items = List<Property>.from(current.items)..addAll(page.items);
+          final areaNames = Map<String, LocationArea>.from(current.areaNames)
+            ..addAll(await _fetchAreaNamesFor(page.items));
+          emit(
+            ArchivePropertiesLoaded(
+              items: items,
+              lastDoc: page.lastDocument,
+              hasMore: page.hasMore,
+              areaNames: areaNames,
+            ),
+          );
+        } catch (e, st) {
+          emit(
+            ArchivePropertiesActionFailure(
+              current,
+              mapErrorMessage(e, stackTrace: st),
+            ),
+          );
+        }
+      },
+    );
   }
 
   Future<void> _onRetry(
@@ -110,10 +124,15 @@ class ArchivePropertiesBloc
     ArchivePropertiesExternalMutationReceived event,
     Emitter<ArchivePropertiesState> emit,
   ) async {
-    final current = _asLoaded(state);
-    if (current == null) return;
-    emit(ArchivePropertiesActionInProgress(current));
-    await _loadPage(emit, previous: current);
+    await _runGuardedRequest(
+      isRefresh: true,
+      job: () async {
+        final current = _asLoaded(state);
+        if (current == null) return;
+        emit(ArchivePropertiesActionInProgress(current));
+        await _loadPage(emit, previous: current);
+      },
+    );
   }
 
   Future<void> _loadPage(
@@ -148,6 +167,30 @@ class ArchivePropertiesBloc
         emit(ArchivePropertiesFailure(mapErrorMessage(e, stackTrace: st)));
       }
     }
+  }
+
+  Future<bool> _runGuardedRequest({
+    required bool isRefresh,
+    required Future<void> Function() job,
+  }) async {
+    if (isRefresh && _isLoadingMore) return false;
+    if (!isRefresh && _isRefreshing) return false;
+    return _requestGuard.run(() async {
+      if (isRefresh) {
+        _isRefreshing = true;
+      } else {
+        _isLoadingMore = true;
+      }
+      try {
+        await job();
+      } finally {
+        if (isRefresh) {
+          _isRefreshing = false;
+        } else {
+          _isLoadingMore = false;
+        }
+      }
+    });
   }
 
   Future<Map<String, LocationArea>> _fetchAreaNamesFor(

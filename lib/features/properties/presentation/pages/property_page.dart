@@ -16,15 +16,17 @@ import 'package:real_state/features/auth/domain/repositories/auth_repository_dom
 import 'package:real_state/features/models/entities/access_request.dart';
 import 'package:real_state/features/notifications/domain/repositories/notifications_repository.dart';
 import 'package:real_state/features/properties/data/repositories/properties_repository.dart';
+import 'package:real_state/features/properties/domain/models/property_share_progress.dart';
+import 'package:real_state/features/properties/domain/services/property_share_service.dart';
+import 'package:real_state/features/properties/domain/usecases/share_property_pdf_usecase.dart';
 import 'package:real_state/features/properties/presentation/bloc/property_detail_bloc.dart';
 import 'package:real_state/features/properties/presentation/bloc/property_detail_event.dart';
 import 'package:real_state/features/properties/presentation/bloc/property_detail_state.dart';
 import 'package:real_state/features/properties/presentation/bloc/property_mutations_bloc.dart';
-import 'package:real_state/features/properties/domain/services/property_share_service.dart';
-import 'package:real_state/features/properties/domain/usecases/share_property_pdf_usecase.dart';
 import 'package:real_state/features/properties/presentation/utils/property_placeholders.dart';
 import 'package:real_state/features/properties/presentation/widgets/property_detail_view.dart';
 import 'package:real_state/features/properties/presentation/widgets/property_request_dialog.dart';
+import 'package:real_state/features/properties/presentation/widgets/property_share_progress_overlay.dart';
 import 'package:real_state/features/users/data/repositories/users_repository.dart';
 
 class PropertyPage extends StatefulWidget {
@@ -45,7 +47,7 @@ class _PropertyPageState extends State<PropertyPage> {
   int _currentImagesToShow = 0;
   int _totalImages = 0;
   int _lastLoadMoreTriggerCount = -1;
-  Completer<void>? _shareLoadingCompleter;
+  PropertyShareProgress? _currentShareProgress;
 
   @override
   void initState() {
@@ -94,17 +96,18 @@ class _PropertyPageState extends State<PropertyPage> {
             curr is PropertyDetailShareFailure,
         listener: (context, state) {
           if (state is PropertyDetailShareInProgress) {
-            _completeShareLoading();
-            _shareLoadingCompleter = Completer<void>();
-            LoadingDialog.show(context, _shareLoadingCompleter!.future);
+            if (!mounted) return;
+            setState(() => _currentShareProgress = state.progress);
             return;
           }
           if (state is PropertyDetailShareSuccess) {
-            _completeShareLoading();
+            if (!mounted) return;
+            setState(() => _currentShareProgress = null);
             return;
           }
           if (state is PropertyDetailShareFailure) {
-            _completeShareLoading();
+            if (!mounted) return;
+            setState(() => _currentShareProgress = null);
             AppSnackbar.show(context, state.message, isError: true);
             return;
           }
@@ -164,7 +167,7 @@ class _PropertyPageState extends State<PropertyPage> {
                     )
                   : null,
             );
-            return Scaffold(
+            final scaffold = Scaffold(
               appBar: CustomAppBar(
                 title: 'property',
                 actions: [
@@ -246,6 +249,14 @@ class _PropertyPageState extends State<PropertyPage> {
                       ),
               ),
             );
+
+            return Stack(
+              children: [
+                scaffold,
+                if (_currentShareProgress != null)
+                  PropertyShareProgressOverlay(progress: _currentShareProgress!),
+              ],
+            );
           },
         ),
       ),
@@ -316,14 +327,9 @@ class _PropertyPageState extends State<PropertyPage> {
                 ),
                 onTap: () {
                   context.pop();
-                  LoadingDialog.show(
-                    context,
-                    Future.sync(
-                      () => context.read<PropertyDetailBloc>().add(
+                  context.read<PropertyDetailBloc>().add(
                         PropertyShareImagesRequested(context),
-                      ),
-                    ),
-                  );
+                      );
                 },
               ),
               ListTile(
@@ -390,11 +396,4 @@ class _PropertyPageState extends State<PropertyPage> {
     }
   }
 
-  void _completeShareLoading() {
-    if (_shareLoadingCompleter != null &&
-        !(_shareLoadingCompleter?.isCompleted ?? true)) {
-      _shareLoadingCompleter?.complete();
-    }
-    _shareLoadingCompleter = null;
-  }
 }

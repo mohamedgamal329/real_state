@@ -4,7 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:real_state/core/components/base_gradient_page.dart';
 import 'package:real_state/core/components/custom_app_bar.dart';
-import 'package:real_state/core/widgets/selection_app_bar.dart';
+import 'package:real_state/features/properties/presentation/selection/property_selection_policy.dart';
+import 'package:real_state/features/properties/presentation/selection/selection_app_bar.dart';
 import 'package:real_state/features/brokers/presentation/bloc/properties/broker_area_properties_bloc.dart';
 import 'package:real_state/features/brokers/presentation/bloc/properties/broker_area_properties_event.dart';
 import 'package:real_state/features/brokers/presentation/bloc/properties/broker_area_properties_state.dart';
@@ -40,6 +41,7 @@ class _BrokerAreaPropertiesPageState extends State<BrokerAreaPropertiesPage> {
   late final RefreshController _refreshController;
   final Set<String> _selected = {};
   List<Property> _currentItems = const [];
+  bool _hasMore = false;
   late PropertyFilter _filter;
 
   @override
@@ -152,8 +154,11 @@ class _BrokerAreaPropertiesPageState extends State<BrokerAreaPropertiesPage> {
         appBar: _selectionMode
             ? SelectionAppBar(
                 selectedCount: _selected.length,
+                policy: const PropertySelectionPolicy(actions: [PropertyBulkAction.share]),
+                actionCallbacks: {
+                  PropertyBulkAction.share: _shareSelected,
+                },
                 onClearSelection: _clearSelection,
-                onShare: _shareSelected,
               )
             : CustomAppBar(title: pageTitle),
         floatingActionButton: _selectionMode
@@ -181,28 +186,31 @@ class _BrokerAreaPropertiesPageState extends State<BrokerAreaPropertiesPage> {
               }
             },
             builder: (context, state) {
+              final hasCachedItems = _currentItems.isNotEmpty;
               final isInitialLoading =
                   state is BrokerAreaPropertiesInitial ||
-                  state is BrokerAreaPropertiesLoadInProgress;
+                  (state is BrokerAreaPropertiesLoadInProgress && !hasCachedItems);
 
-              // Update filter ref if needed
+              final List<Property> items;
               if (state is BrokerAreaPropertiesLoadSuccess) {
-                _filter = state.filter;
-              } else if (state is BrokerAreaPropertiesFailure) {
+                items = state.items;
+                _hasMore = state.hasMore;
                 _filter = state.filter;
               } else if (state is BrokerAreaPropertiesLoadMoreInProgress) {
+                items = state.items;
+                _hasMore = state.hasMore;
                 _filter = state.filter;
-              } else if (state is BrokerAreaPropertiesLoadInProgress) {
+              } else if (state is BrokerAreaPropertiesFailure) {
+                items = state.items;
+                _hasMore = state.hasMore;
+                _filter = state.filter;
+              } else {
+                items = _currentItems;
+              }
+              if (state is BrokerAreaPropertiesLoadInProgress) {
                 _filter = state.filter;
               }
 
-              final List<Property> items = (state is BrokerAreaPropertiesLoadSuccess)
-                  ? state.items
-                  : (isInitialLoading
-                        ? []
-                        : (state is BrokerAreaPropertiesFailure ? state.items : []));
-
-              // For selection logic
               if (!isInitialLoading) {
                 _currentItems = items;
               }
@@ -213,7 +221,7 @@ class _BrokerAreaPropertiesPageState extends State<BrokerAreaPropertiesPage> {
                 isLoading: isInitialLoading,
                 isError: state is BrokerAreaPropertiesFailure && items.isEmpty,
                 errorMessage: state is BrokerAreaPropertiesFailure ? state.message : null,
-                hasMore: state is BrokerAreaPropertiesLoadSuccess && state.hasMore,
+                hasMore: _hasMore,
                 startAreaName: areaTitle,
                 onRefresh: _refresh,
                 onLoadMore: () => _bloc.add(const BrokerAreaPropertiesLoadMore()),

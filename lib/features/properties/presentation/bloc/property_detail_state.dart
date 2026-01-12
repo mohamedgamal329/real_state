@@ -5,6 +5,7 @@ import 'package:real_state/features/models/entities/access_request.dart';
 import 'package:real_state/features/models/entities/property.dart';
 import 'package:real_state/features/properties/domain/property_permissions.dart';
 import 'package:real_state/features/properties/domain/property_owner_scope.dart';
+import 'package:real_state/features/properties/domain/models/property_share_progress.dart';
 
 abstract class PropertyDetailState extends Equatable {
   const PropertyDetailState();
@@ -209,10 +210,12 @@ class PropertyDetailActionSuccess extends PropertyDetailState {
 
 class PropertyDetailShareInProgress extends PropertyDetailState {
   final PropertyDetailLoaded data;
-  const PropertyDetailShareInProgress(this.data);
+  final PropertyShareProgress progress;
+
+  const PropertyDetailShareInProgress(this.data, this.progress);
 
   @override
-  List<Object?> get props => [data];
+  List<Object?> get props => [data, progress];
 }
 
 class PropertyDetailShareSuccess extends PropertyDetailState {

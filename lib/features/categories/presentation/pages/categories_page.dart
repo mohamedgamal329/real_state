@@ -8,7 +8,8 @@ import 'package:real_state/core/components/base_gradient_page.dart';
 import 'package:real_state/core/components/custom_app_bar.dart';
 import 'package:real_state/core/components/empty_state_widget.dart';
 import 'package:real_state/core/widgets/property_list_scaffold.dart';
-import 'package:real_state/core/widgets/selection_app_bar.dart';
+import 'package:real_state/features/properties/presentation/selection/property_selection_policy.dart';
+import 'package:real_state/features/properties/presentation/selection/selection_app_bar.dart';
 import 'package:real_state/features/categories/presentation/cubit/categories_cubit.dart';
 import 'package:real_state/features/categories/presentation/cubit/categories_state.dart';
 import 'package:real_state/features/categories/presentation/widgets/category_property_card.dart';
@@ -71,8 +72,11 @@ class _CategoriesPageState extends State<CategoriesPage>
       appBar: _selectionMode
           ? SelectionAppBar(
               selectedCount: _selected.length,
+              policy: const PropertySelectionPolicy(actions: [PropertyBulkAction.share]),
+              actionCallbacks: {
+                PropertyBulkAction.share: _shareSelected,
+              },
               onClearSelection: _clearSelection,
-              onShare: _shareSelected,
             )
           : CustomAppBar(title: 'categories'.tr()),
       floatingActionButton: Padding(

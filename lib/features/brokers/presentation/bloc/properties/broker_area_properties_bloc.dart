@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_state/core/handle_errors/error_mapper.dart';
+import 'package:real_state/core/utils/single_flight_guard.dart';
 import 'package:real_state/features/categories/data/models/property_filter.dart';
 import 'package:real_state/core/constants/ui_constants.dart';
 import 'package:real_state/features/properties/domain/property_owner_scope.dart';
@@ -19,6 +20,8 @@ class BrokerAreaPropertiesBloc
   StreamSubscription<PropertyMutation>? _mutationSub;
   String? _brokerId;
   PropertyFilter _filter;
+  final SingleFlightGuard _requestGuard = SingleFlightGuard();
+  bool _isLoadingMore = false;
 
   BrokerAreaPropertiesBloc(
     this._getBrokerPage,
@@ -58,7 +61,7 @@ class BrokerAreaPropertiesBloc
         (event.filter ?? const PropertyFilter()).copyWith(
           locationAreaId: event.areaId,
         );
-    await _load(emit, reset: true);
+    await _guarded(() => _load(emit, reset: true));
   }
 
   Future<void> _onRefreshed(
@@ -68,7 +71,7 @@ class BrokerAreaPropertiesBloc
     _brokerId = event.brokerId;
     _filter =
         (event.filter ?? _filter).copyWith(locationAreaId: event.areaId);
-    await _load(emit, reset: true);
+    await _guarded(() => _load(emit, reset: true));
   }
 
   Future<void> _onFilterChanged(
@@ -78,7 +81,7 @@ class BrokerAreaPropertiesBloc
     _filter = event.filter.copyWith(
       locationAreaId: _filter.locationAreaId,
     );
-    await _load(emit, reset: true);
+    await _guarded(() => _load(emit, reset: true));
   }
 
   Future<void> _onLoadMore(
@@ -90,80 +93,53 @@ class BrokerAreaPropertiesBloc
         current is! BrokerAreaPropertiesLoadMoreInProgress) {
       return;
     }
-    if (current is BrokerAreaPropertiesLoadSuccess) {
-      if (!current.hasMore) return;
+    if (current is BrokerAreaPropertiesLoadSuccess && !current.hasMore) return;
+    if (current is BrokerAreaPropertiesLoadMoreInProgress && !current.hasMore) return;
+    if (_requestGuard.isBusy || _isLoadingMore) return;
+    await _guarded(() async {
+      _isLoadingMore = true;
+      final items = current is BrokerAreaPropertiesLoadSuccess ? current.items : (current as BrokerAreaPropertiesLoadMoreInProgress).items;
+      final lastDoc = current is BrokerAreaPropertiesLoadSuccess ? current.lastDoc : (current as BrokerAreaPropertiesLoadMoreInProgress).lastDoc;
+      final hasMore = current is BrokerAreaPropertiesLoadSuccess ? current.hasMore : (current as BrokerAreaPropertiesLoadMoreInProgress).hasMore;
+      final filter = current is BrokerAreaPropertiesLoadSuccess ? current.filter : (current as BrokerAreaPropertiesLoadMoreInProgress).filter;
+
       emit(
         BrokerAreaPropertiesLoadMoreInProgress(
-          items: current.items,
-          lastDoc: current.lastDoc,
-          hasMore: current.hasMore,
-          filter: current.filter,
+          items: items,
+          lastDoc: lastDoc,
+          hasMore: hasMore,
+          filter: filter,
         ),
       );
       try {
         final page = await _getBrokerPage(
           brokerId: _brokerId!,
-          startAfter: current.lastDoc,
+          startAfter: lastDoc,
           limit: UiConstants.propertiesPageLimit,
-          filter: current.filter,
+          filter: filter,
         );
         emit(
           BrokerAreaPropertiesLoadSuccess(
-            items: [...current.items, ...page.items],
+            items: [...items, ...page.items],
             lastDoc: page.lastDocument,
             hasMore: page.hasMore,
-            filter: current.filter,
+            filter: filter,
           ),
         );
       } catch (e, st) {
         emit(
           BrokerAreaPropertiesFailure(
             message: mapErrorMessage(e, stackTrace: st),
-            items: current.items,
-            lastDoc: current.lastDoc,
-            hasMore: current.hasMore,
-            filter: current.filter,
+            items: items,
+            lastDoc: lastDoc,
+            hasMore: hasMore,
+            filter: filter,
           ),
         );
+      } finally {
+        _isLoadingMore = false;
       }
-      return;
-    }
-    final data = current as BrokerAreaPropertiesLoadMoreInProgress;
-    if (!data.hasMore) return;
-    emit(
-      BrokerAreaPropertiesLoadMoreInProgress(
-        items: data.items,
-        lastDoc: data.lastDoc,
-        hasMore: data.hasMore,
-        filter: data.filter,
-      ),
-    );
-    try {
-      final page = await _getBrokerPage(
-        brokerId: _brokerId!,
-        startAfter: data.lastDoc,
-        limit: UiConstants.propertiesPageLimit,
-        filter: data.filter,
-      );
-      emit(
-        BrokerAreaPropertiesLoadSuccess(
-          items: [...data.items, ...page.items],
-          lastDoc: page.lastDocument,
-          hasMore: page.hasMore,
-          filter: data.filter,
-        ),
-      );
-    } catch (e, st) {
-      emit(
-        BrokerAreaPropertiesFailure(
-          message: mapErrorMessage(e, stackTrace: st),
-          items: data.items,
-          lastDoc: data.lastDoc,
-          hasMore: data.hasMore,
-          filter: data.filter,
-        ),
-      );
-    }
+    });
   }
 
   Future<void> _load(
@@ -198,6 +174,8 @@ class BrokerAreaPropertiesBloc
       );
     }
   }
+
+  Future<bool> _guarded(Future<void> Function() action) => _requestGuard.run(action);
 
   @override
   Future<void> close() async {
