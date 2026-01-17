@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:real_state/core/constants/user_role.dart';
+import 'package:real_state/core/pagination/page_token.dart';
 import 'package:real_state/features/access_requests/domain/repositories/access_requests_repository.dart';
 import 'package:real_state/features/models/entities/access_request.dart';
 import 'package:real_state/features/users/domain/entities/managed_user.dart';
@@ -116,7 +116,7 @@ class FakeAccessRequestsRepository implements AccessRequestsRepository {
 
   @override
   Future<PageResult<AccessRequest>> fetchPage({
-    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    PageToken? startAfter,
     int limit = 10,
     String? requesterId,
     String? ownerId,
@@ -291,7 +291,6 @@ class FakeUsersRepository implements UsersRepository {
       name: name ?? existing.name,
       email: existing.email,
       phone: phone ?? existing.phone,
-      jobTitle: existing.jobTitle,
       active: existing.active,
     );
   }

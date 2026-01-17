@@ -54,6 +54,27 @@ void main() {
       );
     });
 
+    test('collector can modify broker-scoped property if created', () {
+      final brokerProperty = Property(
+        id: base.id,
+        title: base.title,
+        purpose: base.purpose,
+        createdBy: 'collector1',
+        ownerScope: PropertyOwnerScope.broker,
+        brokerId: 'broker1',
+        createdAt: base.createdAt,
+        updatedAt: base.updatedAt,
+      );
+      expect(
+        canModifyProperty(
+          property: brokerProperty,
+          userId: 'collector1',
+          role: UserRole.collector,
+        ),
+        isTrue,
+      );
+    });
+
     test('broker can modify own broker-scoped property', () {
       final brokerProperty = Property(
         id: base.id,

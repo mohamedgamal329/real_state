@@ -96,7 +96,7 @@ void main() {
 
   test('collector cannot accept/reject access requests', () {
     expect(canAcceptRejectAccessRequests(UserRole.collector), false);
-    expect(canRequestAccess(UserRole.collector), false);
+    expect(canRequestAccess(UserRole.collector), true);
     expect(canManageUsers(UserRole.collector), false);
     expect(canManageLocations(UserRole.collector), false);
     expect(canShowAccessRequestDialog(UserRole.collector), false);

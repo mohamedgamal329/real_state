@@ -5,13 +5,13 @@ import 'package:real_state/features/categories/domain/entities/property_filter.d
 import 'package:real_state/features/models/entities/location_area.dart';
 import 'package:real_state/features/models/entities/property.dart';
 import 'package:real_state/features/location/domain/repositories/location_areas_repository.dart';
+import 'package:real_state/features/properties/domain/models/property_mutation.dart';
 import 'package:real_state/features/properties/domain/repositories/properties_repository.dart';
 import 'package:real_state/features/properties/domain/property_owner_scope.dart';
-import 'package:real_state/features/properties/presentation/bloc/properties_bloc.dart';
-import 'package:real_state/features/properties/presentation/bloc/properties_event.dart';
-import 'package:real_state/features/properties/presentation/bloc/properties_state.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_mutations_bloc.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_mutations_state.dart';
+import 'package:real_state/features/properties/presentation/bloc/lists/properties_bloc.dart';
+import 'package:real_state/features/properties/presentation/bloc/lists/properties_event.dart';
+import 'package:real_state/features/properties/presentation/bloc/lists/properties_state.dart';
+import 'package:real_state/features/properties/presentation/side_effects/property_mutations_bloc.dart';
 
 class MockPropertiesRepository extends Mock implements PropertiesRepository {}
 

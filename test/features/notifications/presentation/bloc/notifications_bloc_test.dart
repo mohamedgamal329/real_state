@@ -6,6 +6,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:real_state/core/constants/user_role.dart';
 import 'package:real_state/core/handle_errors/error_mapper.dart';
+import 'package:real_state/core/pagination/page_token.dart';
 import 'package:real_state/features/access_requests/domain/repositories/access_requests_repository.dart';
 import 'package:real_state/features/access_requests/domain/usecases/accept_access_request_usecase.dart';
 import 'package:real_state/features/access_requests/domain/usecases/reject_access_request_usecase.dart';
@@ -119,6 +120,10 @@ class _FakeAuthRepo implements AuthRepositoryDomain {
   Stream<UserEntity?> get userChanges => _controller.stream;
 
   @override
+  Future<void> sendPasswordResetEmail(String email) =>
+      throw UnimplementedError();
+
+  @override
   Future<UserEntity> signInWithEmail(String email, String password) =>
       throw UnimplementedError();
 
@@ -128,6 +133,12 @@ class _FakeAuthRepo implements AuthRepositoryDomain {
     required String password,
     required String name,
     required UserRole role,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
   }) => throw UnimplementedError();
 
   @override
@@ -295,7 +306,7 @@ class _FakeAccessRequestsRepo implements AccessRequestsRepository {
 
   @override
   Future<PageResult<AccessRequest>> fetchPage({
-    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    PageToken? startAfter,
     int limit = 10,
     String? requesterId,
     String? ownerId,
@@ -395,19 +406,25 @@ void main() {
     await bloc.close();
   });
 
-  test('initial load failure mapped', () async {
-    bloc = _buildBloc(pages: [], props: {});
+  test('refresh failure mapped after initial success', () async {
+    final items = [_notification(id: '1')];
+    bloc = _buildBloc(
+      pages: [
+        NotificationsPage(items: items, lastDocument: null, hasMore: false),
+      ],
+    );
+    final loadedFuture = bloc.stream.firstWhere(
+      (s) => s is NotificationsLoaded,
+    );
+    await loadedFuture;
     repo.throwOnFetch = true;
-    final emitted = <NotificationsState>[];
-    final sub = bloc.stream.listen(emitted.add);
-    final state =
+    bloc.add(const NotificationsRefreshRequested());
+    final failure =
         await bloc.stream
                 .firstWhere((s) => s is NotificationsFailure)
                 .timeout(const Duration(seconds: 1))
             as NotificationsFailure;
-    final msg = state.message;
-    expect(msg, mapErrorMessage(Exception('fail')));
-    await sub.cancel();
+    expect(failure.message, mapErrorMessage(Exception('fail')));
     await bloc.close();
   });
 

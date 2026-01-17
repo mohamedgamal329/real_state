@@ -24,9 +24,9 @@ import 'package:real_state/features/properties/domain/usecases/delete_property_u
 import 'package:real_state/features/properties/domain/usecases/restore_property_usecase.dart';
 import 'package:real_state/features/properties/domain/usecases/share_property_pdf_usecase.dart';
 import 'package:real_state/features/categories/domain/usecases/apply_property_filter_usecase.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_mutations_bloc.dart';
-import 'package:real_state/features/properties/presentation/mutations/property_mutation_cubit.dart';
-import 'package:real_state/features/properties/presentation/share/property_share_cubit.dart';
+import 'package:real_state/features/properties/presentation/side_effects/property_mutations_bloc.dart';
+import 'package:real_state/features/properties/presentation/side_effects/property_mutation_cubit.dart';
+import 'package:real_state/features/properties/presentation/side_effects/property_share_cubit.dart';
 import 'package:real_state/features/users/data/repositories/users_repository.dart';
 import 'package:real_state/features/users/domain/repositories/users_lookup_repository.dart';
 

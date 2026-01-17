@@ -1,9 +1,10 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:real_state/features/properties/domain/models/property_mutation.dart';
 import 'package:real_state/features/properties/domain/property_owner_scope.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_mutations_bloc.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_mutations_event.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_mutations_state.dart';
+import 'package:real_state/features/properties/presentation/side_effects/property_mutations_bloc.dart';
+import 'package:real_state/features/properties/presentation/side_effects/property_mutations_event.dart';
+import 'package:real_state/features/properties/presentation/side_effects/property_mutations_state.dart';
 
 void main() {
   group('PropertyMutationsBloc', () {

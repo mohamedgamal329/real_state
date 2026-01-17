@@ -9,7 +9,7 @@ import 'package:real_state/features/brokers/domain/entities/broker.dart';
 import 'package:real_state/features/brokers/domain/repositories/brokers_repository.dart';
 import 'package:real_state/features/brokers/domain/usecases/get_brokers_usecase.dart';
 import 'package:real_state/features/brokers/presentation/bloc/brokers_list_bloc.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_mutations_bloc.dart';
+import 'package:real_state/features/properties/presentation/side_effects/property_mutations_bloc.dart';
 import 'package:real_state/features/settings/presentation/pages/manage_users_page.dart';
 import 'package:real_state/features/users/domain/entities/managed_user.dart';
 import 'package:real_state/features/users/domain/repositories/user_management_repository.dart';
@@ -46,15 +46,8 @@ class FakeUserManagementRepository implements UserManagementRepository {
     required String name,
     required UserRole role,
     String? phone,
-    String? jobTitle,
   }) async {
-    final user = ManagedUser(
-      id: email,
-      email: email,
-      name: name,
-      role: role,
-      jobTitle: jobTitle,
-    );
+    final user = ManagedUser(id: email, email: email, name: name, role: role);
     if (role == UserRole.collector) {
       collectors.add(user);
     } else {

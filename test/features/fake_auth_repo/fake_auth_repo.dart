@@ -14,6 +14,10 @@ class FakeAuthRepo implements AuthRepositoryDomain {
       throw UnimplementedError();
 
   @override
+  Future<void> sendPasswordResetEmail(String email) =>
+      throw UnimplementedError();
+
+  @override
   Future<void> signOut() => throw UnimplementedError();
 
   @override
@@ -32,6 +36,14 @@ class FakeAuthRepo implements AuthRepositoryDomain {
     required String password,
     required String name,
     required UserRole role,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
   }) {
     throw UnimplementedError();
   }
