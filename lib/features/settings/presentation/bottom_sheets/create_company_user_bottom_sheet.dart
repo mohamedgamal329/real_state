@@ -21,7 +21,6 @@ class _CreateCompanyUserBottomSheetState
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
-  final _jobTitleCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _confirmPasswordCtrl = TextEditingController();
   UserRole _role = UserRole.collector;
@@ -32,7 +31,6 @@ class _CreateCompanyUserBottomSheetState
   void dispose() {
     _nameCtrl.dispose();
     _emailCtrl.dispose();
-    _jobTitleCtrl.dispose();
     _passwordCtrl.dispose();
     _confirmPasswordCtrl.dispose();
     super.dispose();
@@ -60,7 +58,6 @@ class _CreateCompanyUserBottomSheetState
         cubit.create(
           email: _emailCtrl.text.trim(),
           name: _nameCtrl.text.trim(),
-          jobTitle: _jobTitleCtrl.text.trim(),
           password: _passwordCtrl.text.trim(),
           role: _role,
         ),
@@ -122,15 +119,6 @@ class _CreateCompanyUserBottomSheetState
                     validator: (v) => Validators.isEmail(v)
                         ? null
                         : 'valid_email_required'.tr(),
-                  ),
-                  const SizedBox(height: 12),
-                  AppTextField(
-                    label: 'job_title'.tr(),
-                    controller: _jobTitleCtrl,
-                    textInputAction: TextInputAction.next,
-                    validator: (v) => Validators.isNotEmpty(v)
-                        ? null
-                        : 'job_title_required'.tr(),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<UserRole>(

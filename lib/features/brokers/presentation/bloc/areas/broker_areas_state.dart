@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:real_state/features/brokers/domain/entities/broker_area.dart';
+import 'package:real_state/features/models/entities/location_area.dart';
 
 abstract class BrokerAreasState extends Equatable {
   const BrokerAreasState();
@@ -23,11 +24,16 @@ class BrokerAreasLoadInProgress extends BrokerAreasState {
 class BrokerAreasLoadSuccess extends BrokerAreasState {
   final String brokerId;
   final List<BrokerArea> areas;
+  final Map<String, LocationArea> areaDetails;
 
-  const BrokerAreasLoadSuccess({required this.brokerId, required this.areas});
+  const BrokerAreasLoadSuccess({
+    required this.brokerId,
+    required this.areas,
+    required this.areaDetails,
+  });
 
   @override
-  List<Object?> get props => [brokerId, areas];
+  List<Object?> get props => [brokerId, areas, areaDetails];
 }
 
 class BrokerAreasFailure extends BrokerAreasState {

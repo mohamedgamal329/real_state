@@ -27,11 +27,14 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> signIn(String email, String password) async {
+    if (isClosed) return;
     emit(const AuthState.loading());
     try {
       final user = await _repo.signInWithEmail(email, password);
+      if (isClosed) return;
       emit(AuthState.authenticated(user));
     } catch (e, st) {
+      if (isClosed) return;
       if (kDebugMode) {
         debugPrint('AuthCubit signIn error: $e');
         debugPrintStack(stackTrace: st);

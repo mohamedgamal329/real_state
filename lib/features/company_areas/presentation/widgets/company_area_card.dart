@@ -1,6 +1,10 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:real_state/core/components/app_network_image.dart';
+import 'package:real_state/core/components/pressable_scale.dart';
+import 'package:real_state/core/components/app_svg_icon.dart';
+import 'package:real_state/core/constants/app_images.dart';
+import 'package:real_state/core/constants/app_spacing.dart';
 import 'package:real_state/features/company_areas/domain/entities/company_area_summary.dart';
 
 class CompanyAreaCard extends StatelessWidget {
@@ -16,53 +20,59 @@ class CompanyAreaCard extends StatelessWidget {
     final countLabel = 'properties_count_format'.tr(
       args: [area.count.toString()],
     );
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 1,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              if (area.imageUrl.isNotEmpty)
-                AppNetworkImage(
-                  url: area.imageUrl,
-                  width: 86,
-                  height: 86,
-                  borderRadius: 14,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_) => _AreaImagePlaceholder(name: name),
-                  placeholderBuilder: (_) => _AreaImagePlaceholder(name: name),
-                )
-              else
-                _AreaImagePlaceholder(name: name),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
+    return PressableScale(
+      enabled: onTap != null,
+      scale: 0.985,
+      hoverScale: 0.99,
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 1,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Row(
+              children: [
+                if (area.imageUrl.isNotEmpty)
+                  AppNetworkImage(
+                    url: area.imageUrl,
+                    width: 86,
+                    height: 86,
+                    borderRadius: 14,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_) => _AreaImagePlaceholder(name: name),
+                    placeholderBuilder: (_) =>
+                        _AreaImagePlaceholder(name: name),
+                  )
+                else
+                  _AreaImagePlaceholder(name: name),
+                const SizedBox(width: AppSpacing.lg),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      countLabel,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        countLabel,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const Icon(Icons.chevron_right),
-            ],
+                const AppSvgIcon(AppSVG.chevronRight),
+              ],
+            ),
           ),
         ),
       ),
@@ -92,7 +102,7 @@ class _AreaImagePlaceholder extends StatelessWidget {
           child: Text(
             initials,
             style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: theme.colorScheme.primary,
             ),
           ),

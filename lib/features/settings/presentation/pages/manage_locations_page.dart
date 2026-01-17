@@ -1,5 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:real_state/core/components/app_svg_icon.dart';
+import 'package:real_state/core/constants/app_images.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_state/core/animations/slide_fade_in.dart';
 import 'package:real_state/core/components/app_confirm_dialog.dart';
@@ -9,11 +11,8 @@ import 'package:real_state/core/components/app_snackbar.dart';
 import 'package:real_state/core/components/custom_app_bar.dart';
 import 'package:real_state/core/components/empty_state_widget.dart';
 import 'package:real_state/core/components/loading_dialog.dart';
-import 'package:real_state/features/auth/domain/repositories/auth_repository_domain.dart';
-import 'package:real_state/features/location/domain/repositories/location_repository.dart';
-import 'package:real_state/features/location/domain/usecases/get_location_areas_usecase.dart';
-import 'package:real_state/features/location/presentation/widgets/location_area_card.dart';
-import 'package:real_state/features/location/presentation/widgets/location_area_form_dialog.dart';
+import 'package:real_state/core/widgets/location_area_card.dart';
+import 'package:real_state/core/widgets/location_area_form_dialog.dart';
 import 'package:real_state/features/models/entities/location_area.dart';
 import 'package:real_state/features/settings/presentation/cubit/manage_locations_cubit.dart';
 
@@ -22,25 +21,17 @@ class ManageLocationsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cubitFactory = context.read<ManageLocationsCubit Function()>();
     return BlocProvider(
-      create: (context) => ManageLocationsCubit(
-        context.read<LocationRepository>(),
-        context.read<AuthRepositoryDomain>(),
-        context.read<GetLocationAreasUseCase>(),
-      )..initialize(),
-      child: const _ManageLocationsView(),
+      create: (context) => cubitFactory()..initialize(),
+      child: const ManageLocationsView(),
     );
   }
 }
 
-class _ManageLocationsView extends StatefulWidget {
-  const _ManageLocationsView();
+class ManageLocationsView extends StatelessWidget {
+  const ManageLocationsView({super.key});
 
-  @override
-  State<_ManageLocationsView> createState() => _ManageLocationsViewState();
-}
-
-class _ManageLocationsViewState extends State<_ManageLocationsView> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<ManageLocationsCubit, ManageLocationsState>(
@@ -81,14 +72,9 @@ class _ManageLocationsViewState extends State<_ManageLocationsView> {
             state is ManageLocationsLoadInProgress;
 
         if (showSkeleton) {
-          return Scaffold(
-            appBar: const CustomAppBar(title: 'manage_locations'),
-            body: AppSkeletonList(
-              itemBuilder: (_, __) => LocationAreaCard(
-                area: _placeholderLocations()[0],
-                localeCode: context.locale.toString(),
-              ),
-            ),
+          return _ManageLocationsSkeleton(
+            localeCode: context.locale.toString(),
+            placeholder: _placeholderLocations().first,
           );
         }
 
@@ -99,105 +85,190 @@ class _ManageLocationsViewState extends State<_ManageLocationsView> {
         return Scaffold(
           appBar: const CustomAppBar(title: 'manage_locations'),
           body: items.isEmpty
-              ? EmptyStateWidget(
-                  description: 'no_locations_description'.tr(),
-                  action: () => _create(context.read<ManageLocationsCubit>()),
+              ? _ManageLocationsEmpty(
+                  onCreate: () => _createLocation(
+                    context,
+                    context.read<ManageLocationsCubit>(),
+                  ),
                 )
-              : ListView.separated(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (c, i) {
-                    final it = items[i];
-                    return SlideFadeIn(
-                      delay: Duration(milliseconds: 40 * i),
-                      child: LocationAreaCard(
-                        area: it,
-                        localeCode: context.locale.toString(),
-                        onEdit: canInteract && _isAreaComplete(it)
-                            ? () => _edit(
-                                context.read<ManageLocationsCubit>(),
-                                it,
-                              )
-                            : null,
-                        onDelete: canInteract && _isAreaComplete(it)
-                            ? () => _delete(
-                                context.read<ManageLocationsCubit>(),
-                                it,
-                              )
-                            : null,
-                      ),
-                    );
-                  },
+              : _ManageLocationsList(
+                  items: items,
+                  canInteract: canInteract,
+                  localeCode: context.locale.toString(),
                 ),
-
           floatingActionButton: FloatingActionButton(
-            onPressed: () => _create(context.read<ManageLocationsCubit>()),
-            child: const Icon(Icons.add),
+            onPressed: () =>
+                _createLocation(context, context.read<ManageLocationsCubit>()),
+            child: const AppSvgIcon(AppSVG.add),
           ),
         );
       },
     );
   }
+}
 
-  Future<void> _create(ManageLocationsCubit cubit) async {
-    final res = await LocationAreaFormDialog.show(context);
-    if (res == null || res.imageFile == null) return;
-    await LoadingDialog.show(
-      context,
-      cubit.create(
-        nameAr: res.nameAr,
-        nameEn: res.nameEn,
-        imageFile: res.imageFile!,
+class _ManageLocationsSkeleton extends StatelessWidget {
+  final String localeCode;
+  final LocationArea placeholder;
+
+  const _ManageLocationsSkeleton({
+    required this.localeCode,
+    required this.placeholder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: const CustomAppBar(title: 'manage_locations'),
+      body: AppSkeletonList(
+        itemBuilder: (_, __) =>
+            LocationAreaCard(area: placeholder, localeCode: localeCode),
       ),
     );
   }
+}
 
-  Future<void> _edit(ManageLocationsCubit cubit, LocationArea item) async {
-    final res = await LocationAreaFormDialog.show(context, initial: item);
-    if (res == null) return;
-    await LoadingDialog.show(
-      context,
-      cubit.update(
-        item,
-        nameAr: res.nameAr,
-        nameEn: res.nameEn,
-        imageFile: res.imageFile,
-      ),
+class _ManageLocationsEmpty extends StatelessWidget {
+  final VoidCallback onCreate;
+
+  const _ManageLocationsEmpty({required this.onCreate});
+
+  @override
+  Widget build(BuildContext context) {
+    return EmptyStateWidget(
+      description: 'no_locations_description'.tr(),
+      action: onCreate,
     );
   }
+}
 
-  Future<void> _delete(ManageLocationsCubit cubit, LocationArea item) async {
-    final result = await AppConfirmDialog.show(
-      context,
-      titleKey: 'delete_location',
-      descriptionKey: 'are_you_sure',
-      confirmLabelKey: 'delete',
-      cancelLabelKey: 'cancel',
-      isDestructive: true,
+class _ManageLocationsList extends StatelessWidget {
+  final List<LocationArea> items;
+  final bool canInteract;
+  final String localeCode;
+
+  const _ManageLocationsList({
+    required this.items,
+    required this.canInteract,
+    required this.localeCode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.all(12),
+      itemCount: items.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (c, i) {
+        final it = items[i];
+        return SlideFadeIn(
+          delay: Duration(milliseconds: 40 * i),
+          child: LocationAreaCard(
+            area: it,
+            localeCode: localeCode,
+            onEdit: canInteract && _isAreaComplete(it)
+                ? () => _editLocation(
+                    context,
+                    context.read<ManageLocationsCubit>(),
+                    it,
+                  )
+                : null,
+            onDelete: canInteract && _isAreaComplete(it)
+                ? () => _deleteLocation(
+                    context,
+                    context.read<ManageLocationsCubit>(),
+                    it,
+                  )
+                : null,
+          ),
+        );
+      },
     );
-    if (result == AppConfirmResult.confirmed) {
-      await cubit.delete(item);
-    }
   }
+}
 
-  List<LocationArea> _placeholderLocations() {
-    return List.generate(
-      6,
-      (i) => LocationArea(
-        id: 'placeholder-$i',
-        nameAr: 'loading_location'.tr(),
-        nameEn: 'loading_location'.tr(),
-        imageUrl: '',
-        isActive: true,
-        createdAt: DateTime.now(),
-      ),
-    );
-  }
+Future<void> _createLocation(
+  BuildContext context,
+  ManageLocationsCubit cubit,
+) async {
+  // Unfocus before dialog
+  FocusScope.of(context).unfocus();
 
-  bool _isAreaComplete(LocationArea area) {
-    return area.nameAr.trim().isNotEmpty &&
-        area.nameEn.trim().isNotEmpty &&
-        area.imageUrl.trim().isNotEmpty;
+  final res = await LocationAreaFormDialog.show(context);
+  if (res == null || res.imageFile == null) return;
+
+  // Unfocus again before loading overlay (though LoadingDialog.show will also do it)
+  FocusScope.of(context).unfocus();
+
+  await LoadingDialog.show(
+    context,
+    cubit.create(
+      nameAr: res.nameAr,
+      nameEn: res.nameEn,
+      imageFile: res.imageFile!,
+    ),
+  );
+}
+
+Future<void> _editLocation(
+  BuildContext context,
+  ManageLocationsCubit cubit,
+  LocationArea item,
+) async {
+  // Unfocus before dialog
+  FocusScope.of(context).unfocus();
+
+  final res = await LocationAreaFormDialog.show(context, initial: item);
+  if (res == null) return;
+
+  // Unfocus again before loading overlay
+  FocusScope.of(context).unfocus();
+
+  await LoadingDialog.show(
+    context,
+    cubit.update(
+      item,
+      nameAr: res.nameAr,
+      nameEn: res.nameEn,
+      imageFile: res.imageFile,
+    ),
+  );
+}
+
+Future<void> _deleteLocation(
+  BuildContext context,
+  ManageLocationsCubit cubit,
+  LocationArea item,
+) async {
+  final result = await AppConfirmDialog.show(
+    context,
+    titleKey: 'delete_location',
+    descriptionKey: 'are_you_sure',
+    confirmLabelKey: 'delete',
+    cancelLabelKey: 'cancel',
+    isDestructive: true,
+  );
+  if (result == AppConfirmResult.confirmed) {
+    await cubit.delete(item);
   }
+}
+
+List<LocationArea> _placeholderLocations() {
+  return List.generate(
+    6,
+    (i) => LocationArea(
+      id: 'placeholder-$i',
+      nameAr: 'loading_location'.tr(),
+      nameEn: 'loading_location'.tr(),
+      imageUrl: '',
+      isActive: true,
+      createdAt: DateTime.now(),
+    ),
+  );
+}
+
+bool _isAreaComplete(LocationArea area) {
+  return area.nameAr.trim().isNotEmpty &&
+      area.nameEn.trim().isNotEmpty &&
+      area.imageUrl.trim().isNotEmpty;
 }

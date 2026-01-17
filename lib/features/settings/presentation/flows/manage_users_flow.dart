@@ -1,6 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_state/core/components/app_confirm_dialog.dart';
 import 'package:real_state/core/components/app_snackbar.dart';
 import 'package:real_state/core/utils/async_action_guard.dart';
@@ -15,13 +15,17 @@ class ManageUsersFlow {
   final AsyncActionGuard _deleteGuard;
 
   Future<void> openCreateUserSheet(BuildContext context) async {
+    final cubit = context.read<ManageUsersCubit>();
     final created = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => const CreateCompanyUserBottomSheet(),
+      builder: (_) => BlocProvider.value(
+        value: cubit,
+        child: const CreateCompanyUserBottomSheet(),
+      ),
     );
     if (created == true) {
       AppSnackbar.show(context, 'user_created'.tr());
@@ -33,10 +37,16 @@ class ManageUsersFlow {
     ManagedUser user, {
     required bool canAssignOwner,
   }) async {
+    final cubit = context.read<ManageUsersCubit>();
     await showDialog<bool>(
       context: context,
-      builder: (_) =>
-          EditManagedUserDialog(user: user, canAssignOwner: canAssignOwner),
+      builder: (_) => BlocProvider.value(
+        value: cubit,
+        child: EditManagedUserDialog(
+          user: user,
+          canAssignOwner: canAssignOwner,
+        ),
+      ),
     );
   }
 

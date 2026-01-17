@@ -23,6 +23,7 @@ class Property {
 
   // Stored as string but should never be exposed by default in DTO->UI
   final String? ownerPhoneEncryptedOrHiddenStored;
+  final String? securityGuardPhoneEncryptedOrHiddenStored;
   final bool isImagesHidden;
 
   final PropertyStatus status;
@@ -52,6 +53,7 @@ class Property {
     this.coverImageUrl,
     this.imageUrls = const [],
     this.ownerPhoneEncryptedOrHiddenStored,
+    this.securityGuardPhoneEncryptedOrHiddenStored,
     this.isImagesHidden = false,
     this.status = PropertyStatus.active,
     this.isDeleted = false,

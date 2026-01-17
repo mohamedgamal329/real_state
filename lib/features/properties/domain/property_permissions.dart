@@ -16,8 +16,7 @@ bool canManageLocations(UserRole? role) =>
     role == UserRole.owner || role == UserRole.broker;
 bool canAcceptRejectAccessRequests(UserRole? role) =>
     role == UserRole.owner || role == UserRole.broker;
-bool canRequestAccess(UserRole? role) =>
-    role != UserRole.collector && role != null;
+bool canRequestAccess(UserRole? role) => role != null;
 bool canShowAccessRequestDialog(UserRole? role) =>
     canAcceptRejectAccessRequests(role);
 
@@ -47,16 +46,9 @@ bool canModifyProperty({
   required String userId,
   required UserRole role,
 }) {
+  if (property.createdBy == userId) return true;
   if (role == UserRole.owner) return true;
   if (role == UserRole.broker && property.brokerId == userId) return true;
-  if (role == UserRole.collector) {
-    return canCollectorEditCompanyProperty(
-      property: property,
-      role: role,
-      userId: userId,
-    );
-  }
-  if (property.createdBy == userId && role != UserRole.collector) return true;
   return false;
 }
 
@@ -84,17 +76,38 @@ bool canDeleteProperty({
 }) =>
     canArchiveOrDeleteProperty(property: property, userId: userId, role: role);
 
-/// Owners can always bypass image visibility restrictions.
-bool canBypassImageRestrictions(UserRole? role) => role == UserRole.owner;
+/// Owners can bypass image visibility restrictions for company properties.
+bool canBypassImageRestrictions({
+  required UserRole? role,
+  required Property property,
+}) =>
+    role == UserRole.owner && property.ownerScope == PropertyOwnerScope.company;
 
-/// Owners can always bypass phone visibility restrictions.
-bool canBypassPhoneRestrictions(UserRole? role) => role == UserRole.owner;
+/// Owners can bypass phone visibility restrictions for company properties.
+bool canBypassPhoneRestrictions({
+  required UserRole? role,
+  required Property property,
+}) =>
+    role == UserRole.owner && property.ownerScope == PropertyOwnerScope.company;
 
-/// Owners can always bypass location visibility restrictions.
-bool canBypassLocationRestrictions(UserRole? role) => role == UserRole.owner;
+/// Owners can bypass location visibility restrictions for company properties.
+bool canBypassLocationRestrictions({
+  required UserRole? role,
+  required Property property,
+}) =>
+    role == UserRole.owner && property.ownerScope == PropertyOwnerScope.company;
 
-/// Collectors are not allowed to request sensitive data (images/phone/location).
-bool canRequestSensitiveInfo(UserRole? role) => canRequestAccess(role);
+/// Collectors can request sensitive data for company properties only.
+bool canRequestSensitiveInfo({
+  required UserRole? role,
+  required Property property,
+}) {
+  if (role == null) return false;
+  if (role == UserRole.collector) {
+    return property.ownerScope == PropertyOwnerScope.company;
+  }
+  return true;
+}
 
 /// Collectors are not allowed to share properties.
 bool canShareProperty(UserRole? role) =>
@@ -110,19 +123,60 @@ bool canDecideAccessRequest({
   return request.ownerId == userId;
 }
 
+bool isPropertyCreator({required Property property, required String? userId}) {
+  if (userId == null || userId.isEmpty) return false;
+  return property.createdBy == userId;
+}
+
 /// Determines if a user inherently has access to hidden details for a property.
-/// - Owners always have access.
+/// - Owners always have access to company properties.
 /// - Brokers have access to properties they created/own.
+/// - Collectors have access to company properties they created.
 bool hasIntrinsicPropertyAccess({
   required Property property,
   required UserRole? userRole,
   required String? userId,
 }) {
-  if (userRole == UserRole.owner) return true;
-  if (userRole == UserRole.broker &&
-      userId != null &&
-      property.brokerId == userId) {
-    return true;
+  if (userId != null && property.createdBy == userId) return true;
+  if (userRole == UserRole.owner) {
+    return property.ownerScope == PropertyOwnerScope.company;
+  }
+  if (userRole == UserRole.broker && userId != null) {
+    return property.brokerId == userId || property.createdBy == userId;
+  }
+  if (userRole == UserRole.collector && userId != null) {
+    if (property.ownerScope != PropertyOwnerScope.company) return false;
+    return property.createdBy == userId;
   }
   return false;
+}
+
+/// Returns true if the user can view the security number (security guard phone).
+bool canViewSecurityNumber({
+  required Property property,
+  required String? userId,
+  required UserRole? userRole,
+}) {
+  return hasIntrinsicPropertyAccess(
+    property: property,
+    userRole: userRole,
+    userId: userId,
+  );
+}
+
+/// ABSOLUTE RULE: Returns true if user is the property creator AND has FULL access.
+///
+/// When true, creator should NEVER see:
+/// - Request access buttons
+/// - Locked placeholders
+/// - Permission warnings
+/// - Any restricted UI
+///
+/// Use this function as the SINGLE SOURCE OF TRUTH for creator access checks in UI.
+bool isCreatorWithFullAccess({
+  required Property property,
+  required String? userId,
+  required UserRole? userRole,
+}) {
+  return isPropertyCreator(property: property, userId: userId);
 }

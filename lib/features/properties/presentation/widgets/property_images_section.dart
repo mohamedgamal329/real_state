@@ -2,6 +2,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:real_state/core/components/app_network_image.dart';
 import 'package:real_state/core/components/primary_button.dart';
+import 'package:real_state/core/components/app_svg_icon.dart';
+import 'package:real_state/core/constants/app_images.dart';
 import 'package:real_state/features/models/entities/property.dart';
 
 class PropertyImagesSection extends StatelessWidget {
@@ -63,9 +65,9 @@ class PropertyImagesSection extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Icon(Icons.lock, size: 32),
+              const AppSvgIcon(AppSVG.lock, size: 32),
               const SizedBox(height: 8),
               Text(
                 'images_hidden'.tr(),

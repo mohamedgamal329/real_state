@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:real_state/core/components/app_svg_icon.dart';
+import 'package:real_state/core/constants/app_images.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -11,9 +13,9 @@ import 'package:real_state/core/components/app_snackbar.dart';
 import 'package:real_state/core/components/loading_dialog.dart';
 import 'package:real_state/core/utils/async_action_guard.dart';
 import 'package:real_state/features/models/entities/access_request.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_detail_bloc.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_detail_event.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_detail_state.dart';
+import 'package:real_state/features/properties/presentation/bloc/detail/property_detail_bloc.dart';
+import 'package:real_state/features/properties/presentation/bloc/detail/property_detail_event.dart';
+import 'package:real_state/features/properties/presentation/bloc/detail/property_detail_state.dart';
 import 'package:real_state/features/properties/presentation/dialogs/property_request_dialog.dart';
 
 class PropertyFlow {
@@ -56,7 +58,7 @@ class PropertyFlow {
                 ),
               ),
               ListTile(
-                leading: const Icon(Icons.photo_library_outlined),
+                leading: const AppSvgIcon(AppSVG.photo),
                 title: Text('share_images_only'.tr()),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
@@ -69,7 +71,7 @@ class PropertyFlow {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.picture_as_pdf),
+                leading: const AppSvgIcon(AppSVG.pdf),
                 title: Text('share_details_pdf'.tr()),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),

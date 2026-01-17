@@ -10,28 +10,33 @@ import 'package:real_state/features/company_areas/presentation/bloc/company_area
 import 'package:real_state/features/location/domain/repositories/location_areas_repository.dart';
 import 'package:real_state/features/properties/domain/repositories/properties_repository.dart';
 import 'package:real_state/features/properties/domain/property_permissions.dart';
-import 'package:real_state/features/properties/presentation/bloc/archive_properties_bloc.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_mutations_bloc.dart';
+import 'package:real_state/features/properties/presentation/bloc/archive/archive_properties_bloc.dart';
+import 'package:real_state/features/properties/presentation/side_effects/property_mutation_cubit.dart';
+import 'package:real_state/features/properties/presentation/side_effects/property_mutations_bloc.dart';
+import 'package:real_state/features/settings/presentation/cubit/profile_info_cubit.dart';
+import 'package:real_state/features/users/domain/repositories/user_management_repository.dart';
 
 import '../../core/auth/auth_repository.dart';
+import '../../features/auth/domain/repositories/auth_repository_domain.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
-import '../../features/brokers/presentation/pages/broker_area_properties_page.dart';
+import '../../features/brokers/presentation/pages/broker_area_properties/broker_area_properties_page.dart';
 import 'package:real_state/features/categories/domain/entities/property_filter.dart';
 import '../../features/categories/presentation/pages/categories_filter_page.dart';
 import '../../features/categories/presentation/pages/categories_page.dart';
 import '../../features/company_areas/presentation/pages/company_areas_page.dart';
+import '../../features/company_areas/presentation/pages/company_area_properties/company_area_properties_page.dart';
 import '../../features/main_shell/presentation/pages/main_shell_page.dart';
 import '../../features/models/entities/property.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
-import '../../features/properties/presentation/pages/archive_properties_page.dart';
-import '../../features/properties/presentation/pages/company_area_properties_page.dart';
 import '../../features/properties/presentation/pages/filtered_properties_page.dart';
-import '../../features/properties/presentation/pages/my_added_properties_page.dart';
 import '../../features/properties/presentation/pages/property_editor_page.dart';
-import '../../features/properties/presentation/pages/property_image_viewer_page.dart';
-import '../../features/properties/presentation/pages/property_page.dart';
+import '../../features/properties/presentation/pages/property_image_viewer/property_image_viewer_page.dart';
+import '../../features/properties/presentation/pages/property_detail/property_page.dart';
+import '../../features/settings/presentation/pages/archive_properties/archive_properties_page.dart';
 import '../../features/settings/presentation/pages/manage_locations_page.dart';
 import '../../features/settings/presentation/pages/manage_users_page.dart';
+import '../../features/settings/presentation/pages/my_added_properties/my_added_properties_page.dart';
+import '../../features/settings/presentation/pages/profile_info_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
 import 'not_found_page.dart';
 import 'route_guards.dart';
@@ -88,6 +93,16 @@ class AppRouter {
             }
             return const ManageLocationsPage();
           },
+        ),
+        GoRoute(
+          path: '/settings/profile',
+          builder: (c, s) => BlocProvider(
+            create: (context) => ProfileInfoCubit(
+              context.read<AuthRepositoryDomain>(),
+              context.read<UserManagementRepository>(),
+            ),
+            child: const ProfileInfoPage(),
+          ),
         ),
         GoRoute(
           path: '/property/new',
@@ -232,14 +247,25 @@ class AppRouter {
         ),
         GoRoute(
           path: '/properties/archive',
-          builder: (c, s) => BlocProvider(
-            create: (context) => ArchivePropertiesBloc(
-              context.read<PropertiesRepository>(),
-              context.read<LocationAreasRepository>(),
-              context.read<PropertyMutationsBloc>(),
-            ),
-            child: const ArchivePropertiesPage(),
-          ),
+          builder: (c, s) {
+            final mutationCubitFactory = c
+                .read<PropertyMutationCubit Function()>();
+            return MultiBlocProvider(
+              providers: [
+                BlocProvider(
+                  create: (context) => ArchivePropertiesBloc(
+                    context.read<PropertiesRepository>(),
+                    context.read<LocationAreasRepository>(),
+                    context.read<PropertyMutationsBloc>(),
+                  ),
+                ),
+                BlocProvider<PropertyMutationCubit>(
+                  create: (_) => mutationCubitFactory(),
+                ),
+              ],
+              child: const ArchivePropertiesPage(),
+            );
+          },
         ),
         GoRoute(
           path: '/company/areas',

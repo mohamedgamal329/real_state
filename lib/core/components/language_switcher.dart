@@ -1,5 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:real_state/core/components/app_svg_icon.dart';
+import 'package:real_state/core/constants/app_images.dart';
 
 /// Locale picker with a smooth dialog to avoid partial language updates.
 class LanguageSwitcher extends StatelessWidget {
@@ -55,7 +57,7 @@ class LanguageSwitcher extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.language, size: 18, color: colorScheme.primary),
+            AppSvgIcon(AppSVG.language, size: 18, color: colorScheme.primary),
             const SizedBox(width: 6),
             Text(
               current,
@@ -113,7 +115,7 @@ class _LanguageDialog extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(18, 16, 8, 4),
                     child: Row(
                       children: [
-                        Icon(Icons.language, color: colorScheme.primary),
+                        AppSvgIcon(AppSVG.language, color: colorScheme.primary),
                         const SizedBox(width: 8),
                         Text(
                           'language'.tr(),
@@ -122,7 +124,7 @@ class _LanguageDialog extends StatelessWidget {
                         ),
                         const Spacer(),
                         IconButton(
-                          icon: const Icon(Icons.close_rounded),
+                          icon: const AppSvgIcon(AppSVG.close),
                           splashRadius: 20,
                           onPressed: () =>
                               Navigator.of(context, rootNavigator: true).pop(),
@@ -221,7 +223,7 @@ class _LanguageTile extends StatelessWidget {
             AnimatedOpacity(
               opacity: isSelected ? 1 : 0,
               duration: const Duration(milliseconds: 160),
-              child: Icon(Icons.check_circle, color: colorScheme.primary),
+              child: AppSvgIcon(AppSVG.success, color: colorScheme.primary),
             ),
           ],
         ),

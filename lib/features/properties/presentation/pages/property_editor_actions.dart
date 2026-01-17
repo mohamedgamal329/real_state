@@ -21,6 +21,11 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
         _kitchensCtrl.text = prop.kitchens?.toString() ?? '';
         _floorsCtrl.text = prop.floors?.toString() ?? '';
         _phoneCtrl.text = prop.ownerPhoneEncryptedOrHiddenStored ?? '';
+        _securityGuardPhoneCtrl.text =
+            prop.securityGuardPhoneEncryptedOrHiddenStored ?? '';
+        _showSecurityGuardPhone = _securityGuardPhoneCtrl.text
+            .trim()
+            .isNotEmpty;
         _hasPool = prop.hasPool;
         _isImagesHidden = prop.isImagesHidden;
         _purpose = prop.purpose;
@@ -104,6 +109,10 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
 
   Future<void> _save() async {
     if (_formKey.currentState?.validate() != true) return;
+
+    // Unfocus to dismiss keyboard and prevent focus-related crashes during transition
+    FocusScope.of(context).unfocus();
+
     if (_images.isEmpty) {
       AppSnackbar.show(
         context,
@@ -139,12 +148,26 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
 
     final repo = context.read<PropertiesRepository>();
     final propertyId = widget.property?.id ?? repo.generateId();
-    await LoadingDialog.show(context, _performSave(repo, propertyId));
+
+    final overlayController = PropertyEditorProgressOverlayController(
+      const PropertyEditorProgress(
+        stage: PropertyEditorStage.uploadingImages,
+        fraction: 0,
+      ),
+    );
+    overlayController.show(context);
+
+    try {
+      await _performSave(repo, propertyId, overlayController);
+    } finally {
+      overlayController.hide();
+    }
   }
 
   Future<void> _performSave(
     PropertiesRepository repo,
     String propertyId,
+    PropertyEditorProgressOverlayController overlayController,
   ) async {
     try {
       final createUseCase = context.read<CreatePropertyUseCase>();
@@ -153,14 +176,33 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
       if (!_images.any((e) => e.isCover) && _images.isNotEmpty) {
         _images.first.isCover = true;
       }
+
+      // Stage 1: Uploading images
+      overlayController.update(
+        const PropertyEditorProgress(
+          stage: PropertyEditorStage.uploadingImages,
+          fraction: 0.2,
+        ),
+      );
+
       final upload = await context.read<UploadPropertyImagesUseCase>().call(
         _images,
         propertyId,
+      );
+
+      // Stage 2: Saving details
+      overlayController.update(
+        const PropertyEditorProgress(
+          stage: PropertyEditorStage.savingDetails,
+          fraction: 0.6,
+        ),
       );
       final nowCover = upload.coverUrl;
       final description = _descCtrl.text.trim();
       final phone = _phoneCtrl.text.trim();
       final phoneValue = phone.isEmpty ? null : phone;
+      final securityPhone = _securityGuardPhoneCtrl.text.trim();
+      final securityPhoneValue = securityPhone.isEmpty ? null : securityPhone;
       final locationUrl = _locationUrlCtrl.text.trim();
       final locationValue = locationUrl.isEmpty ? null : locationUrl;
       final price = Validators.parsePrice(_priceCtrl.text);
@@ -189,6 +231,7 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
           price: price,
           locationUrl: locationValue,
           ownerPhoneEncryptedOrHiddenStored: phoneValue,
+          securityGuardPhoneEncryptedOrHiddenStored: securityPhoneValue,
           isImagesHidden: _isImagesHidden,
           imageUrls: upload.urls,
           coverImageUrl: nowCover,
@@ -216,6 +259,7 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
           price: price,
           locationUrl: locationValue,
           ownerPhoneEncryptedOrHiddenStored: phoneValue,
+          securityGuardPhoneEncryptedOrHiddenStored: securityPhoneValue,
           isImagesHidden: _isImagesHidden,
           imageUrls: upload.urls,
           coverImageUrl: nowCover,

@@ -9,6 +9,11 @@ abstract class AuthRepositoryDomain {
     required String name,
     required UserRole role,
   });
+  Future<void> sendPasswordResetEmail(String email);
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
   Future<void> signOut();
   Stream<UserEntity?> get userChanges;
   UserEntity? get currentUser;

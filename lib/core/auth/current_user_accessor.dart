@@ -4,4 +4,5 @@ import 'package:real_state/core/constants/user_role.dart';
 /// without coupling helpers to specific auth implementations or Flutter.
 abstract class CurrentUserAccessor {
   UserRole? get currentRole;
+  String? get currentUserId;
 }

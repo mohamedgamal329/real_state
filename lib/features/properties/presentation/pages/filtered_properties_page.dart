@@ -1,26 +1,28 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:real_state/core/components/app_svg_icon.dart';
+import 'package:real_state/core/constants/app_images.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:real_state/core/components/app_error_view.dart';
 import 'package:real_state/core/components/app_snackbar.dart';
 import 'package:real_state/core/components/base_gradient_page.dart';
 import 'package:real_state/core/components/custom_app_bar.dart';
-import 'package:real_state/features/properties/presentation/selection/property_selection_policy.dart';
-import 'package:real_state/features/properties/presentation/selection/selection_app_bar.dart';
+import 'package:real_state/core/selection/property_selection_policy.dart';
+import 'package:real_state/core/selection/selection_app_bar.dart';
+import 'package:real_state/core/widgets/property_filter/show_property_filter_bottom_sheet.dart';
 import 'package:real_state/features/categories/domain/entities/property_filter.dart';
 import 'package:real_state/features/models/entities/property.dart';
+import 'package:real_state/features/models/entities/location_area.dart';
 import 'package:real_state/features/location/domain/repositories/location_areas_repository.dart';
 import 'package:real_state/features/properties/domain/repositories/properties_repository.dart';
-import 'package:real_state/features/properties/presentation/bloc/properties_bloc.dart';
-import 'package:real_state/features/properties/presentation/bloc/properties_event.dart';
-import 'package:real_state/features/properties/presentation/bloc/properties_state.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_mutations_bloc.dart';
+import 'package:real_state/features/properties/presentation/bloc/lists/properties_bloc.dart';
+import 'package:real_state/features/properties/presentation/bloc/lists/properties_event.dart';
+import 'package:real_state/features/properties/presentation/bloc/lists/properties_state.dart';
+import 'package:real_state/features/properties/presentation/side_effects/property_mutations_bloc.dart';
 import 'package:real_state/features/properties/domain/services/property_filter_controller.dart';
-import 'package:real_state/features/properties/presentation/utils/multi_pdf_share.dart';
-import 'package:real_state/features/properties/presentation/utils/property_placeholders.dart';
-import 'package:real_state/features/properties/presentation/widgets/property_paginated_list_view.dart';
+import 'package:real_state/core/utils/multi_pdf_share.dart';
+import 'package:real_state/core/widgets/property_paginated_list_view.dart';
 
 class FilteredPropertiesPage extends StatefulWidget {
   final PropertyFilter filter;
@@ -79,6 +81,27 @@ class _FilteredPropertiesPageState extends State<FilteredPropertiesPage> {
     _clearSelection();
   }
 
+  Future<void> _openFilters({
+    required PropertyFilter currentFilter,
+    required List<LocationArea> locations,
+  }) async {
+    await showPropertyFilterBottomSheet(
+      context,
+      initialFilter: currentFilter,
+      locationAreas: locations,
+      onApply: (filter) {
+        _filterController.apply(filter);
+        context.read<PropertiesBloc>().add(PropertiesStarted(filter: filter));
+      },
+      onClear: () {
+        _filterController.clear();
+        context.read<PropertiesBloc>().add(
+          const PropertiesStarted(filter: PropertyFilter()),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider.value(
@@ -96,6 +119,22 @@ class _FilteredPropertiesPageState extends State<FilteredPropertiesPage> {
             : CustomAppBar(
                 title: 'filtered_properties'.tr(),
                 actions: [
+                  IconButton(
+                    onPressed: () {
+                      final state = _bloc.state;
+                      final loaded = _loadedFrom(state);
+                      final locations =
+                          (loaded?.areaNames.values.toList() ??
+                          const <LocationArea>[]);
+                      final currentFilter =
+                          loaded?.filter ?? _filterController.filter;
+                      _openFilters(
+                        currentFilter: currentFilter,
+                        locations: locations,
+                      );
+                    },
+                    icon: const AppSvgIcon(AppSVG.filter),
+                  ),
                   TextButton(
                     onPressed: () => context.pop(),
                     child: Text('clear'.tr()),
@@ -118,10 +157,17 @@ class _FilteredPropertiesPageState extends State<FilteredPropertiesPage> {
                 state.previous.hasMore
                     ? _refreshController.loadComplete()
                     : _refreshController.loadNoData();
+                final isNetwork = state.message == 'network_error'.tr();
                 AppSnackbar.show(
                   context,
                   state.message,
                   type: AppSnackbarType.error,
+                  actionLabel: isNetwork ? 'retry'.tr() : null,
+                  onAction: isNetwork
+                      ? () => context.read<PropertiesBloc>().add(
+                          PropertiesRefreshed(filter: state.previous.filter),
+                        )
+                      : null,
                 );
               }
             },
@@ -129,18 +175,8 @@ class _FilteredPropertiesPageState extends State<FilteredPropertiesPage> {
               final loaded = _loadedFrom(state);
               final isInitialLoading =
                   state is PropertiesInitial || state is PropertiesLoading;
-              if (state is PropertiesFailure) {
-                return AppErrorView(
-                  message: state.message,
-                  onRetry: () => context.read<PropertiesBloc>().add(
-                    const PropertiesRetryRequested(),
-                  ),
-                );
-              }
 
-              final items = isInitialLoading
-                  ? placeholderProperties()
-                  : (loaded?.items ?? const []);
+              final items = loaded?.items ?? const [];
               _currentItems = items.where((p) => p.id.isNotEmpty).toList();
               final areaNames = loaded?.areaNames ?? const {};
 

@@ -25,14 +25,20 @@ import '../../features/brokers/data/datasources/broker_areas_remote_datasource.d
 import '../../features/brokers/data/repositories/broker_areas_repository_impl.dart';
 import '../../features/brokers/domain/repositories/broker_areas_repository.dart';
 import '../../features/brokers/domain/usecases/get_broker_areas_usecase.dart';
+import '../../features/brokers/presentation/bloc/areas/broker_areas_bloc.dart';
+import '../../features/brokers/presentation/controller/broker_area_properties_controller.dart';
+import '../../features/brokers/presentation/controller/broker_areas_controller.dart';
 import '../../features/company_areas/data/repositories/company_areas_repository_impl.dart';
 import '../../features/company_areas/domain/repositories/company_areas_repository.dart';
 import '../../features/company_areas/domain/usecases/get_company_areas_usecase.dart';
+import '../../features/company_areas/presentation/bloc/company_areas_bloc.dart';
+import '../../features/company_areas/presentation/controller/company_area_properties_controller.dart';
 import '../../features/properties/data/datasources/location_area_remote_datasource.dart';
 import '../../features/properties/data/repositories/properties_repository_impl.dart';
 import '../../features/properties/data/services/property_upload_service_impl.dart';
 import '../../features/properties/domain/repositories/properties_repository.dart';
 import '../../features/properties/domain/services/property_upload_service.dart';
+import '../../features/properties/domain/services/property_mutations_stream.dart';
 import '../../features/properties/domain/usecases/get_broker_properties_page_usecase.dart';
 import '../../features/properties/domain/usecases/get_company_properties_page_usecase.dart';
 import '../../features/properties/domain/usecases/create_property_usecase.dart';
@@ -43,9 +49,9 @@ import '../../features/properties/domain/usecases/restore_property_usecase.dart'
 import '../../features/properties/domain/usecases/share_property_pdf_usecase.dart';
 import '../../features/properties/domain/usecases/upload_property_images_usecase.dart';
 import '../../features/properties/domain/usecases/delete_property_images_usecase.dart';
-import '../../features/properties/presentation/bloc/property_mutations_bloc.dart';
-import '../../features/properties/presentation/mutations/property_mutation_cubit.dart';
-import '../../features/properties/presentation/share/property_share_cubit.dart';
+import '../../features/properties/presentation/side_effects/property_mutations_bloc.dart';
+import '../../features/properties/presentation/side_effects/property_mutation_cubit.dart';
+import '../../features/properties/presentation/side_effects/property_share_cubit.dart';
 import '../../features/brokers/data/datasources/brokers_remote_datasource.dart';
 import '../../features/brokers/data/repositories/brokers_repository_impl.dart';
 import '../../features/brokers/domain/repositories/brokers_repository.dart';
@@ -54,12 +60,14 @@ import '../../features/brokers/presentation/bloc/brokers_list_bloc.dart';
 import '../../features/settings/data/datasources/settings_local_data_source.dart';
 import '../../features/settings/data/repositories/settings_repository_impl.dart';
 import '../../features/settings/domain/repositories/settings_repository.dart';
+import '../../features/settings/presentation/cubit/manage_locations_cubit.dart';
 import '../../features/location/domain/location_areas_cache.dart';
 import '../../features/location/domain/usecases/get_location_areas_usecase.dart';
 import '../../features/categories/data/repositories/categories_repository_impl.dart';
 import '../../features/categories/domain/repositories/categories_repository.dart';
 import '../../features/categories/domain/usecases/apply_property_filter_usecase.dart';
 import '../../features/categories/domain/usecases/get_categories_usecase.dart';
+import '../../features/categories/presentation/cubit/categories_cubit.dart';
 import '../../features/users/data/datasources/users_remote_datasource.dart';
 import '../../features/users/data/repositories/user_management_repository_impl.dart';
 import '../../features/users/data/repositories/users_repository.dart';
@@ -361,6 +369,9 @@ class AppDi {
       RepositoryProvider<PropertyMutationsBloc>.value(
         value: propertyMutationsBloc,
       ),
+      RepositoryProvider<PropertyMutationsStream>.value(
+        value: propertyMutationsBloc,
+      ),
       BlocProvider<PropertyMutationsBloc>.value(value: propertyMutationsBloc),
       RepositoryProvider<GetCompanyPropertiesPageUseCase>.value(
         value: getCompanyPropertiesPageUseCase,
@@ -399,6 +410,15 @@ class AppDi {
       RepositoryProvider<ApplyPropertyFilterUseCase>.value(
         value: applyPropertyFilterUseCase,
       ),
+      Provider<CategoriesCubit Function()>(
+        create: (context) =>
+            () => CategoriesCubit(
+              context.read<PropertiesRepository>(),
+              context.read<GetLocationAreasUseCase>(),
+              context.read<PropertyMutationsStream>(),
+              context.read<AuthRepositoryDomain>(),
+            ),
+      ),
     ];
   }
 
@@ -412,7 +432,30 @@ class AppDi {
       RepositoryProvider<GetBrokerAreasUseCase>.value(
         value: getBrokerAreasUseCase,
       ),
+      Provider<BrokerAreasBloc Function()>(
+        create: (context) =>
+            () => BrokerAreasBloc(
+              context.read<GetBrokerAreasUseCase>(),
+              context.read<LocationAreasRepository>(),
+              context.read<AuthRepositoryDomain>(),
+              context.read<PropertyMutationsStream>(),
+            ),
+      ),
       BlocProvider<BrokersListBloc>.value(value: brokersListBloc),
+      Provider<BrokerAreasController>(
+        create: (context) => BrokerAreasController(
+          context.read<GetBrokerAreasUseCase>(),
+          context.read<LocationAreasRepository>(),
+          context.read<AuthRepositoryDomain>(),
+          context.read<PropertyMutationsStream>(),
+        ),
+      ),
+      Provider<BrokerAreaPropertiesController>(
+        create: (context) => BrokerAreaPropertiesController(
+          context.read<GetBrokerPropertiesPageUseCase>(),
+          context.read<PropertyMutationsStream>(),
+        ),
+      ),
     ];
   }
 
@@ -424,6 +467,20 @@ class AppDi {
       RepositoryProvider<GetCompanyAreasUseCase>.value(
         value: getCompanyAreasUseCase,
       ),
+      Provider<CompanyAreasBloc Function()>(
+        create: (context) =>
+            () => CompanyAreasBloc(
+              context.read<GetCompanyAreasUseCase>(),
+              context.read<PropertyMutationsBloc>(),
+            ),
+      ),
+      Provider<CompanyAreaPropertiesController>(
+        create: (context) => CompanyAreaPropertiesController(
+          context.read<GetCompanyPropertiesPageUseCase>(),
+          context.read<LocationAreasRepository>(),
+          context.read<PropertyMutationsStream>(),
+        ),
+      ),
     ];
   }
 
@@ -434,6 +491,14 @@ class AppDi {
         value: userManagementRepository,
       ),
       RepositoryProvider<SettingsRepository>.value(value: settingsRepository),
+      Provider<ManageLocationsCubit Function()>(
+        create: (context) =>
+            () => ManageLocationsCubit(
+              context.read<LocationRepository>(),
+              context.read<AuthRepositoryDomain>(),
+              context.read<GetLocationAreasUseCase>(),
+            ),
+      ),
     ];
   }
 

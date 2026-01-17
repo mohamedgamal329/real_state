@@ -75,6 +75,44 @@ class AuthRemoteDataSource {
     }
   }
 
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email.trim());
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('sendPasswordResetEmail failed: $e\n$st');
+      }
+      if (e is AuthFailure) rethrow;
+      final failure = mapExceptionToFailure(e, st);
+      throw failure;
+    }
+  }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null || user.email == null) {
+        throw const AuthFailure(error: 'not_signed_in');
+      }
+      final credential = fb.EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(newPassword);
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('changePassword failed: $e\n$st');
+      }
+      if (e is AuthFailure) rethrow;
+      final failure = mapExceptionToFailure(e, st);
+      throw failure;
+    }
+  }
+
   Future<void> signOut() async {
     await _auth.signOut();
   }

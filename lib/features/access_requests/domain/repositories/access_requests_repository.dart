@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:real_state/core/pagination/page_token.dart';
 
 import '../../../models/entities/access_request.dart';
 import '../../../properties/domain/repositories/properties_repository.dart'
@@ -17,7 +17,7 @@ abstract class AccessRequestsRepository {
   });
 
   Future<PageResult<AccessRequest>> fetchPage({
-    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    PageToken? startAfter,
     int limit = 10,
     String? requesterId,
     String? ownerId,

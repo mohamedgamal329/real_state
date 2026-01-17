@@ -1,6 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:real_state/core/constants/user_role.dart';
 import 'package:real_state/core/errors/localized_exception.dart';
+import 'package:real_state/core/pagination/page_token.dart';
 import 'package:real_state/features/auth/domain/repositories/auth_repository_domain.dart';
 import 'package:real_state/features/categories/domain/entities/property_filter.dart';
 import 'package:real_state/features/models/entities/property.dart';
@@ -15,7 +15,7 @@ class GetBrokerPropertiesPageUseCase {
 
   Future<PageResult<Property>> call({
     required String brokerId,
-    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    PageToken? startAfter,
     int limit = 20,
     PropertyFilter? filter,
   }) {

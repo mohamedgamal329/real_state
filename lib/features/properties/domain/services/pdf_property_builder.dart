@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-
 import 'package:pdf/pdf.dart' as pdf;
 import 'package:pdf/widgets.dart' as pw;
 import 'package:real_state/features/models/entities/property.dart';
@@ -17,11 +16,9 @@ class PdfImageData {
 }
 
 const double _kPdfPadding = 36.0;
-const double _kPdfLogoSpacing = 24.0;
 const double _kPdfTitleFontSize = 36.0;
 const double _kPdfBodyFontSize = 20.0;
 const double _kPdfLineSpacing = 1.7;
-const double _kPdfDetailsLogoFactor = 0.25;
 const double _kPdfLogoPageLogoFactor = 0.45;
 
 class PdfPropertyBuilder {
@@ -34,8 +31,15 @@ class PdfPropertyBuilder {
     List<PdfImageData> images = const [],
     Uint8List? logoBytes,
     pw.Font? arabicFont,
+    pw.Font? arabicFontBold,
   }) async {
-    final doc = pw.Document();
+    final theme = arabicFont != null
+        ? pw.ThemeData.withFont(
+            base: arabicFont,
+            bold: arabicFontBold ?? arabicFont,
+          )
+        : null;
+    final doc = pw.Document(theme: theme);
     final sanitizedImages = includeImages ? images : const <PdfImageData>[];
 
     _addImagePages(doc, sanitizedImages);
@@ -46,6 +50,7 @@ class PdfPropertyBuilder {
       logoBytes: logoBytes,
       localeCode: localeCode,
       arabicFont: arabicFont,
+      isRtl: _shouldUseRtl(localeCode, [titleText, descriptionText]),
     );
     _addLogoPage(doc: doc, logoBytes: logoBytes);
 
@@ -100,12 +105,14 @@ class PdfPropertyBuilder {
     required Uint8List? logoBytes,
     required String? localeCode,
     required pw.Font? arabicFont,
+    required bool isRtl,
   }) {
     doc.addPage(
       pw.Page(
         pageTheme: pw.PageTheme(
           pageFormat: pdf.PdfPageFormat.a4,
           margin: pw.EdgeInsets.zero,
+          textDirection: isRtl ? pw.TextDirection.rtl : pw.TextDirection.ltr,
           buildBackground: (_) => pw.Container(color: pdf.PdfColors.grey900),
         ),
         build: (_) => _buildDetailsPage(
@@ -133,11 +140,11 @@ class PdfPropertyBuilder {
     final textColor = pdf.PdfColors.grey100;
     final accent = pdf.PdfColors.amber200;
     final arabicFontFallback = arabicFont != null ? [arabicFont] : null;
+
     final titleStyle = pw.TextStyle(
       fontSize: _kPdfTitleFontSize,
       fontWeight: pw.FontWeight.bold,
       color: accent,
-      letterSpacing: 0.1,
       fontFallback: arabicFontFallback ?? const [],
     );
     final bodyStyle = pw.TextStyle(
@@ -146,29 +153,34 @@ class PdfPropertyBuilder {
       color: textColor,
       fontFallback: arabicFontFallback ?? const [],
     );
+
     final isArabicLocale = localeCode?.toLowerCase().startsWith('ar') ?? false;
     final description = descriptionText.trim();
-    final detailsLogoHeight = pageHeight * _kPdfDetailsLogoFactor;
-    pw.Widget localizedText(String text, {pw.TextStyle? style}) {
+
+    pw.Widget localizedText(
+      String text, {
+      pw.TextStyle? style,
+      pw.TextAlign? align,
+    }) {
       final resolvedStyle = style ?? bodyStyle;
       final hasArabicCharacters = _containsArabic(text);
       final needsArabicFont = isArabicLocale || hasArabicCharacters;
       final effectiveStyle = resolvedStyle.copyWith(
-        font: needsArabicFont && arabicFont != null
+        font: (needsArabicFont && arabicFont != null)
             ? arabicFont
             : resolvedStyle.font,
         fontFallback: arabicFontFallback ?? resolvedStyle.fontFallback,
-        color: resolvedStyle.color,
       );
-      final textDirection = needsArabicFont
-          ? pw.TextDirection.rtl
-          : pw.TextDirection.ltr;
       return pw.Directionality(
-        textDirection: textDirection,
+        textDirection: needsArabicFont
+            ? pw.TextDirection.rtl
+            : pw.TextDirection.ltr,
         child: pw.Text(
           text,
           style: effectiveStyle,
-          textAlign: pw.TextAlign.center,
+          textAlign:
+              align ??
+              (needsArabicFont ? pw.TextAlign.right : pw.TextAlign.center),
         ),
       );
     }
@@ -185,23 +197,16 @@ class PdfPropertyBuilder {
           mainAxisSize: pw.MainAxisSize.min,
           crossAxisAlignment: pw.CrossAxisAlignment.center,
           children: [
-            if (logoBytes != null)
-              pw.Container(
-                height: detailsLogoHeight,
-                alignment: pw.Alignment.center,
-                child: pw.Image(
-                  pw.MemoryImage(logoBytes),
-                  height: detailsLogoHeight,
-                  fit: pw.BoxFit.contain,
-                ),
-              ),
-            if (logoBytes != null) pw.SizedBox(height: _kPdfLogoSpacing),
+            /* Logo removed from details page as per FIX 6 requirements */
+            pw.SizedBox(height: 10),
             localizedText(
-              titleText.isNotEmpty ? titleText : 'property',
+              titleText.isNotEmpty ? titleText : 'Property',
               style: titleStyle,
             ),
             if (description.isNotEmpty) ...[
-              pw.SizedBox(height: _kPdfLogoSpacing),
+              pw.SizedBox(height: 30),
+              pw.Divider(color: pdf.PdfColors.grey700),
+              pw.SizedBox(height: 30),
               localizedText(description, style: bodyStyle),
             ],
           ],
@@ -247,6 +252,15 @@ class PdfPropertyBuilder {
           (codeUnit >= 0xFE70 && codeUnit <= 0xFEFF)) {
         return true;
       }
+    }
+    return false;
+  }
+
+  bool _shouldUseRtl(String? localeCode, List<String> samples) {
+    final isArabicLocale = localeCode?.toLowerCase().startsWith('ar') ?? false;
+    if (isArabicLocale) return true;
+    for (final text in samples) {
+      if (_containsArabic(text)) return true;
     }
     return false;
   }

@@ -6,24 +6,31 @@ import 'package:real_state/core/constants/user_role.dart';
 import 'package:real_state/core/handle_errors/error_mapper.dart';
 import 'package:real_state/features/auth/domain/repositories/auth_repository_domain.dart';
 import 'package:real_state/features/brokers/domain/usecases/get_broker_areas_usecase.dart';
+import 'package:real_state/features/location/domain/repositories/location_areas_repository.dart';
+import 'package:real_state/features/models/entities/location_area.dart';
+import 'package:real_state/features/properties/domain/models/property_mutation.dart';
 import 'package:real_state/features/properties/domain/property_owner_scope.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_mutations_bloc.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_mutations_state.dart';
+import 'package:real_state/features/properties/domain/services/property_mutations_stream.dart';
 
 import 'broker_areas_event.dart';
 import 'broker_areas_state.dart';
 
 class BrokerAreasBloc extends Bloc<BrokerAreasEvent, BrokerAreasState> {
   final GetBrokerAreasUseCase _getAreas;
-  final Map<String, String> _areaNameCache = {};
+  final LocationAreasRepository _areasRepo;
+  final Map<String, LocationArea> _areaCache = {};
   final AuthRepositoryDomain _auth;
   StreamSubscription? _authSub;
   StreamSubscription<PropertyMutation>? _mutationSub;
   bool _isCollector = false;
   String? _activeBrokerId;
 
-  BrokerAreasBloc(this._getAreas, this._auth, PropertyMutationsBloc mutations)
-    : super(const BrokerAreasInitial()) {
+  BrokerAreasBloc(
+    this._getAreas,
+    this._areasRepo,
+    this._auth,
+    PropertyMutationsStream mutations,
+  ) : super(const BrokerAreasInitial()) {
     on<BrokerAreasRequested>(_onRequested);
     _auth.userChanges.first.then(
       (user) => _isCollector = user?.role == UserRole.collector,
@@ -55,14 +62,32 @@ class BrokerAreasBloc extends Bloc<BrokerAreasEvent, BrokerAreasState> {
     }
     emit(BrokerAreasLoadInProgress(event.brokerId));
     try {
+      final cachedNames = <String, String>{
+        for (final entry in _areaCache.entries) entry.key: entry.value.name,
+      };
       final areas = await _getAreas(
         event.brokerId,
-        cachedAreaNames: _areaNameCache,
+        cachedAreaNames: cachedNames,
       );
-      for (final area in areas) {
-        _areaNameCache[area.id] = area.name;
+      final areaIds = areas.map((area) => area.id).toList();
+      final missing = areaIds
+          .where((id) => !_areaCache.containsKey(id))
+          .toList();
+      if (missing.isNotEmpty) {
+        final fetched = await _areasRepo.fetchNamesByIds(missing);
+        _areaCache.addAll(fetched);
       }
-      emit(BrokerAreasLoadSuccess(brokerId: event.brokerId, areas: areas));
+      final areaDetails = <String, LocationArea>{
+        for (final id in areaIds)
+          if (_areaCache[id] != null) id: _areaCache[id]!,
+      };
+      emit(
+        BrokerAreasLoadSuccess(
+          brokerId: event.brokerId,
+          areas: areas,
+          areaDetails: areaDetails,
+        ),
+      );
     } catch (e, st) {
       emit(
         BrokerAreasFailure(

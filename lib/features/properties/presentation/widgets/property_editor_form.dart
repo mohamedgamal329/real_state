@@ -1,16 +1,17 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:real_state/core/components/app_skeletonizer.dart';
-import 'package:real_state/core/components/app_text_field.dart';
 import 'package:real_state/core/components/primary_button.dart';
-import 'package:real_state/core/constants/aed_text.dart';
 import 'package:real_state/core/validation/validators.dart';
-import 'package:real_state/features/location/presentation/widgets/location_picker_form_field.dart';
 import 'package:real_state/features/models/entities/location_area.dart';
 import 'package:real_state/features/models/entities/property.dart';
 
 import 'package:real_state/features/properties/models/property_editor_models.dart';
-import 'property_images_editor.dart';
+import 'property_editor/attributes_section.dart';
+import 'property_editor/basic_info_section.dart';
+import 'property_editor/contact_section.dart';
+import 'property_editor/images_section.dart';
+import 'property_editor/location_section.dart';
 
 class PropertyEditorForm extends StatelessWidget {
   final GlobalKey<FormState> formKey;
@@ -22,10 +23,13 @@ class PropertyEditorForm extends StatelessWidget {
   final TextEditingController kitchensCtrl;
   final TextEditingController floorsCtrl;
   final TextEditingController phoneCtrl;
+  final TextEditingController securityGuardPhoneCtrl;
   final bool isEditing;
   final bool showSkeleton;
   final bool hasPool;
   final bool isImagesHidden;
+  final bool showSecurityGuardPhone;
+  final VoidCallback onShowSecurityGuardPhone;
   final PropertyPurpose purpose;
   final String? locationId;
   final List<LocationArea> locations;
@@ -51,10 +55,13 @@ class PropertyEditorForm extends StatelessWidget {
     required this.kitchensCtrl,
     required this.floorsCtrl,
     required this.phoneCtrl,
+    required this.securityGuardPhoneCtrl,
     required this.isEditing,
     required this.showSkeleton,
     required this.hasPool,
     required this.isImagesHidden,
+    required this.showSecurityGuardPhone,
+    required this.onShowSecurityGuardPhone,
     required this.purpose,
     required this.locationId,
     required this.locations,
@@ -85,146 +92,91 @@ class PropertyEditorForm extends StatelessWidget {
                 title: 'details'.tr(),
                 child: Column(
                   children: [
-                    AppTextField(
-                      label: 'title_label'.tr(),
-                      controller: titleCtrl,
-                      validator: (v) => Validators.isNotEmpty(v)
+                    PropertyEditorBasicInfoSection(
+                      titleCtrl: titleCtrl,
+                      descCtrl: descCtrl,
+                      priceCtrl: priceCtrl,
+                      titleValidator: (v) => Validators.isNotEmpty(v)
                           ? null
                           : 'title_required'.tr(),
-                      textInputAction: TextInputAction.next,
-                    ),
-                    const SizedBox(height: 12),
-                    AppTextField(
-                      label: 'description_label'.tr(),
-                      controller: descCtrl,
-                      maxLines: 3,
-                      validator: (v) => Validators.isNotEmpty(v)
+                      descValidator: (v) => Validators.isNotEmpty(v)
                           ? null
                           : 'description_required'.tr(),
-                      textInputAction: TextInputAction.newline,
-                    ),
-                    const SizedBox(height: 12),
-                    AppTextField(
-                      label: 'price_label'.tr(),
-                      controller: priceCtrl,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      validator: (v) {
+                      priceValidator: (v) {
                         if (!Validators.isNotEmpty(v))
                           return 'price_required'.tr();
                         return Validators.isValidPrice(v)
                             ? null
                             : 'price_invalid'.tr();
                       },
-                      prefixIcon: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 14,
-                        ),
-                        child: Text(
-                          AED,
-                          style: Theme.of(context).textTheme.labelMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                fontFamily: 'AED',
-                              ),
-                        ),
-                      ),
-                      textInputAction: TextInputAction.next,
+                      titleAction: TextInputAction.next,
+                      descAction: TextInputAction.newline,
+                      priceAction: TextInputAction.next,
                     ),
                     const SizedBox(height: 12),
-                    AppTextField(
-                      label: 'location_url'.tr(),
-                      controller: locationUrlCtrl,
-                      keyboardType: TextInputType.url,
-                      textInputAction: TextInputAction.next,
-                      validator: (v) {
+                    PropertyEditorLocationSection(
+                      locationUrlCtrl: locationUrlCtrl,
+                      purpose: purpose,
+                      locationId: locationId,
+                      locations: locations,
+                      onPurposeChanged: onPurposeChanged,
+                      onLocationChanged: onLocationChanged,
+                      onAddLocation: onAddLocation,
+                      locationUrlValidator: (v) {
                         if (v == null || v.trim().isEmpty) return null;
                         return Validators.isValidUrl(v)
                             ? null
                             : 'location_url_invalid'.tr();
                       },
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<PropertyPurpose>(
-                      initialValue: purpose,
-                      items: PropertyPurpose.values
-                          .map(
-                            (p) => DropdownMenuItem(
-                              value: p,
-                              child: Text(
-                                'purpose.${p.name}'.tr().toUpperCase(),
-                              ),
-                            ),
-                          )
-                          .toList(),
-                      validator: (p) => Validators.isSelected(p)
+                      purposeValidator: (p) => Validators.isSelected(p)
                           ? null
                           : 'purpose_required'.tr(),
-                      onChanged: (p) {
-                        if (p != null) onPurposeChanged(p);
-                      },
-                      decoration: InputDecoration(
-                        labelText: 'purpose_label'.tr(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    LocationPickerFormField(
-                      value: locationId,
-                      locations: locations,
-                      onChanged: onLocationChanged,
-                      onAddPressed: onAddLocation,
-                      validator: (v) => Validators.isSelected(v)
+                      locationValidator: (v) => Validators.isSelected(v)
                           ? null
                           : 'location_required'.tr(),
                     ),
                     const SizedBox(height: 12),
-                    _buildCountsRow(),
+                    PropertyEditorAttributesSection(
+                      roomsCtrl: roomsCtrl,
+                      kitchensCtrl: kitchensCtrl,
+                      floorsCtrl: floorsCtrl,
+                    ),
                   ],
                 ),
               ),
               const SizedBox(height: 16),
               _SectionCard(
                 title: 'settings'.tr(),
-                child: Column(
-                  children: [
-                    AppTextField(
-                      label: 'owner_phone_optional'.tr(),
-                      controller: phoneCtrl,
-                      keyboardType: TextInputType.phone,
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) return null;
-                        return Validators.isValidPhone(v)
-                            ? null
-                            : 'owner_phone_invalid'.tr();
-                      },
-                      textInputAction: TextInputAction.done,
-                    ),
-                    SwitchListTile(
-                      title: Text('has_pool_switch'.tr()),
-                      value: hasPool,
-                      onChanged: onTogglePool,
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                    SwitchListTile(
-                      title: Text('hide_images_default'.tr()),
-                      value: isImagesHidden,
-                      onChanged: onToggleImagesHidden,
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ],
+                child: PropertyEditorContactSection(
+                  phoneCtrl: phoneCtrl,
+                  securityGuardPhoneCtrl: securityGuardPhoneCtrl,
+                  hasPool: hasPool,
+                  isImagesHidden: isImagesHidden,
+                  onTogglePool: onTogglePool,
+                  onToggleImagesHidden: onToggleImagesHidden,
+                  showSecurityGuardPhone: showSecurityGuardPhone,
+                  onShowSecurityGuardPhone: onShowSecurityGuardPhone,
+                  phoneValidator: (v) {
+                    if (v == null || v.trim().isEmpty) return null;
+                    return Validators.isValidPhone(v)
+                        ? null
+                        : 'owner_phone_invalid'.tr();
+                  },
+                  securityGuardPhoneValidator: (v) {
+                    if (v == null || v.trim().isEmpty) return null;
+                    return Validators.isValidPhone(v)
+                        ? null
+                        : 'owner_phone_invalid'.tr();
+                  },
                 ),
               ),
               const SizedBox(height: 16),
               _SectionCard(
                 title: 'images'.tr(),
-                child: PropertyImagesEditor(
+                child: PropertyEditorImagesSection(
                   images: images,
                   onPickImages: onPickImages,
-                  onRemove: onRemoveImage,
+                  onRemoveImage: onRemoveImage,
                   onSetCover: onSetCover,
                 ),
               ),
@@ -239,39 +191,6 @@ class PropertyEditorForm extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  Row _buildCountsRow() {
-    return Row(
-      children: [
-        Expanded(
-          child: AppTextField(
-            label: 'rooms_label_simple'.tr(),
-            controller: roomsCtrl,
-            keyboardType: TextInputType.number,
-            textInputAction: TextInputAction.next,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: AppTextField(
-            label: 'kitchens_label'.tr(),
-            controller: kitchensCtrl,
-            keyboardType: TextInputType.number,
-            textInputAction: TextInputAction.next,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: AppTextField(
-            label: 'floors_label_simple'.tr(),
-            controller: floorsCtrl,
-            keyboardType: TextInputType.number,
-            textInputAction: TextInputAction.next,
-          ),
-        ),
-      ],
     );
   }
 }

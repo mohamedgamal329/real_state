@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:real_state/core/components/app_svg_icon.dart';
+import 'package:real_state/core/constants/app_images.dart';
 import 'package:real_state/core/widgets/app_select_item.dart';
 
 /// iOS-style picker presented in a modal bottom sheet.
@@ -105,7 +107,7 @@ class _AppDropdownFieldState<T> extends State<_AppDropdownField<T>> {
             borderSide: BorderSide(color: theme.colorScheme.primary),
           ),
           disabledBorder: border,
-          suffixIcon: const Icon(Icons.arrow_drop_down),
+          suffixIcon: const AppSvgIcon(AppSVG.arrowDropDown),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,
             vertical: 14,
@@ -201,8 +203,8 @@ class _AppDropdownFieldState<T> extends State<_AppDropdownField<T>> {
                         return ListTile(
                           title: Text(item.label),
                           trailing: selected
-                              ? Icon(
-                                  Icons.check,
+                              ? AppSvgIcon(
+                                  AppSVG.check,
                                   color: theme.colorScheme.primary,
                                 )
                               : null,

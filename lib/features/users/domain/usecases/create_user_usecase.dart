@@ -10,7 +10,6 @@ class CreateUserUseCase {
     required String password,
     required String name,
     required UserRole role,
-    String? jobTitle,
     String? phone,
   }) {
     return _repo.createUser(
@@ -18,7 +17,6 @@ class CreateUserUseCase {
       password: password,
       name: name,
       role: role,
-      jobTitle: jobTitle,
       phone: phone,
     );
   }

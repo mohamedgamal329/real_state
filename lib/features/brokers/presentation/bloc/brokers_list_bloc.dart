@@ -7,9 +7,9 @@ import 'package:real_state/core/handle_errors/error_mapper.dart';
 import 'package:real_state/features/auth/domain/repositories/auth_repository_domain.dart';
 import 'package:real_state/features/brokers/domain/entities/broker.dart';
 import 'package:real_state/features/brokers/domain/usecases/get_brokers_usecase.dart';
+import 'package:real_state/features/properties/domain/models/property_mutation.dart';
 import 'package:real_state/features/properties/domain/property_owner_scope.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_mutations_bloc.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_mutations_state.dart';
+import 'package:real_state/features/properties/domain/services/property_mutations_stream.dart';
 
 import 'brokers_list_event.dart';
 import 'brokers_list_state.dart';
@@ -21,8 +21,11 @@ class BrokersListBloc extends Bloc<BrokersListEvent, BrokersListState> {
   StreamSubscription<PropertyMutation>? _mutationSub;
   bool _isCollector = false;
 
-  BrokersListBloc(this._getBrokers, this._auth, PropertyMutationsBloc mutations)
-    : super(const BrokersListInitial()) {
+  BrokersListBloc(
+    this._getBrokers,
+    this._auth,
+    PropertyMutationsStream mutations,
+  ) : super(const BrokersListInitial()) {
     on<BrokersListRequested>(_onRequested);
     on<BrokersListRefreshed>(_onRequested);
 

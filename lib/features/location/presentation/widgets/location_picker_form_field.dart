@@ -1,5 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:real_state/core/components/app_svg_icon.dart';
+import 'package:real_state/core/constants/app_images.dart';
 import 'package:real_state/features/models/entities/location_area.dart';
 
 class LocationPickerFormField extends StatelessWidget {
@@ -65,7 +67,7 @@ class LocationPickerFormField extends StatelessWidget {
           ),
           TextButton.icon(
             onPressed: enabled ? onAddPressed : null,
-            icon: const Icon(Icons.add_location_alt_outlined),
+            icon: const AppSvgIcon(AppSVG.locationOn),
             label: Text('locations_add_cta'.tr()),
           ),
         ],
@@ -111,7 +113,7 @@ class LocationPickerFormField extends StatelessWidget {
           ),
           child: IconButton(
             onPressed: enabled ? onAddPressed : null,
-            icon: const Icon(Icons.add),
+            icon: const AppSvgIcon(AppSVG.add),
             tooltip: 'add_location'.tr(),
           ),
         ),

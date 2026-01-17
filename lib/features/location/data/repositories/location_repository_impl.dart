@@ -8,7 +8,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/constants/app_collections.dart';
 import '../../../../core/errors/localized_exception.dart';
-import '../../../models/dtos/location_area_dto.dart';
+import '../dtos/location_area_dto.dart';
 import '../../../models/entities/location_area.dart';
 import 'package:real_state/features/location/domain/repositories/location_repository.dart';
 

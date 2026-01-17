@@ -1,5 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
+import 'package:real_state/core/pagination/page_token.dart';
 import 'package:real_state/features/categories/domain/entities/property_filter.dart';
 import 'package:real_state/features/models/entities/location_area.dart';
 import 'package:real_state/features/models/entities/property.dart';
@@ -37,7 +37,7 @@ abstract class CategoriesListState extends CategoriesCoreState {
   });
 
   final List<Property> items;
-  final DocumentSnapshot<Map<String, dynamic>>? lastDoc;
+  final PageToken? lastDoc;
   final bool hasMore;
 
   @override

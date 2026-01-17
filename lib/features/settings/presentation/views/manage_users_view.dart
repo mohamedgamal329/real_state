@@ -2,20 +2,21 @@ import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:real_state/core/components/app_svg_icon.dart';
+import 'package:real_state/core/constants/app_images.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:real_state/core/animations/slide_fade_in.dart';
 import 'package:real_state/core/components/app_error_view.dart';
 import 'package:real_state/core/components/app_skeleton_list.dart';
-import 'package:real_state/core/components/app_skeletonizer.dart';
 import 'package:real_state/core/components/app_snackbar.dart';
 import 'package:real_state/core/components/custom_app_bar.dart';
-import 'package:real_state/core/components/empty_state_widget.dart';
 import 'package:real_state/core/constants/user_role.dart';
 import 'package:real_state/features/auth/domain/repositories/auth_repository_domain.dart';
 import 'package:real_state/features/brokers/presentation/bloc/brokers_list_bloc.dart';
 import 'package:real_state/features/brokers/presentation/bloc/brokers_list_event.dart';
 import 'package:real_state/features/settings/presentation/cubit/manage_users_cubit.dart';
 import 'package:real_state/features/settings/presentation/flows/manage_users_flow.dart';
+import 'package:real_state/features/settings/presentation/views/manage_users_list.dart';
+import 'package:real_state/features/settings/presentation/views/manage_users_tabs.dart';
 import 'package:real_state/features/settings/presentation/widgets/user_list_item.dart';
 import 'package:real_state/features/users/domain/entities/managed_user.dart';
 import 'package:real_state/features/users/domain/repositories/user_management_repository.dart';
@@ -145,7 +146,7 @@ class _ManageUsersViewState extends State<ManageUsersView>
             floatingActionButton: _isOwner
                 ? FloatingActionButton(
                     onPressed: () => widget.flow.openCreateUserSheet(context),
-                    child: const Icon(Icons.add),
+                    child: const AppSvgIcon(AppSVG.add),
                   )
                 : null,
             body: AnimatedPadding(
@@ -155,54 +156,19 @@ class _ManageUsersViewState extends State<ManageUsersView>
               ),
               child: Column(
                 children: [
-                  TabBar(
-                    tabs: [
-                      Tab(key: collectorsTabKey, text: 'collectors'.tr()),
-                      Tab(key: brokersTabKey, text: 'brokers'.tr()),
-                    ],
-                    onTap: (i) => setState(() => _tabIndex = i),
+                  ManageUsersTabs(
                     controller: _tabController,
+                    onTap: (i) => setState(() => _tabIndex = i),
+                    collectorsTabKey: collectorsTabKey,
+                    brokersTabKey: brokersTabKey,
                   ),
                   Expanded(
-                    child: AppSkeletonizer(
-                      enabled: showSkeleton,
-                      child: displayList.isEmpty
-                          ? EmptyStateWidget(
-                              description: 'no_users_description'.tr(),
-                              action: () =>
-                                  context.read<ManageUsersCubit>().load(),
-                            )
-                          : ListView.separated(
-                              padding: const EdgeInsets.all(12),
-                              itemCount: displayList.length,
-                              separatorBuilder: (_, __) =>
-                                  const SizedBox(height: 8),
-                              itemBuilder: (c, i) {
-                                final user = displayList[i];
-                                final canInteract = !showSkeleton;
-                                return SlideFadeIn(
-                                  delay: Duration(milliseconds: 40 * i),
-                                  child: UserListItem(
-                                    user: user,
-                                    onEdit: canInteract
-                                        ? () => widget.flow
-                                              .openEditUserSheetOrDialog(
-                                                context,
-                                                user,
-                                                canAssignOwner: _isOwner,
-                                              )
-                                        : () {},
-                                    onDelete: canInteract
-                                        ? () =>
-                                              widget.flow.confirmAndDeleteUser(
-                                                context,
-                                                user,
-                                              )
-                                        : () {},
-                                  ),
-                                );
-                              },
-                            ),
+                    child: ManageUsersList(
+                      flow: widget.flow,
+                      displayList: displayList,
+                      showSkeleton: showSkeleton,
+                      canAssignOwner: _isOwner,
+                      onRetry: () => context.read<ManageUsersCubit>().load(),
                     ),
                   ),
                 ],
@@ -218,13 +184,7 @@ class _ManageUsersViewState extends State<ManageUsersView>
     final placeholders = _placeholderUsers(role: UserRole.collector);
     return Column(
       children: [
-        TabBar(
-          controller: _tabController,
-          tabs: [
-            Tab(text: 'collectors'.tr()),
-            Tab(text: 'brokers'.tr()),
-          ],
-        ),
+        ManageUsersTabs(controller: _tabController),
         Expanded(
           child: AppSkeletonList(
             itemCount: placeholders.length,

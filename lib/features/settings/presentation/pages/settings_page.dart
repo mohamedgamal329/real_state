@@ -1,5 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:real_state/core/components/app_svg_icon.dart';
+import 'package:real_state/core/constants/app_images.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:real_state/core/components/app_confirm_dialog.dart';
@@ -10,6 +12,7 @@ import 'package:real_state/core/components/loading_dialog.dart';
 import 'package:real_state/core/components/primary_button.dart';
 import 'package:real_state/features/properties/domain/property_permissions.dart';
 import 'package:real_state/features/settings/presentation/cubit/settings_cubit.dart';
+import 'package:real_state/core/widgets/clean_logo.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -19,10 +22,10 @@ class SettingsPage extends StatelessWidget {
     return Scaffold(
       appBar: CustomAppBar(
         title: 'settings',
-        actions: [
+        actions: const [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0),
-            child: Image.asset('assets/images/logo.jpeg', height: 26),
+            padding: EdgeInsets.symmetric(horizontal: 12.0),
+            child: CleanLogo(size: 32),
           ),
         ],
       ),
@@ -37,60 +40,119 @@ class SettingsPage extends StatelessWidget {
           }
         },
         builder: (context, state) {
+          final theme = Theme.of(context);
+          final colorScheme = theme.colorScheme;
           final isLoading = state is SettingsHydrating;
           final role = state.userRole;
           final showManageUsers = role != null && canManageUsers(role);
           final showManageLocations = role != null && canManageLocations(role);
           final showAnyAdmin = showManageUsers || showManageLocations;
+          final containerColor = theme.brightness == Brightness.dark
+              ? colorScheme.surfaceContainerHighest
+              : Colors.white;
 
           return AppSkeletonizer(
             enabled: isLoading,
             child: ListView(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.fromLTRB(
+                12,
+                12,
+                12,
+                kBottomNavigationBarHeight +
+                    100 +
+                    MediaQuery.of(context).padding.bottom,
+              ),
               children: [
-                _buildLanguageTile(context),
-                _buildThemeTile(context, state, isLoading: isLoading),
-                ListTile(
-                  title: Text('notifications'.tr()),
-                  leading: const Icon(Icons.notifications),
-                  onTap: () => context.push('/notifications'),
-                ),
-                ListTile(
-                  title: Text('archive'.tr()),
-                  leading: const Icon(Icons.inventory_2_outlined),
-                  onTap: () => context.push('/properties/archive'),
-                ),
-                ListTile(
-                  title: Text('my_added_properties'.tr()),
-                  leading: const Icon(Icons.maps_home_work_outlined),
-                  onTap: () => context.push('/properties/my-added'),
-                ),
-                const Divider(),
-                if (showAnyAdmin) ...[
-                  if (showManageUsers)
-                    ListTile(
-                      title: Text('manage_users'.tr()),
-                      leading: const Icon(Icons.people),
-                      onTap: () => context.push('/settings/users'),
-                    ),
-                  if (showManageLocations)
-                    ListTile(
-                      title: Text('manage_locations'.tr()),
-                      leading: const Icon(Icons.location_on),
-                      onTap: () => context.push('/settings/locations'),
-                    ),
-                ] else if (!isLoading) ...[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 8.0,
-                      horizontal: 12,
-                    ),
-                    child: Text(
-                      'section_hidden_for_role'.tr(),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: containerColor,
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                ],
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 20,
+                  ),
+                  child: Column(
+                    children: [
+                      ListTile(
+                        title: Text('profile_info'.tr()),
+                        leading: const AppSvgIcon(AppSVG.profile),
+                        onTap: () => context.push('/settings/profile'),
+                      ),
+                      Divider(color: colorScheme.surfaceContainer),
+                      ListTile(
+                        title: Text('archive'.tr()),
+                        leading: const AppSvgIcon(AppSVG.inventory),
+                        onTap: () => context.push('/properties/archive'),
+                      ),
+
+                      Divider(color: colorScheme.surfaceContainer),
+
+                      ListTile(
+                        title: Text('my_added_properties'.tr()),
+                        leading: const AppSvgIcon(AppSVG.mapsHomeWork),
+                        onTap: () => context.push('/properties/my-added'),
+                      ),
+                      Divider(color: colorScheme.surfaceContainer),
+
+                      ListTile(
+                        title: Text('notifications'.tr()),
+                        leading: const AppSvgIcon(AppSVG.notifications),
+                        onTap: () => context.push('/notifications'),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                Container(
+                  decoration: BoxDecoration(
+                    color: containerColor,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 20,
+                  ),
+                  child: Column(
+                    children: [
+                      if (showAnyAdmin) ...[
+                        if (showManageUsers) ...[
+                          ListTile(
+                            title: Text('manage_users'.tr()),
+                            leading: const AppSvgIcon(AppSVG.people),
+                            onTap: () => context.push('/settings/users'),
+                          ),
+                          Divider(color: colorScheme.surfaceContainer),
+                        ],
+
+                        if (showManageLocations) ...[
+                          ListTile(
+                            title: Text('manage_locations'.tr()),
+                            leading: const AppSvgIcon(AppSVG.locationOn),
+                            onTap: () => context.push('/settings/locations'),
+                          ),
+                          Divider(color: colorScheme.surfaceContainer),
+                        ],
+                      ] else if (!isLoading) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 8.0,
+                            horizontal: 12,
+                          ),
+                          child: Text(
+                            'section_hidden_for_role'.tr(),
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ),
+                      ],
+                      _buildLanguageTile(context),
+                      Divider(color: colorScheme.surfaceContainer),
+
+                      _buildThemeTile(context, state, isLoading: isLoading),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 24),
                 PrimaryButton(
                   label: 'sign_out'.tr(),
@@ -122,7 +184,7 @@ class SettingsPage extends StatelessWidget {
       subtitle: Text(
         locale.languageCode == 'ar' ? 'arabic'.tr() : 'english'.tr(),
       ),
-      leading: const Icon(Icons.language),
+      leading: const AppSvgIcon(AppSVG.language),
       onTap: () async {
         final newLocale = locale.languageCode == 'ar'
             ? const Locale('en')
@@ -140,7 +202,7 @@ class SettingsPage extends StatelessWidget {
     return ListTile(
       title: Text('theme'.tr()),
       subtitle: Text(_themeModeLabel(state.themeMode)),
-      leading: const Icon(Icons.brightness_6),
+      leading: const AppSvgIcon(AppSVG.theme),
       onTap: isLoading
           ? null
           : () async {

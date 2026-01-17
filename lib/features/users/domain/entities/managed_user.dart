@@ -9,7 +9,6 @@ class ManagedUser extends Equatable {
   final String? email;
   final UserRole role;
   final String? phone;
-  final String? jobTitle;
   final bool active;
 
   const ManagedUser({
@@ -18,10 +17,9 @@ class ManagedUser extends Equatable {
     this.name,
     this.email,
     this.phone,
-    this.jobTitle,
     this.active = true,
   });
 
   @override
-  List<Object?> get props => [id, name, email, role, phone, jobTitle, active];
+  List<Object?> get props => [id, name, email, role, phone, active];
 }

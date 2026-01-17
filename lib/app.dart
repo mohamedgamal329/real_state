@@ -40,7 +40,6 @@ class App extends StatelessWidget {
             child: BlocBuilder<SettingsCubit, SettingsState>(
               builder: (context, state) {
                 return MaterialApp.router(
-                  key: ValueKey(context.locale.languageCode),
                   onGenerateTitle: (context) => 'app_title'.tr(),
                   theme: theme,
                   darkTheme: dark,
@@ -55,8 +54,12 @@ class App extends StatelessWidget {
                   builder: (context, child) {
                     return GestureDetector(
                       behavior: HitTestBehavior.opaque,
-                      onTap: () =>
-                          FocusManager.instance.primaryFocus?.unfocus(),
+                      onTap: () {
+                        final primaryFocus = FocusManager.instance.primaryFocus;
+                        if (primaryFocus != null && primaryFocus.hasFocus) {
+                          primaryFocus.unfocus();
+                        }
+                      },
                       child: child,
                     );
                   },

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:real_state/core/constants/app_colors.dart';
 
 class BaseGradientPage extends StatelessWidget {
   final Widget child;
@@ -10,8 +11,13 @@ class BaseGradientPage extends StatelessWidget {
     final isLight = theme.brightness == Brightness.light;
     final colorScheme = theme.colorScheme;
     final gradient = isLight
-        ? const LinearGradient(
-            colors: [Color(0xFFF5F7FB), Color(0xFFEFF2F8), Color(0xFFFFFFFF)],
+        ? LinearGradient(
+            colors: [
+              const Color(0xFFEEF3FF).withValues(alpha: 0.7),
+              AppColors.background.withValues(alpha: 0.85),
+              AppColors.surface.withValues(alpha: 0.9),
+              const Color(0xFFFCFDFF),
+            ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           )

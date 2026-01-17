@@ -26,12 +26,21 @@ check_layer_imports() {
       continue
     fi
     local matches
-    matches=$(rg -n --glob '*.dart' "import .*features/.*/data" "$target_dir" 2>/dev/null || true)
+    matches=$(rg -n --glob '*.dart' "import .*\\/data\\/" "$target_dir" 2>/dev/null || true)
     if [[ -n "$matches" ]]; then
       log_error "Layer '$layer' in feature '$feature' imports from a data package"
       echo "$matches"
     fi
   done < <(feature_dirs)
+}
+
+check_firestore_types() {
+  local matches
+  matches=$(rg -n --glob '*.dart' -g '!**/data/**' "DocumentSnapshot|Timestamp" lib 2>/dev/null || true)
+  if [[ -n "$matches" ]]; then
+    log_error "Firestore types referenced outside lib/**/data/**"
+    echo "$matches"
+  fi
 }
 
 check_feature_mix() {
@@ -44,16 +53,17 @@ check_feature_mix() {
     fi
     local has_bloc
     local has_cubit
-    has_bloc=$(find "$dir" -path "*/bloc/*.dart" -print -quit || true)
-    has_cubit=$(find "$dir" -path "*/cubit/*.dart" -print -quit || true)
+    has_bloc=$(find "$dir" -type d -name bloc -print -quit || true)
+    has_cubit=$(find "$dir" -type d -name cubit -print -quit || true)
     if [[ -n "$has_bloc" && -n "$has_cubit" ]]; then
-      log_warning "Feature '$feature' mixes Bloc and Cubit under presentation (consider consolidating)"
+      log_error "Feature '$feature' mixes Bloc and Cubit under presentation"
     fi
   done < <(feature_dirs)
 }
 
 check_layer_imports presentation
 check_layer_imports domain
+check_firestore_types
 check_feature_mix
 
 if [[ $errors -ne 0 ]]; then

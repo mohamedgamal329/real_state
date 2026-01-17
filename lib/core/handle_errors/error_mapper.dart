@@ -22,6 +22,9 @@ Failure mapExceptionToFailure(Object exception, [StackTrace? st]) {
   }
 
   if (exception is fb_auth.FirebaseAuthException) {
+    if (exception.code == 'network-request-failed') {
+      return NetworkFailure(error: exception, stackTrace: st);
+    }
     return AuthFailure(error: exception, stackTrace: st);
   }
 

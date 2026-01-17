@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../../core/constants/app_collections.dart';
-import '../../../models/dtos/property_dto.dart';
+import '../dtos/property_dto.dart';
 import '../../../models/entities/property.dart';
 
 class PropertiesRemoteDataSource {

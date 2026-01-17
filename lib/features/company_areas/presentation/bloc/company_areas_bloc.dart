@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_state/core/handle_errors/error_mapper.dart';
+import 'package:real_state/features/properties/domain/models/property_mutation.dart';
 import 'package:real_state/features/properties/domain/property_owner_scope.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_mutations_bloc.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_mutations_state.dart';
+import 'package:real_state/features/properties/domain/services/property_mutations_stream.dart';
 
 import '../../domain/entities/company_area_summary.dart';
 import '../../domain/usecases/get_company_areas_usecase.dart';
@@ -13,7 +13,7 @@ import 'company_areas_state.dart';
 
 class CompanyAreasBloc extends Bloc<CompanyAreasEvent, CompanyAreasState> {
   final GetCompanyAreasUseCase _useCase;
-  final PropertyMutationsBloc _mutations;
+  final PropertyMutationsStream _mutations;
   late final StreamSubscription<PropertyMutation> _mutationSub;
 
   CompanyAreasBloc(this._useCase, this._mutations)

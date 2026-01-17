@@ -1,5 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:real_state/core/components/app_svg_icon.dart';
+import 'package:real_state/core/constants/app_images.dart';
 import 'package:real_state/core/components/app_network_image.dart';
 
 class PropertyAreaCard extends StatelessWidget {
@@ -54,7 +56,7 @@ class PropertyAreaCard extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right),
+            const AppSvgIcon(AppSVG.chevronRight),
           ],
         ),
       ),

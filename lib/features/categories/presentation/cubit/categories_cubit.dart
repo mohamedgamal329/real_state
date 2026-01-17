@@ -1,26 +1,26 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:real_state/core/constants/ui_constants.dart';
 import 'package:real_state/core/constants/user_role.dart';
 import 'package:real_state/core/handle_errors/error_mapper.dart';
+import 'package:real_state/core/pagination/page_token.dart';
 import 'package:real_state/features/auth/domain/repositories/auth_repository_domain.dart';
 import 'package:real_state/features/categories/domain/entities/property_filter.dart';
 import 'package:real_state/features/location/domain/usecases/get_location_areas_usecase.dart';
 import 'package:real_state/features/models/entities/location_area.dart';
 import 'package:real_state/features/models/entities/property.dart';
+import 'package:real_state/features/properties/domain/models/property_mutation.dart';
 import 'package:real_state/features/properties/domain/repositories/properties_repository.dart';
 import 'package:real_state/features/properties/domain/property_owner_scope.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_mutations_bloc.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_mutations_state.dart';
+import 'package:real_state/features/properties/domain/services/property_mutations_stream.dart';
 
 import 'categories_state.dart';
 
 class CategoriesCubit extends Cubit<CategoriesState> {
   final PropertiesRepository _repo;
   final GetLocationAreasUseCase _areas;
-  final PropertyMutationsBloc _mutations;
+  final PropertyMutationsStream _mutations;
   final AuthRepositoryDomain _auth;
   late final StreamSubscription<PropertyMutation> _mutationSub;
   StreamSubscription? _authSub;
@@ -57,6 +57,8 @@ class CategoriesCubit extends Cubit<CategoriesState> {
     _auth.userChanges.first.then(
       (u) => _isCollector = u?.role == UserRole.collector,
     );
+    // Ensure locations are loaded early for filters
+    unawaited(ensureLocationsLoaded());
   }
 
   /// Load location areas for filter dropdown
@@ -71,6 +73,16 @@ class CategoriesCubit extends Cubit<CategoriesState> {
 
     _locationsLoadCompleter = Completer<void>();
     try {
+      if (state is CategoriesInitial) {
+        final core = state as CategoriesInitial;
+        emit(
+          CategoriesLoadInProgress(
+            filter: core.filter,
+            locationAreas: core.locationAreas,
+            areaNames: core.areaNames,
+          ),
+        );
+      }
       final areas = await _areas.call(force: force);
       final map = {for (final a in areas) a.id: a};
       _locationsLoaded = true;
@@ -86,6 +98,10 @@ class CategoriesCubit extends Cubit<CategoriesState> {
 
   /// Load first page with current filter
   Future<void> loadFirstPage() async {
+    final existing = _asListState(state);
+    if (existing != null && existing.items.isNotEmpty) {
+      return;
+    }
     final core = _coreState();
     await ensureLocationsLoaded();
     await _fetchFirstPage(
@@ -385,7 +401,7 @@ class CategoriesCubit extends Cubit<CategoriesState> {
   }
 
   Future<PageResult<Property>> _fetchPageForRole({
-    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    PageToken? startAfter,
     required int limit,
     PropertyFilter? filter,
   }) {

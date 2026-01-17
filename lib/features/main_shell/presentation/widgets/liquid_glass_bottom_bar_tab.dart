@@ -1,11 +1,14 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:real_state/core/constants/app_colors.dart';
+import 'package:real_state/core/components/app_svg_icon.dart';
 import 'package:vector_math/vector_math_64.dart' as vmath;
 
 class LiquidGlassTabItem {
   const LiquidGlassTabItem({
     this.icon,
+    this.svgAsset,
     this.glowColor,
     this.activeStyle,
     this.inactiveStyle,
@@ -15,6 +18,7 @@ class LiquidGlassTabItem {
   });
 
   final IconData? icon;
+  final String? svgAsset;
   final String label;
   final Color? glowColor;
   final Color? activeColor;
@@ -39,7 +43,8 @@ class LiquidGlassBottomBarTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final icon = tab.icon;
-    final activeColor = tab.activeColor ?? scheme.primary;
+    final svgAsset = tab.svgAsset;
+    final activeColor = AppColors.primary; // tab.activeColor ?? scheme.primary;
     final inactiveColor = tab.inactiveColor ?? scheme.onSurfaceVariant;
     final baseText = Theme.of(context).textTheme.labelSmall;
     final activeStyle =
@@ -62,7 +67,7 @@ class LiquidGlassBottomBarTab extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              if (icon != null)
+              if (icon != null || svgAsset != null)
                 ExcludeSemantics(
                   child: Stack(
                     clipBehavior: Clip.none,
@@ -105,11 +110,17 @@ class LiquidGlassBottomBarTab extends StatelessWidget {
                       AnimatedScale(
                         scale: 1,
                         duration: const Duration(milliseconds: 150),
-                        child: Icon(
-                          icon,
-                          size: 24,
-                          color: selected ? activeColor : inactiveColor,
-                        ),
+                        child: svgAsset != null
+                            ? AppSvgIcon(
+                                svgAsset,
+                                size: 24,
+                                color: selected ? activeColor : inactiveColor,
+                              )
+                            : Icon(
+                                icon,
+                                size: 24,
+                                color: selected ? activeColor : inactiveColor,
+                              ),
                       ),
                     ],
                   ),

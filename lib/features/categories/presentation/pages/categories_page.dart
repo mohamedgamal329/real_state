@@ -1,20 +1,19 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:real_state/core/components/app_error_view.dart';
 import 'package:real_state/core/components/base_gradient_page.dart';
 import 'package:real_state/core/components/custom_app_bar.dart';
-import 'package:real_state/core/components/empty_state_widget.dart';
-import 'package:real_state/core/widgets/property_list_scaffold.dart';
-import 'package:real_state/features/properties/presentation/selection/property_selection_policy.dart';
-import 'package:real_state/features/properties/presentation/selection/selection_app_bar.dart';
+import 'package:real_state/core/selection/property_selection_policy.dart';
+import 'package:real_state/core/selection/selection_app_bar.dart';
+import 'package:real_state/core/components/app_svg_icon.dart';
+import 'package:real_state/core/constants/app_images.dart';
+import 'package:real_state/core/widgets/property_filter/show_property_filter_bottom_sheet.dart';
+import 'package:real_state/core/widgets/property_paginated_list_view.dart';
 import 'package:real_state/features/categories/presentation/cubit/categories_cubit.dart';
 import 'package:real_state/features/categories/presentation/cubit/categories_state.dart';
 import 'package:real_state/features/categories/presentation/widgets/category_property_card.dart';
-import 'package:real_state/features/properties/presentation/utils/property_placeholders.dart';
-import 'package:real_state/features/properties/presentation/utils/multi_pdf_share.dart';
+import 'package:real_state/core/utils/multi_pdf_share.dart';
 import 'package:real_state/features/models/entities/property.dart';
 
 class CategoriesPage extends StatefulWidget {
@@ -78,17 +77,34 @@ class _CategoriesPageState extends State<CategoriesPage>
               actionCallbacks: {PropertyBulkAction.share: _shareSelected},
               onClearSelection: _clearSelection,
             )
-          : CustomAppBar(title: 'categories'.tr()),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
-        child: FloatingActionButton(
-          onPressed: () {
-            final cubit = context.read<CategoriesCubit>();
-            context.push('/filters/categories', extra: cubit);
-          },
-          child: const Icon(Icons.filter_list),
-        ),
-      ),
+          : CustomAppBar(
+              title: 'categories'.tr(),
+              actions: [
+                BlocBuilder<CategoriesCubit, CategoriesState>(
+                  builder: (context, state) {
+                    final core = state is CategoriesCoreState
+                        ? state
+                        : const CategoriesInitial();
+                    return IconButton(
+                      onPressed: () {
+                        showPropertyFilterBottomSheet(
+                          context,
+                          initialFilter: core.filter,
+                          locationAreas: core.locationAreas,
+                          onApply: (filter) {
+                            context.read<CategoriesCubit>().applyFilter(filter);
+                          },
+                          onClear: () {
+                            context.read<CategoriesCubit>().clearFilters();
+                          },
+                        );
+                      },
+                      icon: const AppSvgIcon(AppSVG.filter),
+                    );
+                  },
+                ),
+              ],
+            ),
       body: BaseGradientPage(
         child: BlocConsumer<CategoriesCubit, CategoriesState>(
           listener: (context, state) {
@@ -112,72 +128,63 @@ class _CategoriesPageState extends State<CategoriesPage>
             final isInitialLoading =
                 state is CategoriesInitial || state is CategoriesLoadInProgress;
 
-            if (state is CategoriesFailure ||
-                (state is CategoriesPartialFailure && state.items.isEmpty)) {
-              final message = state is CategoriesFailure
-                  ? state.message
-                  : (state as CategoriesPartialFailure).message;
-              return AppErrorView(
-                message: message,
-                onRetry: () => context.read<CategoriesCubit>().loadFirstPage(),
-              );
-            }
-
-            final items = isInitialLoading
-                ? placeholderProperties()
-                : (dataState?.items ?? const []);
+            final items = dataState?.items ?? const [];
             _currentItems = items.where((p) => p.id.isNotEmpty).toList();
 
-            if (!isInitialLoading && items.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    EmptyStateWidget(
-                      description: 'no_properties_title'.tr(),
-                      action: () =>
-                          context.read<CategoriesCubit>().loadFirstPage(),
-                    ),
-                    const SizedBox(height: 16),
-                    if (!core.filter.isEmpty)
-                      TextButton(
-                        onPressed: () =>
-                            context.read<CategoriesCubit>().clearFilters(),
-                        child: Text('clear_filters'.tr()),
-                      ),
-                  ],
-                ),
-              );
-            }
+            final isError =
+                (state is CategoriesFailure ||
+                (state is CategoriesPartialFailure && items.isEmpty));
+            final errorMessage = state is CategoriesFailure
+                ? state.message
+                : (state is CategoriesPartialFailure ? state.message : null);
 
-            return PropertyListScaffold(
-              controller: _refreshController,
-              isInitialLoading: isInitialLoading,
+            return PropertyPaginatedListView(
+              refreshController: _refreshController,
+              items: items,
+              isLoading: isInitialLoading,
+              isError: isError,
+              errorMessage: errorMessage,
               hasMore: dataState?.hasMore ?? false,
+              areaNames: core.areaNames,
               onRefresh: () => context.read<CategoriesCubit>().refresh(),
               onLoadMore: () => context.read<CategoriesCubit>().loadMore(),
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final property = items[index];
-                final localeCode = context.locale.toString();
-                return CategoryPropertyCard(
-                  property: property,
-                  areaName:
-                      core.areaNames[property.locationAreaId]?.localizedName(
-                        localeCode: localeCode,
-                      ) ??
-                      'placeholder_dash'.tr(),
-                  selectionMode: _selectionMode,
-                  selected: _selected.contains(property.id),
-                  onSelectToggle: () => _toggleSelection(property.id),
-                  onLongPressSelect: () => _toggleSelection(property.id),
-                  onTap: _selectionMode
-                      ? () => _toggleSelection(property.id)
-                      : () => GoRouter.of(
-                          context,
-                        ).push('/property/${property.id}'),
-                );
-              },
+              onRetry: () => context.read<CategoriesCubit>().loadFirstPage(),
+              emptyMessage: 'no_properties_title'.tr(),
+              emptyAction: () =>
+                  context.read<CategoriesCubit>().loadFirstPage(),
+              emptyFooter:
+                  !isInitialLoading && items.isEmpty && !core.filter.isEmpty
+                  ? TextButton(
+                      onPressed: () =>
+                          context.read<CategoriesCubit>().clearFilters(),
+                      child: Text('clear_filters'.tr()),
+                    )
+                  : null,
+              selectionMode: _selectionMode,
+              selectedIds: _selected,
+              onToggleSelection: _toggleSelection,
+              itemBuilder:
+                  (
+                    context,
+                    property,
+                    areaName,
+                    isLoading,
+                    selectionMode,
+                    selected,
+                    onSelectToggle,
+                    onLongPressSelect,
+                    onOpen,
+                  ) {
+                    return CategoryPropertyCard(
+                      property: property,
+                      areaName: areaName,
+                      selectionMode: selectionMode,
+                      selected: selected,
+                      onSelectToggle: onSelectToggle,
+                      onLongPressSelect: onLongPressSelect,
+                      onTap: onOpen,
+                    );
+                  },
             );
           },
         ),

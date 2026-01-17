@@ -11,7 +11,6 @@ abstract class UserManagementRepository {
     required String name,
     required UserRole role,
     String? phone,
-    String? jobTitle,
   });
   Future<void> updateUser({
     required String id,

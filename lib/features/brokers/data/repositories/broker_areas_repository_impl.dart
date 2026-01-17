@@ -1,5 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:real_state/core/constants/user_role.dart';
+import 'package:real_state/core/pagination/page_token.dart';
 import 'package:real_state/features/brokers/data/datasources/broker_areas_remote_datasource.dart';
 import 'package:real_state/features/brokers/domain/entities/broker_area.dart';
 import 'package:real_state/features/brokers/domain/repositories/broker_areas_repository.dart';
@@ -57,7 +57,7 @@ class BrokerAreasRepositoryImpl implements BrokerAreasRepository {
     UserRole? role,
   }) async {
     final counts = {for (final id in areaIds) id: 0};
-    DocumentSnapshot<Map<String, dynamic>>? cursor;
+    PageToken? cursor;
     var hasMore = true;
 
     while (hasMore) {

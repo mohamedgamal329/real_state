@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:real_state/core/components/app_skeletonizer.dart';
+import 'package:real_state/core/constants/app_spacing.dart';
 
 class PropertyListScaffold extends StatelessWidget {
   final RefreshController controller;
@@ -21,7 +22,7 @@ class PropertyListScaffold extends StatelessWidget {
     required this.onLoadMore,
     required this.itemBuilder,
     required this.itemCount,
-    this.padding = const EdgeInsets.all(12),
+    this.padding = const EdgeInsets.all(AppSpacing.lg),
   });
 
   @override
@@ -36,7 +37,7 @@ class PropertyListScaffold extends StatelessWidget {
         child: ListView.separated(
           padding: padding,
           itemBuilder: itemBuilder,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
           itemCount: itemCount,
         ),
       ),

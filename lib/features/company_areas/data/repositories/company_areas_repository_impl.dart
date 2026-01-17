@@ -1,5 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:real_state/core/errors/localized_exception.dart';
+import 'package:real_state/core/pagination/page_token.dart';
 
 import '../../../models/entities/location_area.dart';
 import '../../../properties/data/datasources/location_area_remote_datasource.dart';
@@ -16,7 +16,7 @@ class CompanyAreasRepositoryImpl implements CompanyAreasRepository {
   @override
   Future<List<AreaSummary>> fetchCompanyAreas() async {
     final counts = <String, int>{};
-    DocumentSnapshot<Map<String, dynamic>>? cursor;
+    PageToken? cursor;
     var hasMore = true;
     try {
       while (hasMore) {

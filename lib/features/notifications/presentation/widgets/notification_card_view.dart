@@ -4,10 +4,16 @@ import 'package:real_state/core/utils/price_formatter.dart';
 import 'package:real_state/core/utils/time_ago.dart';
 import 'package:real_state/features/models/entities/access_request.dart';
 import 'package:real_state/features/notifications/domain/entities/app_notification.dart';
-import 'package:real_state/features/notifications/presentation/models/notification_action_status.dart';
 import 'package:real_state/features/notifications/domain/models/notification_property_summary.dart';
+import 'package:real_state/features/notifications/presentation/models/notification_action_status.dart';
 import 'package:real_state/features/notifications/presentation/models/notification_view_model.dart';
-import 'package:real_state/features/notifications/presentation/widgets/notification_card_actions.dart';
+import 'package:real_state/features/notifications/presentation/widgets/notification_card/notification_card_actions.dart';
+import 'package:real_state/features/notifications/presentation/widgets/notification_card/notification_card_body.dart';
+import 'package:real_state/features/notifications/presentation/widgets/notification_card/notification_card_leading_image.dart';
+import 'package:real_state/features/notifications/presentation/widgets/notification_card/notification_card_meta_row.dart';
+import 'package:real_state/features/notifications/presentation/widgets/notification_card/notification_card_status_badge.dart';
+import 'package:real_state/features/notifications/presentation/widgets/notification_card/notification_card_title_row.dart';
+import 'package:real_state/features/notifications/presentation/widgets/notification_card/notification_card_type_icon.dart';
 
 class NotificationCardView extends StatelessWidget {
   const NotificationCardView({
@@ -108,13 +114,16 @@ class NotificationCardView extends StatelessWidget {
       children: [
         Row(
           children: [
-            _LeadingImage(summary),
+            NotificationCardLeadingImage(summary: summary),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTitleRow(context, title),
+                  NotificationCardTitleRow(
+                    title: title,
+                    isUnread: viewModel.isUnread,
+                  ),
                   if (subtitle.isNotEmpty)
                     Text(
                       subtitle,
@@ -133,40 +142,34 @@ class NotificationCardView extends StatelessWidget {
                 ],
               ),
             ),
-            _buildStatusBadge(status.name, context),
+            NotificationCardStatusBadge(status: status.name),
           ],
         ),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            _TypeIcon(icon: icon),
-            const SizedBox(width: 8),
-            Text(
-              typeLabel,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-          ],
+        NotificationCardMetaRow(
+          leading: NotificationCardTypeIcon(icon: icon),
+          label: typeLabel,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
         if (notification.requesterName != null &&
             notification.requesterName!.isNotEmpty) ...[
           const SizedBox(height: 4),
-          Text(
-            'access_request_requester'.tr(args: [notification.requesterName!]),
+          NotificationCardMetaRow(
+            label: 'access_request_requester'.tr(
+              args: [notification.requesterName!],
+            ),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ],
-        if (notification.requestMessage != null &&
-            notification.requestMessage!.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Text(
-            notification.requestMessage!,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-        ],
+        NotificationCardBody(
+          text: notification.requestMessage ?? '',
+          topSpacing: 8,
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
         const SizedBox(height: 12),
         NotificationCardActions(
           notificationId: notification.id,
@@ -178,8 +181,8 @@ class NotificationCardView extends StatelessWidget {
           onAccept: onAccept,
           onReject: onReject,
         ),
-        Text(
-          timeLabel,
+        NotificationCardMetaRow(
+          label: timeLabel,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
@@ -203,13 +206,16 @@ class NotificationCardView extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _LeadingImage(summary),
+            NotificationCardLeadingImage(summary: summary),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTitleRow(context, title),
+                  NotificationCardTitleRow(
+                    title: title,
+                    isUnread: viewModel.isUnread,
+                  ),
                   if (subtitle.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
@@ -237,16 +243,13 @@ class NotificationCardView extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 6),
-        Text(
-          timeLabel,
+        NotificationCardMetaRow(
+          label: timeLabel,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
-        if (viewModel.notification.body.isNotEmpty) ...[
-          const SizedBox(height: 6),
-          Text(viewModel.notification.body),
-        ],
+        NotificationCardBody(text: viewModel.notification.body, topSpacing: 6),
       ],
     );
   }
@@ -257,77 +260,25 @@ class NotificationCardView extends StatelessWidget {
       children: [
         Row(
           children: [
-            const _TypeIcon(icon: Icons.notifications_none),
+            const NotificationCardTypeIcon(icon: Icons.notifications_none),
             const SizedBox(width: 10),
             Expanded(
-              child: _buildTitleRow(context, viewModel.notification.title),
+              child: NotificationCardTitleRow(
+                title: viewModel.notification.title,
+                isUnread: viewModel.isUnread,
+              ),
             ),
           ],
         ),
         const SizedBox(height: 6),
-        if (viewModel.notification.body.isNotEmpty)
-          Text(viewModel.notification.body),
-        Text(
-          timeAgo(viewModel.notification.createdAt),
+        NotificationCardBody(text: viewModel.notification.body),
+        NotificationCardMetaRow(
+          label: timeAgo(viewModel.notification.createdAt),
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildTitleRow(BuildContext context, String title) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(title, style: Theme.of(context).textTheme.titleMedium),
-        ),
-        if (viewModel.isUnread) ...[
-          const SizedBox(width: 6),
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
-              shape: BoxShape.circle,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildStatusBadge(String status, BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    Color color;
-    switch (status) {
-      case 'accepted':
-        color = colors.primary;
-        break;
-      case 'rejected':
-        color = colors.error;
-        break;
-      case 'expired':
-        color = colors.outline;
-        break;
-      default:
-        color = colors.secondary;
-    }
-    final label = 'access_request_status_$status'.tr();
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
     );
   }
 
@@ -383,58 +334,5 @@ class NotificationCardView extends StatelessWidget {
       default:
         return Icons.location_on_outlined;
     }
-  }
-}
-
-class _TypeIcon extends StatelessWidget {
-  final IconData icon;
-  const _TypeIcon({required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        color: scheme.primaryContainer.withAlpha(76),
-        shape: BoxShape.circle,
-      ),
-      child: Icon(icon, size: 18, color: scheme.primary),
-    );
-  }
-}
-
-class _LeadingImage extends StatelessWidget {
-  final NotificationPropertySummary? summary;
-
-  const _LeadingImage(this.summary);
-
-  @override
-  Widget build(BuildContext context) {
-    final placeholder = Container(
-      width: 56,
-      height: 56,
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Icon(
-        Icons.home_outlined,
-        color: Theme.of(context).colorScheme.primary,
-      ),
-    );
-    final url = summary?.coverImageUrl;
-    if (url == null || url.isEmpty) return placeholder;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Image.network(
-        url,
-        width: 56,
-        height: 56,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => placeholder,
-      ),
-    );
   }
 }

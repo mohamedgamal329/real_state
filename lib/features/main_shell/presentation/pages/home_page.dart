@@ -6,10 +6,12 @@ import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:real_state/core/components/app_error_view.dart';
 import 'package:real_state/core/components/app_skeleton_list.dart';
 import 'package:real_state/core/components/app_skeletonizer.dart';
+import 'package:real_state/core/components/app_svg_icon.dart';
 import 'package:real_state/core/components/base_gradient_page.dart';
 import 'package:real_state/core/components/custom_app_bar.dart';
 import 'package:real_state/core/components/empty_state_widget.dart';
 import 'package:real_state/core/components/info_card.dart';
+import 'package:real_state/core/constants/app_images.dart';
 import 'package:real_state/features/auth/domain/entities/user_entity.dart';
 import 'package:real_state/features/auth/domain/repositories/auth_repository_domain.dart';
 import 'package:real_state/features/brokers/presentation/bloc/brokers_list_bloc.dart';
@@ -19,6 +21,7 @@ import 'package:real_state/features/company_areas/presentation/bloc/company_area
 import 'package:real_state/features/company_areas/presentation/bloc/company_areas_event.dart';
 import 'package:real_state/features/company_areas/presentation/bloc/company_areas_state.dart';
 import 'package:real_state/features/properties/domain/property_permissions.dart';
+import 'package:real_state/core/widgets/clean_logo.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -52,10 +55,10 @@ class _HomePageState extends State<HomePage>
     return Scaffold(
       appBar: CustomAppBar(
         title: 'home',
-        actions: [
+        actions: const [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0),
-            child: Image.asset('assets/images/logo.jpeg', height: 26),
+            padding: EdgeInsets.symmetric(horizontal: 12.0),
+            child: CleanLogo(size: 32),
           ),
         ],
       ),
@@ -103,8 +106,8 @@ class _HomePageState extends State<HomePage>
                       children: [
                         InfoCard(
                           title: 'company_properties_title'.tr(),
-                          icon: Icon(
-                            Icons.domain_add,
+                          icon: AppSvgIcon(
+                            AppSVG.index,
                             size: 28,
                             color: Theme.of(context).colorScheme.primary,
                           ),
@@ -156,7 +159,7 @@ class _HomePageState extends State<HomePage>
                 await context.push('/property/new');
               },
               heroTag: 'properties_fab',
-              child: const Icon(Icons.add),
+              child: const AppSvgIcon(AppSVG.add),
             ),
           );
         },
@@ -165,15 +168,29 @@ class _HomePageState extends State<HomePage>
   }
 }
 
-class _BrokersSection extends StatelessWidget {
+class _BrokersSection extends StatefulWidget {
+  const _BrokersSection();
+
+  @override
+  State<_BrokersSection> createState() => _BrokersSectionState();
+}
+
+class _BrokersSectionState extends State<_BrokersSection> {
+  @override
+  void initState() {
+    super.initState();
+    final bloc = context.read<BrokersListBloc>();
+    if (bloc.state is BrokersListInitial) {
+      bloc.add(const BrokersListRequested());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<BrokersListBloc, BrokersListState>(
       builder: (context, state) {
-        if (state is BrokersListInitial) {
-          context.read<BrokersListBloc>().add(const BrokersListRequested());
+        if (state is BrokersListInitial)
           return const _BrokersSkeleton(showHeader: true);
-        }
         final brokers = state is BrokersListLoadSuccess
             ? state.brokers
             : (state is BrokersListLoadInProgress ? state.brokers : const []);
@@ -199,8 +216,8 @@ class _BrokersSection extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.people_alt_outlined,
+                  AppSvgIcon(
+                    AppSVG.people,
                     color: Theme.of(context).colorScheme.primary,
                   ),
                   const SizedBox(width: 8),
@@ -232,7 +249,7 @@ class _BrokersSection extends StatelessWidget {
                         ? b.name!
                         : (b.email ?? 'broker_unknown_name'.tr()),
                   ),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: const AppSvgIcon(AppSVG.chevronRight),
                   onTap: () {
                     context.push(
                       '/broker/${b.id}/areas',

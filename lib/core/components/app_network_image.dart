@@ -1,5 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:real_state/core/components/app_svg_icon.dart';
+import 'package:real_state/core/constants/app_images.dart';
 
 /// Shared cached network image with consistent placeholder and error visuals.
 class AppNetworkImage extends StatelessWidget {
@@ -68,7 +70,7 @@ class AppNetworkImage extends StatelessWidget {
       width: width,
       height: height,
       color: Colors.grey[300],
-      child: const Icon(Icons.broken_image_outlined),
+      child: const AppSvgIcon(AppSVG.imageOff),
     );
   }
 }

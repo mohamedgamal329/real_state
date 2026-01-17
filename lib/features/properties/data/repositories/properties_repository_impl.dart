@@ -3,8 +3,9 @@ import 'package:real_state/core/constants/app_collections.dart';
 import 'package:real_state/core/constants/user_role.dart';
 import 'package:real_state/core/errors/localized_exception.dart';
 import 'package:real_state/core/handle_errors/error_mapper.dart';
+import 'package:real_state/core/pagination/page_token.dart';
 import 'package:real_state/features/categories/domain/entities/property_filter.dart';
-import 'package:real_state/features/models/dtos/property_dto.dart';
+import 'package:real_state/features/properties/data/dtos/property_dto.dart';
 import 'package:real_state/features/models/entities/property.dart';
 import 'package:real_state/features/properties/domain/property_owner_scope.dart';
 import 'package:real_state/features/properties/domain/repositories/properties_repository.dart';
@@ -23,7 +24,7 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
 
   @override
   Future<PageResult<Property>> fetchCompanyPage({
-    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    PageToken? startAfter,
     int limit = 20,
     PropertyFilter? filter,
   }) {
@@ -39,7 +40,7 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
   @override
   Future<PageResult<Property>> fetchBrokerPage({
     required String brokerId,
-    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    PageToken? startAfter,
     int limit = 20,
     PropertyFilter? filter,
     UserRole? role,
@@ -87,7 +88,7 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
   Future<PageResult<Property>> _fetchScopedPage({
     required PropertyOwnerScope scope,
     required String? brokerId,
-    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    PageToken? startAfter,
     int limit = 20,
     PropertyFilter? filter,
   }) async {
@@ -98,7 +99,7 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
         : _buildBaseQuery(filter, scope: scope, brokerId: brokerId);
     final chunk = limit * 3;
     final List<Property> results = [];
-    var cursor = startAfter;
+    var cursor = _toDocumentSnapshot(startAfter);
     DocumentSnapshot<Map<String, dynamic>>? lastDoc;
     var moreServer = true;
     try {
@@ -127,7 +128,7 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
       }
       return PageResult(
         items: results,
-        lastDocument: lastDoc,
+        lastDocument: lastDoc != null ? PageToken(lastDoc) : null,
         hasMore: moreServer && results.isNotEmpty,
       );
     } on FirebaseException catch (e) {
@@ -137,7 +138,7 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
 
   @override
   Future<PageResult<Property>> fetchPage({
-    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    PageToken? startAfter,
     int limit = 20,
     PropertyFilter? filter,
   }) async {
@@ -152,7 +153,7 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
         limit *
         3; // fetch more per round to compensate for client-side filtering
     final List<Property> results = [];
-    var cursor = startAfter;
+    var cursor = _toDocumentSnapshot(startAfter);
     DocumentSnapshot<Map<String, dynamic>>? lastDoc;
     var moreServer = true;
     try {
@@ -187,7 +188,7 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
 
       return PageResult(
         items: results,
-        lastDocument: lastDoc,
+        lastDocument: lastDoc != null ? PageToken(lastDoc) : null,
         hasMore: moreServer && results.isNotEmpty,
       );
     } on FirebaseException catch (e) {
@@ -199,13 +200,14 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
 
   @override
   Future<PageResult<Property>> fetchArchivedPage({
-    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    PageToken? startAfter,
     int limit = 20,
+    PropertyFilter? filter,
   }) async {
     final baseQuery = _buildBaseQuery(null);
     final chunk = limit * 3;
     final List<Property> results = [];
-    var cursor = startAfter;
+    var cursor = _toDocumentSnapshot(startAfter);
     DocumentSnapshot<Map<String, dynamic>>? lastDoc;
     var moreServer = true;
     try {
@@ -225,7 +227,7 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
 
         for (final doc in snap.docs) {
           final property = PropertyDto.fromDoc(doc);
-          if (_matchesArchivedFilter(property)) {
+          if (_matchesArchivedFilter(property, filter)) {
             results.add(property);
             if (results.length == limit) break;
           }
@@ -238,7 +240,7 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
 
       return PageResult(
         items: results,
-        lastDocument: lastDoc,
+        lastDocument: lastDoc != null ? PageToken(lastDoc) : null,
         hasMore: moreServer && results.isNotEmpty,
       );
     } on FirebaseException catch (e) {
@@ -302,6 +304,15 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
     return q;
   }
 
+  DocumentSnapshot<Map<String, dynamic>>? _toDocumentSnapshot(
+    PageToken? token,
+  ) {
+    if (token == null) return null;
+    final value = token.value;
+    if (value is DocumentSnapshot<Map<String, dynamic>>) return value;
+    return null;
+  }
+
   Query<Map<String, dynamic>> _collectionRoot() =>
       _firestore.collection(_collection);
 
@@ -321,9 +332,28 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
     return true;
   }
 
-  bool _matchesArchivedFilter(Property property) {
+  bool _matchesArchivedFilter(Property property, PropertyFilter? filter) {
     if (property.isDeleted) return false;
-    return property.status == PropertyStatus.archived;
+    if (property.status != PropertyStatus.archived) return false;
+    if (filter == null) return true;
+    if (filter.locationAreaId != null &&
+        property.locationAreaId != filter.locationAreaId) {
+      return false;
+    }
+    if (filter.rooms != null && property.rooms != filter.rooms) return false;
+    if (filter.hasPool == true && property.hasPool != true) return false;
+    if (filter.createdBy != null && property.createdBy != filter.createdBy) {
+      return false;
+    }
+    if (filter.minPrice != null) {
+      final price = property.price;
+      if (price == null || price < filter.minPrice!) return false;
+    }
+    if (filter.maxPrice != null) {
+      final price = property.price;
+      if (price == null || price > filter.maxPrice!) return false;
+    }
+    return true;
   }
 
   /// Fetch a single property by id
@@ -381,6 +411,7 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
     String? locationUrl,
     double? price,
     String? ownerPhoneEncryptedOrHiddenStored,
+    String? securityGuardPhoneEncryptedOrHiddenStored,
     bool isImagesHidden = false,
     List<String> imageUrls = const [],
     String? coverImageUrl,
@@ -407,6 +438,8 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
       coverImageUrl: coverImageUrl,
       imageUrls: imageUrls,
       ownerPhoneEncryptedOrHiddenStored: ownerPhoneEncryptedOrHiddenStored,
+      securityGuardPhoneEncryptedOrHiddenStored:
+          securityGuardPhoneEncryptedOrHiddenStored,
       isImagesHidden: isImagesHidden,
       status: PropertyStatus.active,
       isDeleted: false,
@@ -439,6 +472,7 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
     String? locationUrl,
     double? price,
     String? ownerPhoneEncryptedOrHiddenStored,
+    String? securityGuardPhoneEncryptedOrHiddenStored,
     bool? isImagesHidden,
     List<String>? imageUrls,
     String? coverImageUrl,
@@ -472,6 +506,10 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
     if (ownerPhoneEncryptedOrHiddenStored != null) {
       updateMap['ownerPhoneEncryptedOrHiddenStored'] =
           ownerPhoneEncryptedOrHiddenStored;
+    }
+    if (securityGuardPhoneEncryptedOrHiddenStored != null) {
+      updateMap['securityGuardPhoneEncryptedOrHiddenStored'] =
+          securityGuardPhoneEncryptedOrHiddenStored;
     }
     if (isImagesHidden != null) updateMap['isImagesHidden'] = isImagesHidden;
     if (imageUrls != null) updateMap['imageUrls'] = imageUrls;

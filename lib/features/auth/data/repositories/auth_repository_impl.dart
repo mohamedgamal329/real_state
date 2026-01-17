@@ -69,10 +69,29 @@ class AuthRepositoryImpl implements AuthRepositoryDomain, CurrentUserAccessor {
   }
 
   @override
+  Future<void> sendPasswordResetEmail(String email) {
+    return remote.sendPasswordResetEmail(email);
+  }
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) {
+    return remote.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    );
+  }
+
+  @override
   Stream<UserEntity?> get userChanges => remote.authStateChanges();
 
   @override
   UserRole? get currentRole => remote.currentUser?.role;
+
+  @override
+  String? get currentUserId => remote.currentUser?.id;
 
   @override
   UserEntity? get currentUser {

@@ -35,16 +35,11 @@ class UsersRemoteDataSource {
     required String name,
     required UserRole role,
     String? phone,
-    String? jobTitle,
   }) async {
     final ownerSession = await _ensureOwnerWithCredentials();
     final secondaryAuth = await _secondaryAuth();
     final trimmedEmail = email.trim();
     final trimmedName = name.trim();
-    final trimmedJobTitle = jobTitle?.trim();
-    final jobTitleValue = (trimmedJobTitle?.isNotEmpty == true)
-        ? trimmedJobTitle
-        : null;
     try {
       final credential = await secondaryAuth.createUserWithEmailAndPassword(
         email: trimmedEmail,
@@ -58,7 +53,6 @@ class UsersRemoteDataSource {
       await firestore.collection(collection).doc(user.uid).set({
         'email': trimmedEmail,
         'name': trimmedName,
-        'jobTitle': jobTitleValue,
         'role': roleToString(role),
         'phone': phone,
         'companyId': ownerSession.companyId,

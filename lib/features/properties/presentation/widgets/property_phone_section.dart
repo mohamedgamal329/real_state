@@ -2,18 +2,22 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:real_state/core/components/app_snackbar.dart';
 import 'package:real_state/core/components/primary_button.dart';
+import 'package:real_state/core/components/app_svg_icon.dart';
+import 'package:real_state/core/constants/app_images.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class PropertyPhoneSection extends StatelessWidget {
   final bool phoneVisible;
   final String? phoneText;
   final VoidCallback? onRequestAccess;
+  final String? keyPrefix;
 
   const PropertyPhoneSection({
     super.key,
     required this.phoneVisible,
     required this.phoneText,
     this.onRequestAccess,
+    this.keyPrefix,
   });
 
   static const ValueKey<String> hiddenPhoneKey = ValueKey(
@@ -25,6 +29,21 @@ class PropertyPhoneSection extends StatelessWidget {
   static const ValueKey<String> requestButtonKey = ValueKey(
     'property_phone_request_button',
   );
+
+  ValueKey<String> get _hiddenPhoneKey {
+    if (keyPrefix == null || keyPrefix!.isEmpty) return hiddenPhoneKey;
+    return ValueKey('property_phone_hidden_card_${keyPrefix!}');
+  }
+
+  ValueKey<String> get _hiddenPhoneLabelKey {
+    if (keyPrefix == null || keyPrefix!.isEmpty) return hiddenPhoneLabelKey;
+    return ValueKey('property_phone_hidden_${keyPrefix!}');
+  }
+
+  ValueKey<String> get _requestButtonKey {
+    if (keyPrefix == null || keyPrefix!.isEmpty) return requestButtonKey;
+    return ValueKey('property_phone_request_button_${keyPrefix!}');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +61,7 @@ class PropertyPhoneSection extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(Icons.phone_iphone, size: 20),
+            const AppSvgIcon(AppSVG.phone, size: 20),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -53,7 +72,7 @@ class PropertyPhoneSection extends StatelessWidget {
             if (canCall)
               FilledButton.icon(
                 onPressed: () => _callOwner(context, phoneNumber),
-                icon: const Icon(Icons.call),
+                icon: const AppSvgIcon(AppSVG.phone),
                 label: Text('call_owner'.tr()),
               ),
           ],
@@ -62,24 +81,24 @@ class PropertyPhoneSection extends StatelessWidget {
     }
 
     return Card(
-      key: hiddenPhoneKey,
+      key: _hiddenPhoneKey,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
           children: [
-            const Icon(Icons.lock_outline, size: 18),
+            const AppSvgIcon(AppSVG.lock, size: 18),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 'phone_hidden'.tr(),
-                key: hiddenPhoneLabelKey,
+                key: _hiddenPhoneLabelKey,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),
             if (onRequestAccess != null)
               PrimaryButton(
-                key: requestButtonKey,
+                key: _requestButtonKey,
                 label: 'request_phone_access'.tr(),
                 expand: false,
                 onPressed: onRequestAccess,

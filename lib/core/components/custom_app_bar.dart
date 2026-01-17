@@ -32,12 +32,15 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       backgroundColor: bg,
       surfaceTintColor: bg,
-      elevation: 0,
+      elevation: theme.appBarTheme.elevation ?? 0,
       //shadowColor: Colors.black.withValues(alpha: 0.04),
       centerTitle: true,
       actions: actions,
+
       iconTheme: theme.iconTheme.copyWith(color: fg),
-      shape: Border(bottom: BorderSide(color: outline, width: 1)),
+      shape: Border(
+        bottom: BorderSide(color: outline.withValues(alpha: 0.6), width: 1),
+      ),
       bottom: bottom,
     );
   }

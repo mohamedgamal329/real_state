@@ -4,6 +4,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:real_state/core/components/app_network_image.dart';
+import 'package:real_state/core/components/app_svg_icon.dart';
+import 'package:real_state/core/constants/app_images.dart';
 import 'package:real_state/core/components/app_text_field.dart';
 import 'package:real_state/core/components/primary_button.dart';
 import 'package:real_state/core/validation/validators.dart';
@@ -122,8 +124,7 @@ class LocationAreaFormDialog {
         );
       },
     );
-    nameArCtrl.dispose();
-    nameEnCtrl.dispose();
+
     return result;
   }
 }
@@ -149,8 +150,8 @@ class _LocationAreaImagePicker extends StatelessWidget {
       preview = AppNetworkImage(url: existingUrl, fit: BoxFit.cover);
     } else {
       preview = Center(
-        child: Icon(
-          Icons.photo_outlined,
+        child: AppSvgIcon(
+          AppSVG.photo,
           size: 40,
           color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
         ),
@@ -197,7 +198,7 @@ class _LocationAreaImagePicker extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.photo_camera_back_outlined, size: 16),
+                    const AppSvgIcon(AppSVG.camera, size: 16),
                     const SizedBox(width: 6),
                     Text(
                       imageFile != null || existingUrl.isNotEmpty

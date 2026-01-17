@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:real_state/core/components/app_svg_icon.dart';
+import 'package:real_state/core/constants/app_images.dart';
+import 'package:real_state/core/constants/app_spacing.dart';
 
 enum AppSnackbarType { success, warning, error }
 
@@ -15,30 +18,40 @@ class AppSnackbar {
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final bgColor = _backgroundColor(context, type, colorScheme);
-    final iconData = _iconFor(type);
-    final fg = Colors.white;
+    final icon = _iconFor(type);
+    final fg = _foregroundColor(type, colorScheme);
     final snackBar = SnackBar(
       behavior: SnackBarBehavior.floating,
       backgroundColor: bgColor,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
       content: Row(
         children: [
-          Icon(iconData, color: fg),
+          IconTheme(
+            data: IconThemeData(color: fg),
+            child: icon,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: fg,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
         ],
       ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
       duration: duration,
-      elevation: 4,
+      elevation: 3,
       action: (actionLabel != null && onAction != null)
           ? SnackBarAction(
               label: actionLabel,
@@ -57,22 +70,33 @@ class AppSnackbar {
   ) {
     switch (type) {
       case AppSnackbarType.warning:
-        return Colors.amber.withAlpha(220);
+        return colorScheme.tertiaryContainer;
       case AppSnackbarType.error:
-        return Colors.redAccent.withAlpha(220);
+        return colorScheme.errorContainer;
       case AppSnackbarType.success:
-        return colorScheme.primary.withAlpha(230);
+        return colorScheme.primaryContainer;
     }
   }
 
-  static IconData _iconFor(AppSnackbarType type) {
+  static Color _foregroundColor(AppSnackbarType type, ColorScheme colorScheme) {
     switch (type) {
       case AppSnackbarType.warning:
-        return Icons.warning_amber_rounded;
+        return colorScheme.onTertiaryContainer;
       case AppSnackbarType.error:
-        return Icons.error_outline;
+        return colorScheme.onErrorContainer;
       case AppSnackbarType.success:
-        return Icons.check_circle_outline;
+        return colorScheme.onPrimaryContainer;
+    }
+  }
+
+  static Widget _iconFor(AppSnackbarType type) {
+    switch (type) {
+      case AppSnackbarType.warning:
+        return const AppSvgIcon(AppSVG.warning);
+      case AppSnackbarType.error:
+        return const AppSvgIcon(AppSVG.error);
+      case AppSnackbarType.success:
+        return const AppSvgIcon(AppSVG.success);
     }
   }
 }

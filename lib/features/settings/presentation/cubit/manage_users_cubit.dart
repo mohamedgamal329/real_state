@@ -98,7 +98,6 @@ class ManageUsersCubit extends Cubit<ManageUsersState> {
     required String email,
     required UserRole role,
     required String name,
-    required String jobTitle,
     required String password,
   }) async {
     if (!_hasPermission()) return;
@@ -115,7 +114,6 @@ class ManageUsersCubit extends Cubit<ManageUsersState> {
         password: password,
         name: name,
         role: role,
-        jobTitle: jobTitle,
       );
       await load();
     } catch (e) {

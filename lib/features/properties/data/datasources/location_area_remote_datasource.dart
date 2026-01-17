@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:real_state/core/handle_errors/error_mapper.dart';
 
 import '../../../../core/constants/app_collections.dart';
-import '../../../models/dtos/location_area_dto.dart';
+import '../../../location/data/dtos/location_area_dto.dart';
 import '../../../models/entities/location_area.dart';
 
 class LocationAreaRemoteDataSource {

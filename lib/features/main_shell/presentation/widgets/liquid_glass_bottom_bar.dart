@@ -41,6 +41,13 @@ class LiquidGlassBottomBar extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(33),
               boxShadow: [
+                if (!isDark)
+                  BoxShadow(
+                    blurRadius: 18,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 8),
+                    color: colorScheme.shadow.withValues(alpha: 0.08),
+                  ),
                 BoxShadow(
                   inset: true,
                   blurRadius: 8,
@@ -57,15 +64,15 @@ class LiquidGlassBottomBar extends StatelessWidget {
                 begin: AlignmentDirectional.centerStart,
                 colors: [
                   Color.alphaBlend(
-                    colorScheme.primary.withValues(alpha: isDark ? 0.16 : 0.2),
-                    colorScheme.surface.withValues(alpha: isDark ? 0.24 : 0.3),
+                    colorScheme.primary.withValues(alpha: isDark ? 0.16 : 0.12),
+                    colorScheme.surface.withValues(alpha: isDark ? 0.24 : 0.38),
                   ),
                   Color.alphaBlend(
                     colorScheme.secondary.withValues(
-                      alpha: isDark ? 0.12 : 0.16,
+                      alpha: isDark ? 0.12 : 0.1,
                     ),
                     colorScheme.surfaceContainerHighest.withValues(
-                      alpha: isDark ? 0.12 : 0.16,
+                      alpha: isDark ? 0.12 : 0.18,
                     ),
                   ),
                 ],
@@ -73,7 +80,7 @@ class LiquidGlassBottomBar extends StatelessWidget {
               border: Border.all(
                 width: 1.6,
                 color: Color.alphaBlend(
-                  colorScheme.primary.withValues(alpha: 0.1),
+                  colorScheme.primary.withValues(alpha: isDark ? 0.1 : 0.08),
                   colorScheme.outlineVariant.withValues(
                     alpha: isDark ? 0.28 : 0.2,
                   ),
@@ -119,11 +126,11 @@ class LiquidGlassBottomBar extends StatelessWidget {
       blur: isDark ? 18 : 14,
       thickness: 22,
       saturation: isDark ? 1.05 : 1.2,
-      ambientStrength: isDark ? 0.32 : 0.4,
-      lightIntensity: isDark ? 0.75 : 0.95,
+      ambientStrength: isDark ? 0.32 : 0.35,
+      lightIntensity: isDark ? 0.75 : 0.9,
       glassColor: Color.alphaBlend(
-        scheme.primary.withValues(alpha: isDark ? 0.16 : 0.12),
-        scheme.surface.withValues(alpha: isDark ? 0.32 : 0.26),
+        scheme.primary.withValues(alpha: isDark ? 0.16 : 0.1),
+        scheme.surface.withValues(alpha: isDark ? 0.32 : 0.34),
       ),
       refractiveIndex: 1.2,
     );

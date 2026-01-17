@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:real_state/core/components/app_svg_icon.dart';
+import 'package:real_state/core/constants/app_images.dart';
 import 'package:go_router/go_router.dart';
 import 'package:real_state/core/components/app_network_image.dart';
 
@@ -63,7 +65,7 @@ class _PropertyImageViewerState extends State<PropertyImageViewer> {
                 backgroundColor: Colors.black.withValues(alpha: 0.3),
                 foregroundColor: Colors.white,
               ),
-              icon: const Icon(Icons.close),
+              icon: const AppSvgIcon(AppSVG.close),
               onPressed: () => GoRouter.of(context).pop(),
             ),
           ),

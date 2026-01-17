@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:real_state/core/errors/localized_exception.dart';
+import 'package:real_state/core/pagination/page_token.dart';
 
 import '../../../../core/constants/app_collections.dart';
-import '../../../models/dtos/access_request_dto.dart';
+import '../dtos/access_request_dto.dart';
 import '../../../models/entities/access_request.dart';
 import '../../../properties/domain/repositories/properties_repository.dart'
     show PageResult;
@@ -59,7 +60,7 @@ class AccessRequestsRepositoryImpl implements AccessRequestsRepository {
   /// is cursor-based via [startAfter].
   @override
   Future<PageResult<AccessRequest>> fetchPage({
-    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    PageToken? startAfter,
     int limit = 10,
     String? requesterId,
     String? ownerId,
@@ -77,7 +78,8 @@ class AccessRequestsRepositoryImpl implements AccessRequestsRepository {
     }
 
     q = q.orderBy('createdAt', descending: true).limit(limit);
-    if (startAfter != null) q = q.startAfterDocument(startAfter);
+    final cursor = _toDocumentSnapshot(startAfter);
+    if (cursor != null) q = q.startAfterDocument(cursor);
 
     final snap = await q.get();
 
@@ -85,7 +87,11 @@ class AccessRequestsRepositoryImpl implements AccessRequestsRepository {
 
     final last = snap.docs.isNotEmpty ? snap.docs.last : null;
     final hasMore = snap.docs.length == limit;
-    return PageResult(items: items, lastDocument: last, hasMore: hasMore);
+    return PageResult(
+      items: items,
+      lastDocument: last != null ? PageToken(last) : null,
+      hasMore: hasMore,
+    );
   }
 
   @override
@@ -186,5 +192,14 @@ class AccessRequestsRepositoryImpl implements AccessRequestsRepository {
     final snap = await q.get();
     if (snap.docs.isEmpty) return null;
     return AccessRequestDto.fromDoc(snap.docs.first);
+  }
+
+  DocumentSnapshot<Map<String, dynamic>>? _toDocumentSnapshot(
+    PageToken? token,
+  ) {
+    if (token == null) return null;
+    final value = token.value;
+    if (value is DocumentSnapshot<Map<String, dynamic>>) return value;
+    return null;
   }
 }

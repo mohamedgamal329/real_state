@@ -1,12 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:real_state/core/constants/user_role.dart';
+import 'package:real_state/core/pagination/page_token.dart';
 import 'package:real_state/features/categories/domain/entities/property_filter.dart';
 import 'package:real_state/features/models/entities/property.dart';
 
 /// Simple container to hold paginated results coming from the repository.
 class PageResult<T> {
   final List<T> items;
-  final DocumentSnapshot<Map<String, dynamic>>? lastDocument;
+  final PageToken? lastDocument;
   final bool hasMore;
 
   const PageResult({
@@ -24,28 +24,29 @@ abstract class PropertiesRepository {
   String generateId();
 
   Future<PageResult<Property>> fetchPage({
-    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    PageToken? startAfter,
     int limit = 20,
     PropertyFilter? filter,
   });
 
   Future<PageResult<Property>> fetchCompanyPage({
-    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    PageToken? startAfter,
     int limit = 20,
     PropertyFilter? filter,
   });
 
   Future<PageResult<Property>> fetchBrokerPage({
     required String brokerId,
-    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    PageToken? startAfter,
     int limit = 20,
     PropertyFilter? filter,
     UserRole? role,
   });
 
   Future<PageResult<Property>> fetchArchivedPage({
-    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    PageToken? startAfter,
     int limit = 20,
+    PropertyFilter? filter,
   });
 
   Future<Set<String>> fetchBrokerAreaIds(String brokerId, {UserRole? role});
@@ -65,6 +66,7 @@ abstract class PropertiesRepository {
     String? locationUrl,
     double? price,
     String? ownerPhoneEncryptedOrHiddenStored,
+    String? securityGuardPhoneEncryptedOrHiddenStored,
     bool isImagesHidden = false,
     List<String> imageUrls = const [],
     String? coverImageUrl,
@@ -85,6 +87,7 @@ abstract class PropertiesRepository {
     String? locationUrl,
     double? price,
     String? ownerPhoneEncryptedOrHiddenStored,
+    String? securityGuardPhoneEncryptedOrHiddenStored,
     bool? isImagesHidden,
     List<String>? imageUrls,
     String? coverImageUrl,

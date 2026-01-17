@@ -6,13 +6,12 @@ import 'package:real_state/core/components/app_error_view.dart';
 import 'package:real_state/core/components/app_skeleton_list.dart';
 import 'package:real_state/core/components/custom_app_bar.dart';
 import 'package:real_state/core/components/empty_state_widget.dart';
-import 'package:real_state/core/components/info_card.dart';
-import 'package:real_state/features/auth/domain/repositories/auth_repository_domain.dart';
-import 'package:real_state/features/brokers/domain/usecases/get_broker_areas_usecase.dart';
+import 'package:real_state/core/widgets/location_area_card.dart';
+import 'package:real_state/features/brokers/presentation/controller/broker_areas_controller.dart';
 import 'package:real_state/features/brokers/presentation/bloc/areas/broker_areas_bloc.dart';
 import 'package:real_state/features/brokers/presentation/bloc/areas/broker_areas_event.dart';
 import 'package:real_state/features/brokers/presentation/bloc/areas/broker_areas_state.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_mutations_bloc.dart';
+import 'package:real_state/features/models/entities/location_area.dart';
 
 class BrokerAreasPage extends StatelessWidget {
   final String brokerId;
@@ -27,26 +26,20 @@ class BrokerAreasPage extends StatelessWidget {
     return Scaffold(
       appBar: CustomAppBar(title: title),
       body: BlocProvider(
-        create: (context) => BrokerAreasBloc(
-          context.read<GetBrokerAreasUseCase>(),
-          context.read<AuthRepositoryDomain>(),
-          context.read<PropertyMutationsBloc>(),
-        )..add(BrokerAreasRequested(brokerId)),
+        create: (context) =>
+            context.read<BrokerAreasController>().createBloc(brokerId),
         child: BlocBuilder<BrokerAreasBloc, BrokerAreasState>(
           builder: (context, state) {
-            if (state is BrokerAreasInitial) {
-              context.read<BrokerAreasBloc>().add(
-                BrokerAreasRequested(brokerId),
-              );
-            }
             final isLoading =
                 state is BrokerAreasInitial ||
                 state is BrokerAreasLoadInProgress;
             if (isLoading) {
               return AppSkeletonList(
                 itemCount: 6,
-                itemBuilder: (_, __) =>
-                    _AreaCard(name: 'loading_area'.tr(), propertyCount: 0),
+                itemBuilder: (_, __) => _AreaCard(
+                  area: _placeholderArea('loading_area'.tr()),
+                  propertyCount: 0,
+                ),
               );
             }
             if (state is BrokerAreasFailure) {
@@ -69,8 +62,18 @@ class BrokerAreasPage extends StatelessWidget {
                 padding: const EdgeInsets.all(12),
                 itemBuilder: (_, i) {
                   final area = state.areas[i];
+                  final detail = state.areaDetails[area.id];
                   return _AreaCard(
-                    name: area.name,
+                    area:
+                        detail ??
+                        LocationArea(
+                          id: area.id,
+                          nameAr: area.name,
+                          nameEn: area.name,
+                          imageUrl: '',
+                          isActive: true,
+                          createdAt: DateTime.fromMillisecondsSinceEpoch(0),
+                        ),
                     propertyCount: area.propertyCount,
                     onTap: () {
                       context.push(
@@ -96,28 +99,36 @@ class BrokerAreasPage extends StatelessWidget {
 }
 
 class _AreaCard extends StatelessWidget {
-  final String name;
+  final LocationArea area;
   final int propertyCount;
   final VoidCallback? onTap;
 
   const _AreaCard({
-    required this.name,
+    required this.area,
     required this.propertyCount,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InfoCard(
-      title: name.isNotEmpty ? name : 'area_unavailable'.tr(),
-      subtitle: 'broker_areas_properties_count'.tr(
+    return LocationAreaCard(
+      area: area,
+      localeCode: context.locale.toString(),
+      footer: 'broker_areas_properties_count'.tr(
         args: [propertyCount.toString()],
-      ),
-      icon: Icon(
-        Icons.place_outlined,
-        color: Theme.of(context).colorScheme.primary,
       ),
       onTap: onTap,
     );
   }
+}
+
+LocationArea _placeholderArea(String name) {
+  return LocationArea(
+    id: '',
+    nameAr: name,
+    nameEn: name,
+    imageUrl: '',
+    isActive: true,
+    createdAt: DateTime.fromMillisecondsSinceEpoch(0),
+  );
 }

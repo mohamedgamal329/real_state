@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:real_state/core/pagination/page_token.dart';
 import 'package:real_state/features/categories/domain/entities/property_filter.dart';
 import 'package:real_state/features/models/entities/property.dart';
 import 'package:real_state/features/properties/domain/repositories/properties_repository.dart';
@@ -10,7 +10,7 @@ class GetCompanyPropertiesPageUseCase {
   GetCompanyPropertiesPageUseCase(this._repository);
 
   Future<PageResult<Property>> call({
-    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    PageToken? startAfter,
     int limit = 20,
     PropertyFilter? filter,
   }) {

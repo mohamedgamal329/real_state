@@ -18,16 +18,18 @@ import 'package:real_state/features/location/presentation/widgets/location_area_
 import 'package:real_state/features/models/entities/location_area.dart';
 import 'package:real_state/features/models/entities/property.dart';
 import 'package:real_state/features/notifications/domain/repositories/notifications_repository.dart';
+import 'package:real_state/features/properties/domain/models/property_mutation.dart';
 import 'package:real_state/features/properties/domain/repositories/properties_repository.dart';
 import 'package:real_state/features/properties/domain/property_permissions.dart';
 import 'package:real_state/features/properties/domain/usecases/create_property_usecase.dart';
 import 'package:real_state/features/properties/domain/usecases/update_property_usecase.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_mutations_bloc.dart';
-import 'package:real_state/features/properties/presentation/bloc/property_mutations_state.dart';
+import 'package:real_state/features/properties/presentation/side_effects/property_mutations_bloc.dart';
 import 'package:real_state/features/properties/models/property_editor_models.dart';
 import 'package:real_state/features/properties/domain/usecases/upload_property_images_usecase.dart';
 import 'package:real_state/features/properties/domain/usecases/delete_property_images_usecase.dart';
 import 'package:real_state/features/properties/presentation/widgets/property_editor_form.dart';
+import 'package:real_state/core/widgets/property_editor_progress.dart';
+import 'package:real_state/core/widgets/property_editor_progress_overlay.dart';
 
 part 'property_editor_actions.dart';
 
@@ -51,10 +53,12 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
   final _kitchensCtrl = TextEditingController();
   final _floorsCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+  final _securityGuardPhoneCtrl = TextEditingController();
   bool _formattingPrice = false;
   bool _loading = true;
   bool _hasPool = false;
   bool _isImagesHidden = false;
+  bool _showSecurityGuardPhone = false;
   PropertyPurpose _purpose = PropertyPurpose.sale;
   String? _locationId;
 
@@ -87,6 +91,7 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
     _kitchensCtrl.dispose();
     _floorsCtrl.dispose();
     _phoneCtrl.dispose();
+    _securityGuardPhoneCtrl.dispose();
     super.dispose();
   }
 
@@ -147,10 +152,12 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
         kitchensCtrl: _kitchensCtrl,
         floorsCtrl: _floorsCtrl,
         phoneCtrl: _phoneCtrl,
+        securityGuardPhoneCtrl: _securityGuardPhoneCtrl,
         isEditing: widget.isEditing,
         showSkeleton: isLoading,
         hasPool: _hasPool,
         isImagesHidden: _isImagesHidden,
+        showSecurityGuardPhone: _showSecurityGuardPhone,
         purpose: _purpose,
         locationId: _locationId,
         locations: isLoading ? _placeholderLocations() : _locations,
@@ -164,15 +171,13 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
         onPurposeChanged: (p) => setState(() => _purpose = p),
         onLocationChanged: (v) => setState(() => _locationId = v),
         onAddLocation: _handleAddLocationTap,
+        onShowSecurityGuardPhone: () =>
+            setState(() => _showSecurityGuardPhone = true),
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.isEditing ? 'edit_property'.tr() : 'add_property'.tr(),
-        ),
-      ),
+    return PropertyEditorView(
+      titleKey: widget.isEditing ? 'edit_property' : 'add_property',
       body: body,
     );
   }
@@ -215,6 +220,9 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
   }
 
   Future<void> _handleAddLocationTap() async {
+    // Unfocus to avoid crashes when dialog overlay appears
+    FocusScope.of(context).unfocus();
+
     final res = await LocationAreaFormDialog.show(context);
     if (res == null || res.imageFile == null) return;
 
@@ -228,6 +236,9 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
 
     try {
       final repo = context.read<LocationRepository>();
+
+      // Unfocus again before loading overlay to be safe
+      FocusScope.of(context).unfocus();
 
       final newId = await LoadingDialog.show(
         context,
@@ -258,5 +269,24 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
         );
       }
     }
+  }
+}
+
+class PropertyEditorView extends StatelessWidget {
+  final String titleKey;
+  final Widget body;
+
+  const PropertyEditorView({
+    super.key,
+    required this.titleKey,
+    required this.body,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(titleKey.tr())),
+      body: body,
+    );
   }
 }
