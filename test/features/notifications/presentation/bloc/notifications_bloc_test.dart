@@ -383,7 +383,7 @@ void main() {
 
   Future<void> pump() async {
     await Future<void>.delayed(Duration.zero);
-    await Future<void>.delayed(const Duration(milliseconds: 10));
+    await Future<void>.delayed(const Duration(milliseconds: 50));
   }
 
   test('initial load success', () async {

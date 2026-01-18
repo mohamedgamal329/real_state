@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:real_state/core/components/app_snackbar.dart';
 import 'package:real_state/features/brokers/presentation/pages/broker_areas_page.dart';
-import 'package:real_state/features/categories/presentation/cubit/categories_cubit.dart';
 import 'package:real_state/features/company_areas/presentation/bloc/company_areas_bloc.dart';
 import 'package:real_state/features/location/domain/repositories/location_areas_repository.dart';
 import 'package:real_state/features/properties/domain/repositories/properties_repository.dart';

@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:real_state/core/components/primary_button.dart';
+
 import 'package:real_state/features/categories/domain/entities/property_filter.dart';
 import 'package:real_state/core/widgets/property_filter/filter_bottom_sheet.dart';
 import 'package:real_state/features/models/entities/location_area.dart';
@@ -75,7 +75,7 @@ void main() {
       final applyFinder = find.byKey(filterApplyButtonKey);
       expect(applyFinder, findsOneWidget);
 
-      final applyButton = tester.widget<PrimaryButton>(applyFinder);
+      final applyButton = tester.widget<ElevatedButton>(applyFinder);
       expect(applyButton.onPressed, isNotNull);
 
       await tester.enterText(find.byKey(filterMinPriceInputKey), '100');
@@ -86,7 +86,7 @@ void main() {
 
       expect(find.text('price_error_range'.tr()), findsOneWidget);
 
-      final applyButtonAfter = tester.widget<PrimaryButton>(applyFinder);
+      final applyButtonAfter = tester.widget<ElevatedButton>(applyFinder);
       expect(applyButtonAfter.onPressed, isNull);
     },
   );

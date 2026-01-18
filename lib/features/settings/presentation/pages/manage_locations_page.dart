@@ -47,7 +47,7 @@ class ManageLocationsView extends StatelessWidget {
       builder: (context, state) {
         if (state is ManageLocationsAccessDenied) {
           return Scaffold(
-            appBar: const CustomAppBar(title: 'manage_locations'),
+            appBar: CustomAppBar(title: 'manage_locations'.tr()),
             body: AppErrorView(
               message: state.message,
               onRetry: () => context.read<ManageLocationsCubit>().initialize(),
@@ -58,7 +58,7 @@ class ManageLocationsView extends StatelessWidget {
         if (state is ManageLocationsFailure &&
             state is! ManageLocationsDataState) {
           return Scaffold(
-            appBar: const CustomAppBar(title: 'manage_locations'),
+            appBar: CustomAppBar(title: 'manage_locations'.tr()),
             body: AppErrorView(
               message: state.message,
               onRetry: () => context.read<ManageLocationsCubit>().initialize(),
@@ -83,7 +83,7 @@ class ManageLocationsView extends StatelessWidget {
             dataState != null && state is! ManageLocationsActionInProgress;
 
         return Scaffold(
-          appBar: const CustomAppBar(title: 'manage_locations'),
+          appBar: CustomAppBar(title: 'manage_locations'.tr()),
           body: items.isEmpty
               ? _ManageLocationsEmpty(
                   onCreate: () => _createLocation(
@@ -119,7 +119,7 @@ class _ManageLocationsSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: 'manage_locations'),
+      appBar: CustomAppBar(title: 'manage_locations'.tr()),
       body: AppSkeletonList(
         itemBuilder: (_, __) =>
             LocationAreaCard(area: placeholder, localeCode: localeCode),

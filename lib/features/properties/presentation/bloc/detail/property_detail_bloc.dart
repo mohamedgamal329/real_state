@@ -572,7 +572,6 @@ class PropertyDetailBloc
     }
     if (shareState is PropertyShareSuccess) {
       emit(PropertyDetailShareSuccess(loaded));
-      emit(PropertyDetailActionSuccess(loaded));
       return;
     }
     if (shareState is PropertyShareFailure) {

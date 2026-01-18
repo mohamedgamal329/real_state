@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:real_state/core/components/app_text_field.dart';
+import 'package:real_state/core/constants/app_spacing.dart';
 
 class PropertyEditorContactSection extends StatelessWidget {
   const PropertyEditorContactSection({
@@ -54,6 +55,7 @@ class PropertyEditorContactSection extends StatelessWidget {
             ),
           ),
         if (showSecurityGuardPhone) ...[
+          SizedBox(height: AppSpacing.lg),
           AppTextField(
             label: 'security_guard_phone_optional'.tr(),
             controller: securityGuardPhoneCtrl,
@@ -71,8 +73,10 @@ class PropertyEditorContactSection extends StatelessWidget {
             ),
           ),
         if (showSecurityNumber) ...[
+          SizedBox(height: AppSpacing.lg),
+
           AppTextField(
-            label: 'security_number'.tr(),
+            label: 'security_number_optional'.tr(),
             controller: securityNumberCtrl,
             textInputAction: TextInputAction.done,
           ),

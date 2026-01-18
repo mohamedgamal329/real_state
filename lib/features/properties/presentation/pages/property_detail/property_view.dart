@@ -97,7 +97,7 @@ class PropertyPageView extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: CustomAppBar(title: 'property', actions: appBarActions),
+      appBar: CustomAppBar(title: 'property'.tr(), actions: appBarActions),
       body: BaseGradientPage(
         child: showErrorView
             ? AppErrorView(

@@ -15,6 +15,7 @@ import 'package:real_state/features/notifications/presentation/bloc/notification
 import 'package:real_state/features/notifications/presentation/models/notification_action_status.dart';
 import 'package:real_state/features/notifications/presentation/models/notification_view_model.dart';
 import 'package:real_state/features/notifications/presentation/pages/notifications_list_view.dart';
+import 'package:real_state/core/constants/user_role.dart';
 import 'package:real_state/features/properties/domain/property_permissions.dart';
 
 class NotificationsView extends StatelessWidget {
@@ -103,18 +104,18 @@ class NotificationsView extends StatelessWidget {
                 (notification.requestId?.isNotEmpty ?? false) &&
                 (notification.requestStatus == null ||
                     notification.requestStatus == AccessRequestStatus.pending);
-            // FIX 12: Allow actions if user is targetUserId OR property creator
-            final isTargetUser =
-                notification.targetUserId != null &&
-                notification.targetUserId == currentUserId;
-            // For access requests, the property creator should also be able to accept/reject
             final isRequesterOfProperty =
                 notification.requesterId != null &&
                 notification.requesterId == currentUserId;
+
+            final isTargetUser = notification.targetUserId == currentUserId;
+
             final allowActions =
                 canAcceptRejectAccessRequests(currentRole) &&
-                isTargetUser &&
-                !isRequesterOfProperty;
+                (isTargetUser || currentRole == UserRole.owner) &&
+                !isRequesterOfProperty &&
+                canAct;
+
             final isActionPending =
                 canAct &&
                 pendingRequests.contains(notification.requestId ?? '');

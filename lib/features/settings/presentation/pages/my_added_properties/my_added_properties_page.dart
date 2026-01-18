@@ -95,7 +95,8 @@ class _MyAddedPropertiesPageState extends State<MyAddedPropertiesPage> {
     await showPropertyFilterBottomSheet(
       context,
       initialFilter: _filter,
-      locationAreas: areaNames.values.toList(),
+      locationAreas:
+          null, // Allow bottom sheet to use live data from CategoriesCubit
       onApply: (filter) {
         _filter = _enforceOwner(filter);
         _bloc.add(PropertiesStarted(filter: _filter));
