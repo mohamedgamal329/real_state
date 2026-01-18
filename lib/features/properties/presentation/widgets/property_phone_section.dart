@@ -11,6 +11,9 @@ class PropertyPhoneSection extends StatelessWidget {
   final String? phoneText;
   final VoidCallback? onRequestAccess;
   final String? keyPrefix;
+  final String icon;
+  final bool showCallButton;
+  final String? hiddenLabelKey;
 
   const PropertyPhoneSection({
     super.key,
@@ -18,6 +21,9 @@ class PropertyPhoneSection extends StatelessWidget {
     required this.phoneText,
     this.onRequestAccess,
     this.keyPrefix,
+    this.icon = AppSVG.phone,
+    this.showCallButton = true,
+    this.hiddenLabelKey,
   });
 
   static const ValueKey<String> hiddenPhoneKey = ValueKey(
@@ -49,7 +55,10 @@ class PropertyPhoneSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final phoneNumber = phoneText;
     final canCall =
-        phoneVisible && phoneNumber != null && phoneNumber.isNotEmpty;
+        phoneVisible &&
+        phoneNumber != null &&
+        phoneNumber.isNotEmpty &&
+        showCallButton;
 
     if (phoneVisible) {
       return Container(
@@ -61,7 +70,7 @@ class PropertyPhoneSection extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const AppSvgIcon(AppSVG.phone, size: 20),
+            AppSvgIcon(icon, size: 20),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -91,7 +100,7 @@ class PropertyPhoneSection extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'phone_hidden'.tr(),
+                (hiddenLabelKey ?? 'phone_hidden').tr(),
                 key: _hiddenPhoneLabelKey,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),

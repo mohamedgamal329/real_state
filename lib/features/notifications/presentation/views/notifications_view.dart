@@ -103,10 +103,18 @@ class NotificationsView extends StatelessWidget {
                 (notification.requestId?.isNotEmpty ?? false) &&
                 (notification.requestStatus == null ||
                     notification.requestStatus == AccessRequestStatus.pending);
-            final allowActions =
-                canAcceptRejectAccessRequests(currentRole) &&
+            // FIX 12: Allow actions if user is targetUserId OR property creator
+            final isTargetUser =
                 notification.targetUserId != null &&
                 notification.targetUserId == currentUserId;
+            // For access requests, the property creator should also be able to accept/reject
+            final isRequesterOfProperty =
+                notification.requesterId != null &&
+                notification.requesterId == currentUserId;
+            final allowActions =
+                canAcceptRejectAccessRequests(currentRole) &&
+                isTargetUser &&
+                !isRequesterOfProperty;
             final isActionPending =
                 canAct &&
                 pendingRequests.contains(notification.requestId ?? '');

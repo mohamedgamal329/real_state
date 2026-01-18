@@ -102,10 +102,7 @@ class NotificationCardView extends StatelessWidget {
     final price = _priceText(summary);
     final timeLabel = timeAgo(notification.createdAt);
     final showActionButtons =
-        status == AccessRequestStatus.pending &&
-        isOwner &&
-        isTarget &&
-        showActions;
+        status == AccessRequestStatus.pending && isTarget && showActions;
     final isActionDisabled = _isBusy;
     final rejectLoading = actionStatus == NotificationActionStatus.rejecting;
     final acceptLoading = actionStatus == NotificationActionStatus.accepting;

@@ -23,6 +23,7 @@ Future<void> showPropertyFilterBottomSheet(
       value: cubit,
       child: FilterBottomSheet(
         currentFilter: initialFilter,
+        locationAreas: locationAreas,
         onAddLocation: onAddLocation ?? () async {},
         onApply: onApply,
         onClear: onClear,

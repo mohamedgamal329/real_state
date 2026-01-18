@@ -254,7 +254,11 @@ class PropertyDetailBloc
     final userId = loaded.userId;
     final role = loaded.userRole;
     if (userId == null) return;
-    if (!canRequestSensitiveInfo(role: role, property: loaded.property)) {
+    if (!canRequestSensitiveInfo(
+      role: role,
+      userId: userId,
+      property: loaded.property,
+    )) {
       emit(
         PropertyDetailActionSuccess(
           loaded,

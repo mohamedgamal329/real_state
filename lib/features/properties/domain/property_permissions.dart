@@ -100,9 +100,17 @@ bool canBypassLocationRestrictions({
 /// Collectors can request sensitive data for company properties only.
 bool canRequestSensitiveInfo({
   required UserRole? role,
+  required String? userId,
   required Property property,
 }) {
   if (role == null) return false;
+  if (isCreatorWithFullAccess(
+    property: property,
+    userId: userId,
+    userRole: role,
+  )) {
+    return false;
+  }
   if (role == UserRole.collector) {
     return property.ownerScope == PropertyOwnerScope.company;
   }
@@ -156,12 +164,23 @@ bool canViewSecurityNumber({
   required Property property,
   required String? userId,
   required UserRole? userRole,
+  bool hasAcceptedRequest = false,
 }) {
-  return hasIntrinsicPropertyAccess(
+  if (isCreatorWithFullAccess(
+    property: property,
+    userId: userId,
+    userRole: userRole,
+  )) {
+    return true;
+  }
+  if (hasIntrinsicPropertyAccess(
     property: property,
     userRole: userRole,
     userId: userId,
-  );
+  )) {
+    return true;
+  }
+  return hasAcceptedRequest;
 }
 
 /// ABSOLUTE RULE: Returns true if user is the property creator AND has FULL access.
@@ -178,5 +197,6 @@ bool isCreatorWithFullAccess({
   required String? userId,
   required UserRole? userRole,
 }) {
-  return isPropertyCreator(property: property, userId: userId);
+  if (userId == null || userId.isEmpty) return false;
+  return property.createdBy == userId;
 }

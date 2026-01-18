@@ -21,6 +21,7 @@ import 'package:real_state/features/company_areas/presentation/bloc/company_area
 import 'package:real_state/features/company_areas/presentation/bloc/company_areas_event.dart';
 import 'package:real_state/features/company_areas/presentation/bloc/company_areas_state.dart';
 import 'package:real_state/features/properties/domain/property_permissions.dart';
+import 'package:real_state/features/notifications/presentation/widgets/notifications_icon_button.dart';
 import 'package:real_state/core/widgets/clean_logo.dart';
 
 class HomePage extends StatefulWidget {
@@ -56,8 +57,9 @@ class _HomePageState extends State<HomePage>
       appBar: CustomAppBar(
         title: 'home',
         actions: const [
+          NotificationsIconButton(),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12.0),
+            padding: EdgeInsets.only(right: 12.0),
             child: CleanLogo(size: 32),
           ),
         ],

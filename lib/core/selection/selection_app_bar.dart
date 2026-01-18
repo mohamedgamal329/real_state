@@ -30,13 +30,13 @@ class SelectionAppBar extends StatelessWidget implements PreferredSizeWidget {
     return CustomAppBar(
       title: title,
       actions: [
+        ...policy.actions
+            .map((action) => _buildActionButton(context, action))
+            .whereType<Widget>(),
         IconButton(
           icon: const AppSvgIcon(AppSVG.close),
           onPressed: onClearSelection,
         ),
-        ...policy.actions
-            .map((action) => _buildActionButton(context, action))
-            .whereType<Widget>(),
       ],
     );
   }

@@ -207,20 +207,33 @@ void main() {
     expect(
       canRequestSensitiveInfo(
         role: UserRole.collector,
+        userId: 'collector1',
         property: lockedCompany,
       ),
       true,
     );
     expect(
-      canRequestSensitiveInfo(role: UserRole.collector, property: lockedBroker),
+      canRequestSensitiveInfo(
+        role: UserRole.collector,
+        userId: 'collector1',
+        property: lockedBroker,
+      ),
       false,
     );
     expect(
-      canRequestSensitiveInfo(role: UserRole.broker, property: lockedBroker),
-      true,
+      canRequestSensitiveInfo(
+        role: UserRole.broker,
+        userId: 'broker1',
+        property: lockedBroker,
+      ),
+      false,
     );
     expect(
-      canRequestSensitiveInfo(role: UserRole.owner, property: lockedBroker),
+      canRequestSensitiveInfo(
+        role: UserRole.owner,
+        userId: 'owner1',
+        property: lockedBroker,
+      ),
       true,
     );
   });

@@ -71,8 +71,11 @@ class PropertyDetailLoaded extends PropertyDetailState {
 
   bool get canShare => canShareProperty(userRole);
 
-  bool get canRequestAccess =>
-      canRequestSensitiveInfo(role: userRole, property: property);
+  bool get canRequestAccess => canRequestSensitiveInfo(
+    role: userRole,
+    userId: userId,
+    property: property,
+  );
 
   bool get hasPhone =>
       property.ownerPhoneEncryptedOrHiddenStored != null &&
@@ -81,6 +84,10 @@ class PropertyDetailLoaded extends PropertyDetailState {
   bool get hasSecurityGuardPhone =>
       property.securityGuardPhoneEncryptedOrHiddenStored != null &&
       property.securityGuardPhoneEncryptedOrHiddenStored!.trim().isNotEmpty;
+
+  bool get hasSecurityNumber =>
+      property.securityNumberEncryptedOrHiddenStored != null &&
+      property.securityNumberEncryptedOrHiddenStored!.trim().isNotEmpty;
 
   bool get hasLocationUrl =>
       property.locationUrl != null &&
@@ -189,6 +196,23 @@ class PropertyDetailLoaded extends PropertyDetailState {
 
   bool get securityGuardPhoneVisible {
     if (!hasSecurityGuardPhone) return false;
+    if (isCreatorWithFullAccess(
+      property: property,
+      userId: userId,
+      userRole: userRole,
+    ))
+      return true;
+    if (_ownerRequiresBrokerPhoneAccess) {
+      return phoneAccessGranted || _isRequestGranted(phoneAccessRequest);
+    }
+    if (_hasIntrinsicAccess ||
+        canBypassPhoneRestrictions(role: userRole, property: property))
+      return true;
+    return phoneAccessGranted || _isRequestGranted(phoneAccessRequest);
+  }
+
+  bool get securityNumberVisible {
+    if (!hasSecurityNumber) return false;
     if (isCreatorWithFullAccess(
       property: property,
       userId: userId,

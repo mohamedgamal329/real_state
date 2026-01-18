@@ -7,6 +7,7 @@ class PropertyEditorContactSection extends StatelessWidget {
     super.key,
     required this.phoneCtrl,
     required this.securityGuardPhoneCtrl,
+    required this.securityNumberCtrl,
     required this.hasPool,
     required this.isImagesHidden,
     required this.onTogglePool,
@@ -15,10 +16,13 @@ class PropertyEditorContactSection extends StatelessWidget {
     required this.securityGuardPhoneValidator,
     required this.showSecurityGuardPhone,
     required this.onShowSecurityGuardPhone,
+    required this.showSecurityNumber,
+    required this.onShowSecurityNumber,
   });
 
   final TextEditingController phoneCtrl;
   final TextEditingController securityGuardPhoneCtrl;
+  final TextEditingController securityNumberCtrl;
   final bool hasPool;
   final bool isImagesHidden;
   final ValueChanged<bool> onTogglePool;
@@ -27,6 +31,8 @@ class PropertyEditorContactSection extends StatelessWidget {
   final FormFieldValidator<String>? securityGuardPhoneValidator;
   final bool showSecurityGuardPhone;
   final VoidCallback onShowSecurityGuardPhone;
+  final bool showSecurityNumber;
+  final VoidCallback onShowSecurityNumber;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +59,21 @@ class PropertyEditorContactSection extends StatelessWidget {
             controller: securityGuardPhoneCtrl,
             keyboardType: TextInputType.phone,
             validator: securityGuardPhoneValidator,
+            textInputAction: TextInputAction.done,
+          ),
+        ],
+        if (!showSecurityNumber)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: onShowSecurityNumber,
+              child: Text('add_security_number'.tr()),
+            ),
+          ),
+        if (showSecurityNumber) ...[
+          AppTextField(
+            label: 'security_number'.tr(),
+            controller: securityNumberCtrl,
             textInputAction: TextInputAction.done,
           ),
         ],

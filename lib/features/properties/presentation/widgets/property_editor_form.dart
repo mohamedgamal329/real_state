@@ -24,12 +24,15 @@ class PropertyEditorForm extends StatelessWidget {
   final TextEditingController floorsCtrl;
   final TextEditingController phoneCtrl;
   final TextEditingController securityGuardPhoneCtrl;
+  final TextEditingController securityNumberCtrl;
   final bool isEditing;
   final bool showSkeleton;
   final bool hasPool;
   final bool isImagesHidden;
   final bool showSecurityGuardPhone;
+  final bool showSecurityNumber;
   final VoidCallback onShowSecurityGuardPhone;
+  final VoidCallback onShowSecurityNumber;
   final PropertyPurpose purpose;
   final String? locationId;
   final List<LocationArea> locations;
@@ -56,12 +59,15 @@ class PropertyEditorForm extends StatelessWidget {
     required this.floorsCtrl,
     required this.phoneCtrl,
     required this.securityGuardPhoneCtrl,
+    required this.securityNumberCtrl,
     required this.isEditing,
     required this.showSkeleton,
     required this.hasPool,
     required this.isImagesHidden,
     required this.showSecurityGuardPhone,
+    required this.showSecurityNumber,
     required this.onShowSecurityGuardPhone,
+    required this.onShowSecurityNumber,
     required this.purpose,
     required this.locationId,
     required this.locations,
@@ -150,12 +156,15 @@ class PropertyEditorForm extends StatelessWidget {
                 child: PropertyEditorContactSection(
                   phoneCtrl: phoneCtrl,
                   securityGuardPhoneCtrl: securityGuardPhoneCtrl,
+                  securityNumberCtrl: securityNumberCtrl,
                   hasPool: hasPool,
                   isImagesHidden: isImagesHidden,
                   onTogglePool: onTogglePool,
                   onToggleImagesHidden: onToggleImagesHidden,
                   showSecurityGuardPhone: showSecurityGuardPhone,
                   onShowSecurityGuardPhone: onShowSecurityGuardPhone,
+                  showSecurityNumber: showSecurityNumber,
+                  onShowSecurityNumber: onShowSecurityNumber,
                   phoneValidator: (v) {
                     if (v == null || v.trim().isEmpty) return null;
                     return Validators.isValidPhone(v)
@@ -185,6 +194,7 @@ class PropertyEditorForm extends StatelessWidget {
               PrimaryButton(
                 label: isEditing ? 'update'.tr() : 'create'.tr(),
                 icon: Icons.save,
+
                 onPressed: onSave,
               ),
             ],

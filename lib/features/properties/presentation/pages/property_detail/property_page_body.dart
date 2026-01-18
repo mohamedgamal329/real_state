@@ -123,6 +123,8 @@ class _PropertyPageBodyState extends State<PropertyPageBody> {
                 final phoneAccessible = loaded?.phoneVisible ?? false;
                 final securityGuardPhoneAccessible =
                     loaded?.securityGuardPhoneVisible ?? false;
+                final securityNumberAccessible =
+                    loaded?.securityNumberVisible ?? false;
                 final canRequestAccess = loaded?.canRequestAccess ?? false;
                 final canRequestImages =
                     canRequestAccess &&
@@ -131,9 +133,11 @@ class _PropertyPageBodyState extends State<PropertyPageBody> {
                 final canRequestPhone =
                     canRequestAccess &&
                     ((loaded?.hasPhone ?? false) ||
-                        (loaded?.hasSecurityGuardPhone ?? false)) &&
+                        (loaded?.hasSecurityGuardPhone ?? false) ||
+                        (loaded?.hasSecurityNumber ?? false)) &&
                     !phoneAccessible &&
-                    !securityGuardPhoneAccessible;
+                    !securityGuardPhoneAccessible &&
+                    !securityNumberAccessible;
                 final canRequestLocation =
                     canRequestAccess &&
                     (loaded?.hasLocationUrl ?? false) &&
@@ -162,6 +166,7 @@ class _PropertyPageBodyState extends State<PropertyPageBody> {
                   imagesAccessible: imagesAccessible,
                   phoneAccessible: phoneAccessible,
                   securityGuardPhoneAccessible: securityGuardPhoneAccessible,
+                  securityNumberAccessible: securityNumberAccessible,
                   locationAccessible: loaded?.locationVisible ?? false,
                   creatorName: loaded?.creatorName,
                   isSkeleton: isLoading,

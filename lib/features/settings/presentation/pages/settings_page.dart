@@ -60,7 +60,8 @@ class SettingsPage extends StatelessWidget {
                 12,
                 kBottomNavigationBarHeight +
                     100 +
-                    MediaQuery.of(context).padding.bottom,
+                    MediaQuery.of(context).padding.bottom +
+                    MediaQuery.of(context).viewInsets.bottom,
               ),
               children: [
                 Container(
@@ -70,18 +71,22 @@ class SettingsPage extends StatelessWidget {
                   ),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 20,
+                    vertical: 6,
                   ),
                   child: Column(
                     children: [
                       ListTile(
                         title: Text('profile_info'.tr()),
+                        dense: true,
                         leading: const AppSvgIcon(AppSVG.profile),
                         onTap: () => context.push('/settings/profile'),
                       ),
                       Divider(color: colorScheme.surfaceContainer),
                       ListTile(
                         title: Text('archive'.tr()),
+
+                        dense: true,
+
                         leading: const AppSvgIcon(AppSVG.inventory),
                         onTap: () => context.push('/properties/archive'),
                       ),
@@ -90,36 +95,18 @@ class SettingsPage extends StatelessWidget {
 
                       ListTile(
                         title: Text('my_added_properties'.tr()),
+                        dense: true,
+
                         leading: const AppSvgIcon(AppSVG.mapsHomeWork),
                         onTap: () => context.push('/properties/my-added'),
                       ),
                       Divider(color: colorScheme.surfaceContainer),
-
-                      ListTile(
-                        title: Text('notifications'.tr()),
-                        leading: const AppSvgIcon(AppSVG.notifications),
-                        onTap: () => context.push('/notifications'),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                Container(
-                  decoration: BoxDecoration(
-                    color: containerColor,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 20,
-                  ),
-                  child: Column(
-                    children: [
                       if (showAnyAdmin) ...[
                         if (showManageUsers) ...[
                           ListTile(
                             title: Text('manage_users'.tr()),
+                            dense: true,
+
                             leading: const AppSvgIcon(AppSVG.people),
                             onTap: () => context.push('/settings/users'),
                           ),
@@ -129,10 +116,11 @@ class SettingsPage extends StatelessWidget {
                         if (showManageLocations) ...[
                           ListTile(
                             title: Text('manage_locations'.tr()),
+                            dense: true,
+
                             leading: const AppSvgIcon(AppSVG.locationOn),
                             onTap: () => context.push('/settings/locations'),
                           ),
-                          Divider(color: colorScheme.surfaceContainer),
                         ],
                       ] else if (!isLoading) ...[
                         Padding(
@@ -146,6 +134,30 @@ class SettingsPage extends StatelessWidget {
                           ),
                         ),
                       ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                Container(
+                  decoration: BoxDecoration(
+                    color: containerColor,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
+                  child: Column(
+                    children: [
+                      ListTile(
+                        title: Text('notifications'.tr()),
+                        dense: true,
+
+                        leading: const AppSvgIcon(AppSVG.notifications),
+                        onTap: () => context.push('/notifications'),
+                      ),
+                      Divider(color: colorScheme.surfaceContainer),
                       _buildLanguageTile(context),
                       Divider(color: colorScheme.surfaceContainer),
 
@@ -153,9 +165,10 @@ class SettingsPage extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 30),
                 PrimaryButton(
                   label: 'sign_out'.tr(),
+                  iconWidget: AppSvgIcon(AppSVG.logout),
                   onPressed: () async {
                     final result = await AppConfirmDialog.show(
                       context,

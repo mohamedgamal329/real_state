@@ -10,6 +10,7 @@ import 'package:real_state/core/widgets/property_filter/filter_bottom_sheet_view
 import 'package:real_state/core/widgets/property_filter/property_filter_form.dart';
 import 'package:real_state/features/categories/presentation/cubit/categories_cubit.dart';
 import 'package:real_state/features/categories/presentation/cubit/categories_state.dart';
+import 'package:real_state/features/models/entities/location_area.dart';
 
 const filterApplyButtonKey = ValueKey('filter_apply_btn');
 const filterClearButtonKey = ValueKey('filter_clear_btn');
@@ -18,6 +19,7 @@ const filterMaxPriceInputKey = ValueKey('filter_max_price_input');
 
 class FilterBottomSheet extends StatefulWidget {
   final PropertyFilter currentFilter;
+  final List<LocationArea>? locationAreas;
   final Future<void> Function() onAddLocation;
   final Function(PropertyFilter) onApply;
   final VoidCallback? onClear;
@@ -25,6 +27,7 @@ class FilterBottomSheet extends StatefulWidget {
   const FilterBottomSheet({
     super.key,
     required this.currentFilter,
+    this.locationAreas,
     required this.onAddLocation,
     required this.onApply,
     this.onClear,
@@ -138,7 +141,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         final core = state is CategoriesCoreState
             ? state
             : const CategoriesInitial();
-        final locationAreas = core.locationAreas;
+        final locationAreas = widget.locationAreas ?? core.locationAreas;
         final candidateFilter = _buildCandidateFilter();
         final validation = _filterController.validate(candidateFilter);
         final isApplyEnabled = validation.isSuccess;

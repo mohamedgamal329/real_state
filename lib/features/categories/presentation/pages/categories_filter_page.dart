@@ -14,6 +14,7 @@ import 'package:real_state/features/categories/presentation/cubit/categories_cub
 import 'package:real_state/features/categories/presentation/cubit/categories_state.dart';
 import 'package:real_state/core/widgets/property_filter/property_filter_form.dart';
 import 'package:real_state/features/categories/presentation/pages/categories_filter_view.dart';
+import 'package:real_state/features/notifications/presentation/widgets/notifications_icon_button.dart';
 import 'package:real_state/core/widgets/clean_logo.dart';
 
 class CategoriesFilterPage extends StatefulWidget {
@@ -78,7 +79,7 @@ class _CategoriesFilterPageState extends State<CategoriesFilterPage> {
     if (!validation.isSuccess) return;
     final cubit = context.read<CategoriesCubit>();
     cubit.applyFilter(validation.filter!);
-    context.push('/categories', extra: cubit);
+    context.push('/filters/results', extra: validation.filter!);
   }
 
   Future<void> _onClear() async {
@@ -144,8 +145,9 @@ class _CategoriesFilterPageState extends State<CategoriesFilterPage> {
       appBar: CustomAppBar(
         title: 'filter',
         actions: const [
+          NotificationsIconButton(),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12.0),
+            padding: EdgeInsets.only(right: 12.0),
             child: CleanLogo(size: 32),
           ),
         ],

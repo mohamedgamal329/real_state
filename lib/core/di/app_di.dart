@@ -231,6 +231,12 @@ class AppDi {
     authRepoImpl,
     propertyMutationsBloc,
   );
+  late final CategoriesCubit categoriesCubit = CategoriesCubit(
+    propertiesRepository,
+    getLocationAreasUseCase,
+    propertyMutationsBloc,
+    authRepoImpl,
+  );
 
   List<SingleChildWidget> buildProviders() {
     return [
@@ -410,15 +416,7 @@ class AppDi {
       RepositoryProvider<ApplyPropertyFilterUseCase>.value(
         value: applyPropertyFilterUseCase,
       ),
-      Provider<CategoriesCubit Function()>(
-        create: (context) =>
-            () => CategoriesCubit(
-              context.read<PropertiesRepository>(),
-              context.read<GetLocationAreasUseCase>(),
-              context.read<PropertyMutationsStream>(),
-              context.read<AuthRepositoryDomain>(),
-            ),
-      ),
+      BlocProvider<CategoriesCubit>.value(value: categoriesCubit),
     ];
   }
 

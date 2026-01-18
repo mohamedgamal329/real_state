@@ -25,6 +25,7 @@ class UpdatePropertyUseCase {
     String? locationUrl,
     required String? ownerPhoneEncryptedOrHiddenStored,
     required String? securityGuardPhoneEncryptedOrHiddenStored,
+    required String? securityNumberEncryptedOrHiddenStored,
     required bool isImagesHidden,
     required List<String> imageUrls,
     required String? coverImageUrl,
@@ -53,6 +54,8 @@ class UpdatePropertyUseCase {
       ownerPhoneEncryptedOrHiddenStored: ownerPhoneEncryptedOrHiddenStored,
       securityGuardPhoneEncryptedOrHiddenStored:
           securityGuardPhoneEncryptedOrHiddenStored,
+      securityNumberEncryptedOrHiddenStored:
+          securityNumberEncryptedOrHiddenStored,
       isImagesHidden: isImagesHidden,
       imageUrls: imageUrls,
       coverImageUrl: coverImageUrl,

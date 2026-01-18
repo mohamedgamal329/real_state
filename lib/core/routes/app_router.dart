@@ -214,30 +214,9 @@ class AppRouter {
         ),
         GoRoute(
           path: '/filters/categories',
-          builder: (c, s) {
-            final cubit = s.extra is CategoriesCubit
-                ? s.extra as CategoriesCubit
-                : null;
-            if (cubit == null) return const NotFoundPage();
-            return BlocProvider.value(
-              value: cubit,
-              child: const CategoriesFilterPage(),
-            );
-          },
+          builder: (c, s) => const CategoriesFilterPage(),
         ),
-        GoRoute(
-          path: '/categories',
-          builder: (c, s) {
-            final cubit = s.extra is CategoriesCubit
-                ? s.extra as CategoriesCubit
-                : null;
-            if (cubit == null) return const NotFoundPage();
-            return BlocProvider.value(
-              value: cubit,
-              child: const CategoriesPage(),
-            );
-          },
-        ),
+        GoRoute(path: '/categories', builder: (c, s) => const CategoriesPage()),
         GoRoute(
           path: '/company/area/:id',
           builder: (c, s) => CompanyAreaPropertiesPage(

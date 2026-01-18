@@ -4,6 +4,7 @@ import 'package:real_state/core/components/app_text_field.dart';
 import 'package:real_state/core/components/primary_button.dart';
 import 'package:real_state/core/constants/aed_text.dart';
 import 'package:real_state/core/components/app_svg_icon.dart';
+import 'package:real_state/core/constants/app_colors.dart';
 import 'package:real_state/core/constants/app_images.dart';
 import 'package:real_state/core/constants/app_spacing.dart';
 
@@ -178,10 +179,21 @@ class PropertyFilterForm extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.xxl),
-            PrimaryButton(
+            // PrimaryButton(
+            //   key: applyButtonKey,
+            //   label: 'apply_filters'.tr(),
+            //   onPressed: () {
+            //     onApply();
+            //   },
+            //   //onPressed: isApplyEnabled ? onApply : null,
+            // ),
+            ElevatedButton(
               key: applyButtonKey,
-              label: 'apply_filters'.tr(),
               onPressed: isApplyEnabled ? onApply : null,
+              style: ButtonStyle(
+                backgroundColor: WidgetStatePropertyAll(AppColors.primary),
+              ),
+              child: Text('apply_filters'.tr()),
             ),
             const SizedBox(height: AppSpacing.sm),
             TextButton(

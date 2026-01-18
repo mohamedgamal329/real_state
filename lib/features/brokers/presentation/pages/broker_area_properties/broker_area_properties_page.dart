@@ -170,111 +170,61 @@ class _BrokerAreaPropertiesPageState extends State<BrokerAreaPropertiesPage> {
                 listener: (context, state) {
                   if (state is BrokerAreaPropertiesLoadSuccess) {
                     _refreshController.refreshCompleted();
+                    _currentItems = state.items;
+                    _filter = state.filter;
+                    _hasMore = state.hasMore;
                     if (state.hasMore) {
                       _refreshController.loadComplete();
                     } else {
                       _refreshController.loadNoData();
                     }
+                  } else if (state is BrokerAreaPropertiesLoadMoreInProgress) {
+                    _currentItems = state.items;
+                    _filter = state.filter;
+                    _hasMore = state.hasMore;
                   } else if (state is BrokerAreaPropertiesFailure) {
                     _refreshController.refreshFailed();
                     _refreshController.loadFailed();
+                    _currentItems = state.items;
+                    _filter = state.filter;
+                    _hasMore = state.hasMore;
+                  } else if (state is BrokerAreaPropertiesLoadInProgress) {
+                    _filter = state.filter;
                   }
                 },
                 builder: (context, state) {
-                  return _BrokerAreaPropertiesList(
-                    state: state,
-                    refreshController: _refreshController,
-                    areaTitle: areaTitle,
-                    selectionMode: _selectionMode,
-                    selectedIds: _selected,
+                  final view = _BrokerAreaPropertiesView.fromState(
+                    state,
                     cachedItems: _currentItems,
                     cachedFilter: _filter,
                     cachedHasMore: _hasMore,
-                    onToggleSelection: _toggleSelection,
+                  );
+
+                  return PropertyPaginatedListView(
+                    refreshController: _refreshController,
+                    items: view.items,
+                    isLoading: view.isInitialLoading,
+                    isError:
+                        state is BrokerAreaPropertiesFailure &&
+                        view.items.isEmpty,
+                    errorMessage: state is BrokerAreaPropertiesFailure
+                        ? state.message
+                        : null,
+                    hasMore: view.hasMore,
+                    startAreaName: areaTitle,
                     onRefresh: _refresh,
                     onLoadMore: () =>
                         _bloc.add(const BrokerAreaPropertiesLoadMore()),
                     onRetry: _refresh,
-                    onItemsChanged: (items) => _currentItems = items,
-                    onFilterChanged: (filter) => _filter = filter,
-                    onHasMoreChanged: (value) => _hasMore = value,
+                    selectionMode: _selectionMode,
+                    selectedIds: _selected,
+                    onToggleSelection: _toggleSelection,
+                    emptyMessage: 'no_broker_properties_in_area'.tr(),
                   );
                 },
               ),
         ),
       ),
-    );
-  }
-}
-
-class _BrokerAreaPropertiesList extends StatelessWidget {
-  final BrokerAreaPropertiesState state;
-  final RefreshController refreshController;
-  final String areaTitle;
-  final bool selectionMode;
-  final Set<String> selectedIds;
-  final List<Property> cachedItems;
-  final PropertyFilter cachedFilter;
-  final bool cachedHasMore;
-  final ValueChanged<String> onToggleSelection;
-  final VoidCallback onRefresh;
-  final VoidCallback onLoadMore;
-  final VoidCallback onRetry;
-  final ValueChanged<List<Property>> onItemsChanged;
-  final ValueChanged<PropertyFilter> onFilterChanged;
-  final ValueChanged<bool> onHasMoreChanged;
-
-  const _BrokerAreaPropertiesList({
-    required this.state,
-    required this.refreshController,
-    required this.areaTitle,
-    required this.selectionMode,
-    required this.selectedIds,
-    required this.cachedItems,
-    required this.cachedFilter,
-    required this.cachedHasMore,
-    required this.onToggleSelection,
-    required this.onRefresh,
-    required this.onLoadMore,
-    required this.onRetry,
-    required this.onItemsChanged,
-    required this.onFilterChanged,
-    required this.onHasMoreChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final view = _BrokerAreaPropertiesView.fromState(
-      state,
-      cachedItems: cachedItems,
-      cachedFilter: cachedFilter,
-      cachedHasMore: cachedHasMore,
-    );
-    onFilterChanged(view.filter);
-    onHasMoreChanged(view.hasMore);
-    if (!view.isInitialLoading) {
-      onItemsChanged(view.items);
-    }
-
-    final failure = state is BrokerAreaPropertiesFailure
-        ? state as BrokerAreaPropertiesFailure
-        : null;
-
-    return PropertyPaginatedListView(
-      refreshController: refreshController,
-      items: view.items,
-      isLoading: view.isInitialLoading,
-      isError: state is BrokerAreaPropertiesFailure && view.items.isEmpty,
-      errorMessage: failure?.message,
-      hasMore: view.hasMore,
-      startAreaName: areaTitle,
-      onRefresh: onRefresh,
-      onLoadMore: onLoadMore,
-      onRetry: onRetry,
-      selectionMode: selectionMode,
-      selectedIds: selectedIds,
-      onToggleSelection: onToggleSelection,
-      emptyMessage: 'no_broker_properties_in_area'.tr(),
     );
   }
 }

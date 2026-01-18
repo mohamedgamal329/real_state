@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:real_state/core/components/app_snackbar.dart';
 import 'package:real_state/core/validation/validators.dart';
 import 'package:real_state/features/models/entities/property.dart';
+import 'package:real_state/core/constants/app_images.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../pages/property_image_viewer/property_image_viewer_page.dart';
@@ -23,6 +24,7 @@ class PropertyDetailView extends StatefulWidget {
   final bool imagesAccessible;
   final bool phoneAccessible;
   final bool securityGuardPhoneAccessible;
+  final bool securityNumberAccessible;
   final bool locationAccessible;
   final VoidCallback? onRequestImages;
   final VoidCallback? onRequestPhone;
@@ -38,6 +40,7 @@ class PropertyDetailView extends StatefulWidget {
     required this.imagesAccessible,
     required this.phoneAccessible,
     required this.securityGuardPhoneAccessible,
+    required this.securityNumberAccessible,
     required this.locationAccessible,
     this.onRequestImages,
     this.onRequestPhone,
@@ -67,6 +70,9 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
     final hasSecurityGuardPhone =
         (p.securityGuardPhoneEncryptedOrHiddenStored ?? '').trim().isNotEmpty;
     final hasLocation = Validators.isValidUrl(p.locationUrl);
+    final hasSecurityNumber = (p.securityNumberEncryptedOrHiddenStored ?? '')
+        .trim()
+        .isNotEmpty;
     final availableWidth =
         MediaQuery.sizeOf(context).width - 32; // padding from page
     final canExpandDescription =
@@ -132,11 +138,24 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
           ],
           if (hasSecurityGuardPhone) ...[
             PropertyDetailPhoneSection(
-              labelKey: 'security_number',
+              labelKey: 'security_guard_phone',
               phoneVisible: widget.securityGuardPhoneAccessible,
               phoneText: p.securityGuardPhoneEncryptedOrHiddenStored,
               onRequestAccess: widget.onRequestPhone,
               keyPrefix: 'security_guard',
+            ),
+            const SizedBox(height: 20),
+          ],
+          if (hasSecurityNumber) ...[
+            PropertyDetailPhoneSection(
+              labelKey: 'security_number',
+              phoneVisible: widget.securityNumberAccessible,
+              phoneText: p.securityNumberEncryptedOrHiddenStored,
+              onRequestAccess: widget.onRequestPhone,
+              keyPrefix: 'security_number',
+              icon: AppSVG.lock,
+              showCallButton: false,
+              hiddenLabelKey: 'security_number_hidden',
             ),
             const SizedBox(height: 20),
           ],

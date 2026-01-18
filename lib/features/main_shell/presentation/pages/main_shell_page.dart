@@ -34,7 +34,6 @@ class _MainShellPageState extends State<MainShellPage>
     with SingleTickerProviderStateMixin {
   late final CompanyAreasBloc _companyAreasBloc;
   late final BrokerAreasBloc _brokerAreasBloc;
-  late final CategoriesCubit _categoriesCubit;
   late final List<Widget> _pages;
   final List<PropertyMutation> _pendingMutations = [];
   int? _lastHandledMutationTick;
@@ -57,7 +56,6 @@ class _MainShellPageState extends State<MainShellPage>
     BottomTabController.controller.removeListener(_handleTabChange);
     _companyAreasBloc.close();
     _brokerAreasBloc.close();
-    _categoriesCubit.close();
     super.dispose();
   }
 
@@ -81,12 +79,10 @@ class _MainShellPageState extends State<MainShellPage>
   void _initializeCubits() {
     final createCompanyAreasBloc = context.read<CompanyAreasBloc Function()>();
     final createBrokerAreasBloc = context.read<BrokerAreasBloc Function()>();
-    final createCategoriesCubit = context.read<CategoriesCubit Function()>();
 
     _companyAreasBloc = createCompanyAreasBloc()
       ..add(const CompanyAreasRequested());
     _brokerAreasBloc = createBrokerAreasBloc();
-    _categoriesCubit = createCategoriesCubit();
   }
 
   @override
@@ -97,7 +93,6 @@ class _MainShellPageState extends State<MainShellPage>
           providers: [
             BlocProvider<CompanyAreasBloc>.value(value: _companyAreasBloc),
             BlocProvider<BrokerAreasBloc>.value(value: _brokerAreasBloc),
-            BlocProvider<CategoriesCubit>.value(value: _categoriesCubit),
           ],
           child: BlocListener<PropertyMutationsBloc, PropertyMutationsState>(
             listener: _handleMutation,

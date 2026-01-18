@@ -23,7 +23,14 @@ class CleanLogo extends StatelessWidget {
     );
 
     if (!isDark) {
-      return imageWidget;
+      // FIX 7: Add subtle border in light mode so logo doesn't blend into white backgrounds
+      return Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: Colors.grey.shade300, width: 1),
+        ),
+        child: imageWidget,
+      );
     }
 
     // Dark mode: wrap in container with white background

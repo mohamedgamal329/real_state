@@ -23,9 +23,12 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
         _phoneCtrl.text = prop.ownerPhoneEncryptedOrHiddenStored ?? '';
         _securityGuardPhoneCtrl.text =
             prop.securityGuardPhoneEncryptedOrHiddenStored ?? '';
+        _securityNumberCtrl.text =
+            prop.securityNumberEncryptedOrHiddenStored ?? '';
         _showSecurityGuardPhone = _securityGuardPhoneCtrl.text
             .trim()
             .isNotEmpty;
+        _showSecurityNumber = _securityNumberCtrl.text.trim().isNotEmpty;
         _hasPool = prop.hasPool;
         _isImagesHidden = prop.isImagesHidden;
         _purpose = prop.purpose;
@@ -203,6 +206,10 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
       final phoneValue = phone.isEmpty ? null : phone;
       final securityPhone = _securityGuardPhoneCtrl.text.trim();
       final securityPhoneValue = securityPhone.isEmpty ? null : securityPhone;
+      final securityNumber = _securityNumberCtrl.text.trim();
+      final securityNumberValue = securityNumber.isEmpty
+          ? null
+          : securityNumber;
       final locationUrl = _locationUrlCtrl.text.trim();
       final locationValue = locationUrl.isEmpty ? null : locationUrl;
       final price = Validators.parsePrice(_priceCtrl.text);
@@ -232,6 +239,7 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
           locationUrl: locationValue,
           ownerPhoneEncryptedOrHiddenStored: phoneValue,
           securityGuardPhoneEncryptedOrHiddenStored: securityPhoneValue,
+          securityNumberEncryptedOrHiddenStored: securityNumberValue,
           isImagesHidden: _isImagesHidden,
           imageUrls: upload.urls,
           coverImageUrl: nowCover,
@@ -260,6 +268,7 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
           locationUrl: locationValue,
           ownerPhoneEncryptedOrHiddenStored: phoneValue,
           securityGuardPhoneEncryptedOrHiddenStored: securityPhoneValue,
+          securityNumberEncryptedOrHiddenStored: securityNumberValue,
           isImagesHidden: _isImagesHidden,
           imageUrls: upload.urls,
           coverImageUrl: nowCover,

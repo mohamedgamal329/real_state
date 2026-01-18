@@ -58,12 +58,12 @@ class CategoriesCubit extends Cubit<CategoriesState> {
       (u) => _isCollector = u?.role == UserRole.collector,
     );
     // Ensure locations are loaded early for filters
-    unawaited(ensureLocationsLoaded());
+    unawaited(ensureLocationsLoaded(force: true));
   }
 
   /// Load location areas for filter dropdown
   Future<void> loadLocations() async {
-    await ensureLocationsLoaded();
+    await ensureLocationsLoaded(force: true);
   }
 
   Future<void> ensureLocationsLoaded({bool force = false}) async {
@@ -73,23 +73,22 @@ class CategoriesCubit extends Cubit<CategoriesState> {
 
     _locationsLoadCompleter = Completer<void>();
     try {
-      if (state is CategoriesInitial) {
-        final core = state as CategoriesInitial;
-        emit(
-          CategoriesLoadInProgress(
-            filter: core.filter,
-            locationAreas: core.locationAreas,
-            areaNames: core.areaNames,
-          ),
-        );
-      }
+      final core = _coreState();
+      emit(
+        CategoriesLoadInProgress(
+          filter: core.filter,
+          locationAreas: core.locationAreas,
+          areaNames: core.areaNames,
+        ),
+      );
       final areas = await _areas.call(force: force);
       final map = {for (final a in areas) a.id: a};
       _locationsLoaded = true;
       emit(_stateWithLocations(areas, map));
       _locationsLoadCompleter?.complete();
     } catch (e) {
-      _locationsLoadCompleter?.complete();
+      _locationsLoaded = false;
+      _locationsLoadCompleter?.completeError(e);
       // Keep current state on failure to avoid losing list data
     } finally {
       _locationsLoadCompleter = null;
@@ -373,7 +372,7 @@ class CategoriesCubit extends Cubit<CategoriesState> {
       );
     }
     if (state is CategoriesLoadInProgress) {
-      return CategoriesLoadInProgress(
+      return CategoriesInitial(
         filter: current.filter,
         locationAreas: areas,
         areaNames: {...names, ...current.areaNames},

@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:real_state/core/components/app_snackbar.dart';
 import 'package:real_state/core/constants/user_role.dart';
@@ -47,6 +49,16 @@ Future<void> shareMultiplePropertyPdfs({
     ),
   );
   overlayController.show(context);
+
+  // Get temp directory for real file creation
+  final tempDir = await getTemporaryDirectory();
+  final shareDir = Directory('${tempDir.path}/share_pdfs');
+  if (await shareDir.exists()) {
+    await shareDir.delete(recursive: true);
+  }
+  await shareDir.create(recursive: true);
+
+  final tempFiles = <File>[];
   try {
     final files = <XFile>[];
     final usedNames = <String>{};
@@ -82,12 +94,16 @@ Future<void> shareMultiplePropertyPdfs({
           );
         },
       );
-      files.add(
-        XFile.fromData(bytes, name: item.fileName, mimeType: 'application/pdf'),
-      );
+
+      // Write to real temp file with correct filename (FIX 5: Gmail sees this name)
+      final tempFile = File('${shareDir.path}/${item.fileName}');
+      await tempFile.writeAsBytes(bytes);
+      tempFiles.add(tempFile);
+      files.add(XFile(tempFile.path));
+
       if (kDebugMode) {
         debugPrint(
-          'share_pdf: ${property.id} built in ${itemStopwatch.elapsedMilliseconds}ms',
+          'share_pdf: ${property.id} built in ${itemStopwatch.elapsedMilliseconds}ms -> ${item.fileName}',
         );
       }
     }
@@ -109,8 +125,11 @@ Future<void> shareMultiplePropertyPdfs({
         items.length,
       ),
     );
-    // ignore: deprecated_member_use
-    await Share.shareXFiles(files, text: 'share_details_pdf'.tr());
+    await Share.shareXFiles(
+      files,
+      text: 'share_details_pdf'.tr(),
+      subject: 'properties_share_subject'.tr(args: [items.length.toString()]),
+    );
     overlayController.update(
       _batchProgress(
         PropertyShareProgress(

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:image/image.dart' as img;
+import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:real_state/core/errors/localized_exception.dart';
 import 'package:real_state/features/models/entities/property.dart';
@@ -73,17 +74,22 @@ class PropertyShareService {
       onProgress: onProgress,
     );
     _reportProgress(onProgress, PropertyShareStage.generatingPdf);
-    // Use Share.shareXFiles instead of Printing.sharePdf to ensure
-    // the filename uses property title (not temp file UUID)
+
+    // FIX 5: Write to real temp file so Gmail sees correct filename (not UUID)
     final title = property.title?.trim();
     final fileName = title?.isNotEmpty == true
         ? '$title.pdf'
         : '${'property'.tr()}.pdf';
-    final file = XFile.fromData(
-      pdfBytes,
-      name: fileName,
-      mimeType: 'application/pdf',
-    );
+
+    final tempDir = await getTemporaryDirectory();
+    final shareDir = Directory('${tempDir.path}/share_pdfs');
+    if (!await shareDir.exists()) {
+      await shareDir.create(recursive: true);
+    }
+    final tempFile = File('${shareDir.path}/$fileName');
+    await tempFile.writeAsBytes(pdfBytes);
+    final file = XFile(tempFile.path);
+
     _reportProgress(onProgress, PropertyShareStage.uploadingSharing);
     // ignore: deprecated_member_use
     await Share.shareXFiles([file], text: 'share_details_pdf'.tr());

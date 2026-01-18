@@ -37,7 +37,7 @@ class _LoginFormState extends State<LoginForm> {
   ];
 
   _Account get currentAcc {
-    return _accounts[0];
+    return _accounts[1];
   }
 
   @override
@@ -101,6 +101,8 @@ class _LoginFormState extends State<LoginForm> {
           const SizedBox(height: 16),
           PrimaryButton(
             label: 'sign_in'.tr(),
+            iconWidget: AppSvgIcon(AppSVG.login),
+
             onPressed: () async {
               if (_formKey.currentState?.validate() != true) return;
               await LoadingDialog.show(

@@ -101,4 +101,98 @@ void main() {
     expect(canManageLocations(UserRole.collector), false);
     expect(canShowAccessRequestDialog(UserRole.collector), false);
   });
+
+  group('Security Number Permissions', () {
+    test('creator can always view security number', () {
+      expect(
+        canViewSecurityNumber(
+          property: companyProperty,
+          userId: 'u1', // Created by u1
+          userRole: UserRole.broker,
+        ),
+        true,
+      );
+    });
+
+    test(
+      'collector can view security number of company property they created',
+      () {
+        expect(
+          canViewSecurityNumber(
+            property: companyProperty,
+            userId: 'u1', // Created by u1
+            userRole: UserRole.collector,
+          ),
+          true,
+        );
+      },
+    );
+
+    test(
+      'collector cannot view security number of broker property they did not create',
+      () {
+        expect(
+          canViewSecurityNumber(
+            property: brokerProperty,
+            userId: 'other',
+            userRole: UserRole.collector,
+          ),
+          false,
+        );
+      },
+    );
+
+    test('owner can always view security number of company properties', () {
+      expect(
+        canViewSecurityNumber(
+          property: companyProperty,
+          userId: 'any',
+          userRole: UserRole.owner,
+        ),
+        true,
+      );
+    });
+
+    test('other user can view only with accepted request', () {
+      expect(
+        canViewSecurityNumber(
+          property: companyProperty,
+          userId: 'u2',
+          userRole: UserRole.broker,
+        ),
+        false,
+      );
+      expect(
+        canViewSecurityNumber(
+          property: companyProperty,
+          userId: 'u2',
+          userRole: UserRole.broker,
+          hasAcceptedRequest: true,
+        ),
+        true,
+      );
+    });
+
+    test('creator cannot request sensitive info for their own property', () {
+      expect(
+        canRequestSensitiveInfo(
+          property: companyProperty,
+          userId: 'u1',
+          role: UserRole.broker,
+        ),
+        false,
+      );
+    });
+
+    test('others can request sensitive info if they have no full access', () {
+      expect(
+        canRequestSensitiveInfo(
+          property: companyProperty,
+          userId: 'u2',
+          role: UserRole.broker,
+        ),
+        true,
+      );
+    });
+  });
 }

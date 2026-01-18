@@ -45,6 +45,8 @@ class PropertyDto {
           data['ownerPhoneEncryptedOrHiddenStored'] as String?,
       securityGuardPhoneEncryptedOrHiddenStored:
           data['securityGuardPhoneEncryptedOrHiddenStored'] as String?,
+      securityNumberEncryptedOrHiddenStored:
+          data['securityNumberEncryptedOrHiddenStored'] as String?,
       isImagesHidden: (data['isImagesHidden'] as bool?) ?? false,
       status: statusFrom(data['status'] as String?),
       isDeleted: (data['isDeleted'] as bool?) ?? false,
@@ -74,6 +76,8 @@ class PropertyDto {
     'ownerPhoneEncryptedOrHiddenStored': p.ownerPhoneEncryptedOrHiddenStored,
     'securityGuardPhoneEncryptedOrHiddenStored':
         p.securityGuardPhoneEncryptedOrHiddenStored,
+    'securityNumberEncryptedOrHiddenStored':
+        p.securityNumberEncryptedOrHiddenStored,
     'isImagesHidden': p.isImagesHidden,
     'status': p.status.name,
     'isDeleted': p.isDeleted,

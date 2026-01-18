@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:real_state/core/constants/app_images.dart';
 import 'package:real_state/features/properties/presentation/widgets/property_phone_section.dart';
 
 class PropertyDetailPhoneSection extends StatelessWidget {
@@ -10,6 +11,9 @@ class PropertyDetailPhoneSection extends StatelessWidget {
     required this.phoneText,
     required this.onRequestAccess,
     this.keyPrefix,
+    this.icon = AppSVG.phone,
+    this.showCallButton = true,
+    this.hiddenLabelKey,
   });
 
   final String labelKey;
@@ -17,6 +21,9 @@ class PropertyDetailPhoneSection extends StatelessWidget {
   final String? phoneText;
   final VoidCallback? onRequestAccess;
   final String? keyPrefix;
+  final String icon;
+  final bool showCallButton;
+  final String? hiddenLabelKey;
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +38,9 @@ class PropertyDetailPhoneSection extends StatelessWidget {
           phoneText: phoneText,
           onRequestAccess: onRequestAccess,
           keyPrefix: keyPrefix,
+          icon: icon,
+          showCallButton: showCallButton,
+          hiddenLabelKey: hiddenLabelKey,
         ),
       ],
     );

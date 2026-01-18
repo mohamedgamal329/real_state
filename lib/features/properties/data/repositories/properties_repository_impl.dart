@@ -412,6 +412,7 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
     double? price,
     String? ownerPhoneEncryptedOrHiddenStored,
     String? securityGuardPhoneEncryptedOrHiddenStored,
+    String? securityNumberEncryptedOrHiddenStored,
     bool isImagesHidden = false,
     List<String> imageUrls = const [],
     String? coverImageUrl,
@@ -440,6 +441,8 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
       ownerPhoneEncryptedOrHiddenStored: ownerPhoneEncryptedOrHiddenStored,
       securityGuardPhoneEncryptedOrHiddenStored:
           securityGuardPhoneEncryptedOrHiddenStored,
+      securityNumberEncryptedOrHiddenStored:
+          securityNumberEncryptedOrHiddenStored,
       isImagesHidden: isImagesHidden,
       status: PropertyStatus.active,
       isDeleted: false,
@@ -473,6 +476,7 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
     double? price,
     String? ownerPhoneEncryptedOrHiddenStored,
     String? securityGuardPhoneEncryptedOrHiddenStored,
+    String? securityNumberEncryptedOrHiddenStored,
     bool? isImagesHidden,
     List<String>? imageUrls,
     String? coverImageUrl,
@@ -510,6 +514,10 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
     if (securityGuardPhoneEncryptedOrHiddenStored != null) {
       updateMap['securityGuardPhoneEncryptedOrHiddenStored'] =
           securityGuardPhoneEncryptedOrHiddenStored;
+    }
+    if (securityNumberEncryptedOrHiddenStored != null) {
+      updateMap['securityNumberEncryptedOrHiddenStored'] =
+          securityNumberEncryptedOrHiddenStored;
     }
     if (isImagesHidden != null) updateMap['isImagesHidden'] = isImagesHidden;
     if (imageUrls != null) updateMap['imageUrls'] = imageUrls;
