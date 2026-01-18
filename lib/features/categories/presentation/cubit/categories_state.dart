@@ -7,6 +7,8 @@ import 'package:real_state/features/models/entities/property.dart';
 sealed class CategoriesState extends Equatable {
   const CategoriesState();
 
+  PropertyFilter get filter => const PropertyFilter();
+
   @override
   List<Object?> get props => [];
 }
@@ -18,6 +20,7 @@ abstract class CategoriesCoreState extends CategoriesState {
     required this.areaNames,
   });
 
+  @override
   final PropertyFilter filter;
   final List<LocationArea> locationAreas;
   final Map<String, LocationArea> areaNames;

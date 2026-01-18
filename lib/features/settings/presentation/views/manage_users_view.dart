@@ -73,13 +73,13 @@ class _ManageUsersViewState extends State<ManageUsersView>
   Widget build(BuildContext context) {
     if (_loadingRole) {
       return Scaffold(
-        appBar: const CustomAppBar(title: 'manage_users'),
+        appBar: CustomAppBar(title: 'manage_users'.tr()),
         body: _buildSkeletonList(),
       );
     }
     if (!_isOwner) {
       return Scaffold(
-        appBar: const CustomAppBar(title: 'manage_users'),
+        appBar: CustomAppBar(title: 'manage_users'.tr()),
         body: AppErrorView(
           message: 'access_denied_owner'.tr(),
           onRetry: _loadRole,
@@ -125,7 +125,7 @@ class _ManageUsersViewState extends State<ManageUsersView>
 
           if (state is ManageUsersFailure && dataState == null) {
             return Scaffold(
-              appBar: const CustomAppBar(title: 'manage_users'),
+              appBar: CustomAppBar(title: 'manage_users'.tr()),
               body: AppErrorView(
                 message: state.message,
                 onRetry: () => context.read<ManageUsersCubit>().load(),
@@ -142,7 +142,7 @@ class _ManageUsersViewState extends State<ManageUsersView>
                 )
               : list;
           return Scaffold(
-            appBar: const CustomAppBar(title: 'manage_users'),
+            appBar: CustomAppBar(title: 'manage_users'.tr()),
             floatingActionButton: _isOwner
                 ? FloatingActionButton(
                     onPressed: () => widget.flow.openCreateUserSheet(context),

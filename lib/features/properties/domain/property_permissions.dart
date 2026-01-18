@@ -39,15 +39,14 @@ bool canCollectorMutateCompanyProperty(Property property, UserRole? role) =>
     property.ownerScope == PropertyOwnerScope.company;
 
 /// Returns true when the user can update/archive/delete the given property.
-/// Owners are always allowed. Brokers can modify their own properties.
-/// Collectors can modify properties they created.
+/// Owners are always allowed. Brokers/Collectors can modify properties they created.
 bool canModifyProperty({
   required Property property,
   required String userId,
   required UserRole role,
 }) {
-  if (property.createdBy == userId) return true;
   if (role == UserRole.owner) return true;
+  if (property.createdBy == userId) return true;
   if (role == UserRole.broker && property.brokerId == userId) return true;
   return false;
 }
@@ -76,44 +75,78 @@ bool canDeleteProperty({
 }) =>
     canArchiveOrDeleteProperty(property: property, userId: userId, role: role);
 
-/// Owners can bypass image visibility restrictions for company properties.
+/// ABSOLUTE RULE: Returns true if user is the property creator OR Company Owner.
+/// When true, user should NEVER see:
+/// - Request access buttons
+/// - Locked placeholders
+/// - Permission warnings
+bool hasIntrinsicPropertyAccess({
+  required Property property,
+  required UserRole? userRole,
+  required String? userId,
+}) {
+  if (userRole == UserRole.owner) {
+    return true;
+  }
+  if (userId != null && property.createdBy == userId) return true;
+  if (userRole == UserRole.broker && userId != null) {
+    if (property.brokerId == userId) return true;
+  }
+  return false;
+}
+
+/// Owners and Creators can bypass visibility restrictions.
 bool canBypassImageRestrictions({
   required UserRole? role,
   required Property property,
-}) =>
-    role == UserRole.owner && property.ownerScope == PropertyOwnerScope.company;
+  String? userId,
+}) => hasIntrinsicPropertyAccess(
+  property: property,
+  userRole: role,
+  userId: userId,
+);
 
-/// Owners can bypass phone visibility restrictions for company properties.
 bool canBypassPhoneRestrictions({
   required UserRole? role,
   required Property property,
-}) =>
-    role == UserRole.owner && property.ownerScope == PropertyOwnerScope.company;
+  String? userId,
+}) => hasIntrinsicPropertyAccess(
+  property: property,
+  userRole: role,
+  userId: userId,
+);
 
-/// Owners can bypass location visibility restrictions for company properties.
 bool canBypassLocationRestrictions({
   required UserRole? role,
   required Property property,
-}) =>
-    role == UserRole.owner && property.ownerScope == PropertyOwnerScope.company;
+  String? userId,
+}) => hasIntrinsicPropertyAccess(
+  property: property,
+  userRole: role,
+  userId: userId,
+);
 
-/// Collectors can request sensitive data for company properties only.
+/// Determine if user can Request access.
+/// Returns false for creators/owners since they have intrinsic access.
 bool canRequestSensitiveInfo({
   required UserRole? role,
   required String? userId,
   required Property property,
 }) {
   if (role == null) return false;
-  if (isCreatorWithFullAccess(
+  if (hasIntrinsicPropertyAccess(
     property: property,
-    userId: userId,
     userRole: role,
+    userId: userId,
   )) {
     return false;
   }
+  // Collectors can only request for company properties.
   if (role == UserRole.collector) {
     return property.ownerScope == PropertyOwnerScope.company;
   }
+  // Owners can request for anything they don't have intrinsic access to (e.g. broker props).
+  if (role == UserRole.owner) return true;
   return true;
 }
 
@@ -128,35 +161,12 @@ bool canDecideAccessRequest({
 }) {
   if (role == UserRole.collector) return false;
   if (request.ownerId == null || request.ownerId!.isEmpty) return false;
-  return request.ownerId == userId;
+  return request.ownerId == userId || role == UserRole.owner;
 }
 
 bool isPropertyCreator({required Property property, required String? userId}) {
   if (userId == null || userId.isEmpty) return false;
   return property.createdBy == userId;
-}
-
-/// Determines if a user inherently has access to hidden details for a property.
-/// - Owners always have access to company properties.
-/// - Brokers have access to properties they created/own.
-/// - Collectors have access to company properties they created.
-bool hasIntrinsicPropertyAccess({
-  required Property property,
-  required UserRole? userRole,
-  required String? userId,
-}) {
-  if (userId != null && property.createdBy == userId) return true;
-  if (userRole == UserRole.owner) {
-    return property.ownerScope == PropertyOwnerScope.company;
-  }
-  if (userRole == UserRole.broker && userId != null) {
-    return property.brokerId == userId || property.createdBy == userId;
-  }
-  if (userRole == UserRole.collector && userId != null) {
-    if (property.ownerScope != PropertyOwnerScope.company) return false;
-    return property.createdBy == userId;
-  }
-  return false;
 }
 
 /// Returns true if the user can view the security number (security guard phone).
@@ -166,13 +176,6 @@ bool canViewSecurityNumber({
   required UserRole? userRole,
   bool hasAcceptedRequest = false,
 }) {
-  if (isCreatorWithFullAccess(
-    property: property,
-    userId: userId,
-    userRole: userRole,
-  )) {
-    return true;
-  }
   if (hasIntrinsicPropertyAccess(
     property: property,
     userRole: userRole,
@@ -183,20 +186,13 @@ bool canViewSecurityNumber({
   return hasAcceptedRequest;
 }
 
-/// ABSOLUTE RULE: Returns true if user is the property creator AND has FULL access.
-///
-/// When true, creator should NEVER see:
-/// - Request access buttons
-/// - Locked placeholders
-/// - Permission warnings
-/// - Any restricted UI
-///
-/// Use this function as the SINGLE SOURCE OF TRUTH for creator access checks in UI.
+/// Legacy alias for hasIntrinsicPropertyAccess targeted at UI checks.
 bool isCreatorWithFullAccess({
   required Property property,
   required String? userId,
   required UserRole? userRole,
-}) {
-  if (userId == null || userId.isEmpty) return false;
-  return property.createdBy == userId;
-}
+}) => hasIntrinsicPropertyAccess(
+  property: property,
+  userRole: userRole,
+  userId: userId,
+);

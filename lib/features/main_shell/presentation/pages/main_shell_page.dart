@@ -4,7 +4,6 @@ import 'package:real_state/core/constants/app_images.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:real_state/core/components/app_snackbar.dart';
 import 'package:real_state/features/brokers/presentation/bloc/areas/broker_areas_bloc.dart';
-import 'package:real_state/features/categories/presentation/cubit/categories_cubit.dart';
 import 'package:real_state/features/categories/presentation/pages/categories_filter_page.dart';
 import 'package:real_state/features/company_areas/presentation/bloc/company_areas_bloc.dart';
 import 'package:real_state/features/company_areas/presentation/bloc/company_areas_event.dart';

@@ -324,7 +324,13 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
       return false;
     }
     if (filter == null) return true;
-    if (filter.rooms != null && property.rooms != filter.rooms) return false;
+    if (filter.rooms != null) {
+      if (filter.rooms == 5) {
+        if ((property.rooms ?? 0) < 5) return false;
+      } else if (property.rooms != filter.rooms) {
+        return false;
+      }
+    }
     if (filter.hasPool == true && property.hasPool != true) return false;
     if (filter.createdBy != null && property.createdBy != filter.createdBy) {
       return false;
@@ -340,7 +346,13 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
         property.locationAreaId != filter.locationAreaId) {
       return false;
     }
-    if (filter.rooms != null && property.rooms != filter.rooms) return false;
+    if (filter.rooms != null) {
+      if (filter.rooms == 5) {
+        if ((property.rooms ?? 0) < 5) return false;
+      } else if (property.rooms != filter.rooms) {
+        return false;
+      }
+    }
     if (filter.hasPool == true && property.hasPool != true) return false;
     if (filter.createdBy != null && property.createdBy != filter.createdBy) {
       return false;

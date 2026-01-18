@@ -50,40 +50,38 @@ Future<void> shareMultiplePropertyPdfs({
   );
   overlayController.show(context);
 
-  // Get temp directory for real file creation
+  // Get temp directory and create a unique sub-directory per share operation
+  // This avoids filename collisions and Gmail caching issues (FIX F)
   final tempDir = await getTemporaryDirectory();
-  final shareDir = Directory('${tempDir.path}/share_pdfs');
-  if (await shareDir.exists()) {
-    await shareDir.delete(recursive: true);
-  }
+  final timestamp = DateTime.now().millisecondsSinceEpoch;
+  // Use a completely unique directory for this specific share intent
+  final shareDir = Directory('${tempDir.path}/share_pdfs_$timestamp');
   await shareDir.create(recursive: true);
 
   final tempFiles = <File>[];
   try {
-    final files = <XFile>[];
+    final xFiles = <XFile>[];
     final usedNames = <String>{};
-    final items = List<_ShareItem>.unmodifiable(
-      properties.map(
-        (property) => _ShareItem(
-          property,
-          buildSharePdfFileName(
-            title: property.title,
-            fallbackTitle: fallbackTitle,
-            usedNames: usedNames,
-            propertyId: property.id,
-          ),
-        ),
-      ),
-    );
-    final batchStopwatch = Stopwatch()..start();
-    for (var i = 0; i < items.length; i++) {
-      final item = items[i];
-      final property = item.property;
+
+    debugPrint('share_pdfs_selected=${properties.length}');
+
+    // Batch process properties to build PDFs
+    for (var i = 0; i < properties.length; i++) {
+      final property = properties[i];
       final itemStopwatch = Stopwatch()..start();
+
+      final fileName = buildSharePdfFileName(
+        title: property.title,
+        fallbackTitle: fallbackTitle,
+        usedNames: usedNames,
+        propertyId: property.id,
+      );
+
       final includeImages =
           canViewPropertyImages(context: context, property: property) &&
           !property.isImagesHidden &&
           property.imageUrls.isNotEmpty;
+
       final bytes = await service.buildPdfBytes(
         property: property,
         localeCode: localeCode,
@@ -95,49 +93,66 @@ Future<void> shareMultiplePropertyPdfs({
         },
       );
 
-      // Write to real temp file with correct filename (FIX 5: Gmail sees this name)
-      final tempFile = File('${shareDir.path}/${item.fileName}');
+      // Write to real temp file with clean filename (Gmail truth)
+      final tempFile = File('${shareDir.path}/$fileName');
       await tempFile.writeAsBytes(bytes);
+      // Flush to ensure OS sees it.
+      await tempFile.parent.create(recursive: true);
       tempFiles.add(tempFile);
-      files.add(XFile(tempFile.path));
 
+      // EXTREMELY CRITICAL: Use XFile with the explicit name if possible,
+      // but share_plus takes name from path.
+      final xFile = XFile(tempFile.path, name: fileName);
+      xFiles.add(xFile);
+
+      debugPrint('share_dir=${shareDir.path}');
+      debugPrint(
+        'share_pdf_${i + 1}_path=${tempFile.path} size=${bytes.length}',
+      );
       if (kDebugMode) {
         debugPrint(
-          'share_pdf: ${property.id} built in ${itemStopwatch.elapsedMilliseconds}ms -> ${item.fileName}',
+          'share_pdf: ${property.id} built in ${itemStopwatch.elapsedMilliseconds}ms -> $fileName',
         );
       }
     }
-    if (files.isEmpty) {
+
+    if (xFiles.isEmpty) {
       throw const LocalizedException('share_pdf_not_allowed');
     }
-    if (kDebugMode) {
-      debugPrint(
-        'share_pdf: batch ready in ${batchStopwatch.elapsedMilliseconds}ms',
-      );
-    }
+
+    debugPrint('share_pdfs_created=${xFiles.length}');
+    debugPrint('share_pdfs_count=${xFiles.length}');
+
     overlayController.update(
       _batchProgress(
         PropertyShareProgress(
           stage: PropertyShareStage.uploadingSharing,
           fraction: PropertyShareStage.uploadingSharing.defaultFraction(),
         ),
-        items.length - 1,
-        items.length,
+        properties.length - 1,
+        properties.length,
       ),
     );
+
+    // FIX F: Share all XFiles gathered in the loop.
+    // Passing full list ensures multi-attach in Gmail.
+    // ignore: deprecated_member_use
     await Share.shareXFiles(
-      files,
-      text: 'share_details_pdf'.tr(),
-      subject: 'properties_share_subject'.tr(args: [items.length.toString()]),
+      xFiles,
+      subject: 'properties_share_subject'.tr(
+        args: [properties.length.toString()],
+      ),
+      text: properties.length == 1 ? 'share_details_pdf'.tr() : null,
     );
+
     overlayController.update(
       _batchProgress(
         PropertyShareProgress(
           stage: PropertyShareStage.finalizing,
           fraction: PropertyShareStage.finalizing.defaultFraction(),
         ),
-        items.length - 1,
-        items.length,
+        properties.length - 1,
+        properties.length,
       ),
     );
   } on Object catch (e, st) {
@@ -162,20 +177,29 @@ String buildSharePdfFileName({
   final baseTitle = trimmedTitle?.isNotEmpty == true
       ? trimmedTitle!
       : fallbackTitle;
-  var fileName = '$baseTitle.pdf';
+  final sanitizedBase = sanitizeFileName(baseTitle);
+  var fileName = '$sanitizedBase.pdf';
   if (!usedNames.contains(fileName)) {
     usedNames.add(fileName);
     return fileName;
   }
   // Use numeric suffixes for duplicate titles - never expose property IDs
   var suffix = 2;
-  fileName = '$baseTitle ($suffix).pdf';
+  fileName = '$sanitizedBase ($suffix).pdf';
   while (usedNames.contains(fileName)) {
     suffix++;
-    fileName = '$baseTitle ($suffix).pdf';
+    fileName = '$sanitizedBase ($suffix).pdf';
   }
   usedNames.add(fileName);
   return fileName;
+}
+
+String sanitizeFileName(String input) {
+  // Allow alphanumeric, spaces, dashes, underscore. Replace others with underscore.
+  // This is the "Hard Truth" for Android/Gmail file reliability.
+  final sanitized = input.replaceAll(RegExp(r'[^\w\s\-]'), '_');
+  // Collapse multiple underscores/spaces for beauty
+  return sanitized.replaceAll(RegExp(r'[\s_]+'), ' ').trim();
 }
 
 PropertyShareProgress _batchProgress(
@@ -197,11 +221,4 @@ PropertyShareProgress _batchProgress(
     currentIndex: clampedIndex + 1,
     totalProperties: totalProperties,
   );
-}
-
-class _ShareItem {
-  final Property property;
-  final String fileName;
-
-  const _ShareItem(this.property, this.fileName);
 }

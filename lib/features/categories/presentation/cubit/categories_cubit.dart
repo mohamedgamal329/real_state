@@ -24,6 +24,7 @@ class CategoriesCubit extends Cubit<CategoriesState> {
   final AuthRepositoryDomain _auth;
   late final StreamSubscription<PropertyMutation> _mutationSub;
   StreamSubscription? _authSub;
+
   Completer<void>? _locationsLoadCompleter;
   bool _locationsLoaded = false;
   bool _isCollector = false;
@@ -33,63 +34,72 @@ class CategoriesCubit extends Cubit<CategoriesState> {
     _mutationSub = _mutations.mutationStream.listen((mutation) {
       final current = _asListState(state);
       if (current == null) {
-        unawaited(loadFirstPage());
+        if (!state.filter.isEmpty) {
+          unawaited(loadFirstPage());
+        }
         return;
       }
       if (_isCollector && mutation.ownerScope == PropertyOwnerScope.broker) {
         return;
       }
-      emit(
-        CategoriesRefreshing(
-          filter: current.filter,
-          locationAreas: current.locationAreas,
-          areaNames: current.areaNames,
-          items: current.items,
-          lastDoc: current.lastDoc,
-          hasMore: true,
-        ),
-      );
       unawaited(refresh());
     });
+
     _authSub = _auth.userChanges.listen((u) {
+      final wasCollector = _isCollector;
+      _isCollector = u?.role == UserRole.collector;
+      if (wasCollector != _isCollector) {
+        unawaited(refresh());
+      }
+    });
+
+    _auth.userChanges.first.then((u) {
       _isCollector = u?.role == UserRole.collector;
     });
-    _auth.userChanges.first.then(
-      (u) => _isCollector = u?.role == UserRole.collector,
-    );
-    // Ensure locations are loaded early for filters
-    unawaited(ensureLocationsLoaded(force: true));
-  }
 
-  /// Load location areas for filter dropdown
-  Future<void> loadLocations() async {
-    await ensureLocationsLoaded(force: true);
+    // Load locations once on init
+    unawaited(ensureLocationsLoaded());
   }
 
   Future<void> ensureLocationsLoaded({bool force = false}) async {
-    if (_locationsLoaded && _coreState().locationAreas.isNotEmpty && !force)
-      return;
+    // FIX A: Ensure we actually have areas. If loaded=true but list is empty, retry.
+    final hasAreas = _coreState().locationAreas.isNotEmpty;
+    if (_locationsLoaded && hasAreas && !force) return;
     if (_locationsLoadCompleter != null) return _locationsLoadCompleter!.future;
 
     _locationsLoadCompleter = Completer<void>();
     try {
       final core = _coreState();
-      emit(
-        CategoriesLoadInProgress(
-          filter: core.filter,
-          locationAreas: core.locationAreas,
-          areaNames: core.areaNames,
-        ),
-      );
+      // Only emit loading if we don't have areas yet or forcing
+      if (core.locationAreas.isEmpty || force) {
+        emit(
+          CategoriesLoadInProgress(
+            filter: core.filter,
+            locationAreas: core.locationAreas,
+            areaNames: core.areaNames,
+          ),
+        );
+      }
+
       final areas = await _areas.call(force: force);
       final map = {for (final a in areas) a.id: a};
+
       _locationsLoaded = true;
       emit(_stateWithLocations(areas, map));
       _locationsLoadCompleter?.complete();
     } catch (e) {
       _locationsLoaded = false;
       _locationsLoadCompleter?.completeError(e);
-      // Keep current state on failure to avoid losing list data
+
+      final core = _coreState();
+      emit(
+        CategoriesFailure(
+          filter: core.filter,
+          locationAreas: core.locationAreas,
+          areaNames: core.areaNames,
+          message: mapErrorMessage(e),
+        ),
+      );
     } finally {
       _locationsLoadCompleter = null;
     }
@@ -97,23 +107,19 @@ class CategoriesCubit extends Cubit<CategoriesState> {
 
   /// Load first page with current filter
   Future<void> loadFirstPage() async {
-    final existing = _asListState(state);
-    if (existing != null && existing.items.isNotEmpty) {
-      return;
-    }
     final core = _coreState();
     await ensureLocationsLoaded();
     await _fetchFirstPage(
       filter: core.filter,
-      locations: core.locationAreas,
-      cachedAreas: core.areaNames,
+      locations: _coreState().locationAreas,
+      cachedAreas: _coreState().areaNames,
     );
   }
 
   /// Apply new filter - resets pagination and fetches first page
   Future<void> applyFilter(PropertyFilter filter) async {
-    final core = _coreState();
     await ensureLocationsLoaded();
+    final core = _coreState();
     await _fetchFirstPage(
       filter: filter,
       locations: core.locationAreas,
@@ -130,9 +136,12 @@ class CategoriesCubit extends Cubit<CategoriesState> {
   Future<void> refresh() async {
     final current = _asListState(state);
     if (current == null) {
-      await loadFirstPage();
+      if (!state.filter.isEmpty) {
+        await loadFirstPage();
+      }
       return;
     }
+
     emit(
       CategoriesRefreshing(
         filter: current.filter,
@@ -140,9 +149,10 @@ class CategoriesCubit extends Cubit<CategoriesState> {
         areaNames: current.areaNames,
         items: current.items,
         lastDoc: current.lastDoc,
-        hasMore: true,
+        hasMore: current.hasMore,
       ),
     );
+
     try {
       final page = await _fetchPageForRole(
         limit: UiConstants.propertiesPageLimit,
@@ -150,6 +160,7 @@ class CategoriesCubit extends Cubit<CategoriesState> {
       );
       final filtered = _filterForRole(page.items);
       final areaNames = await _fetchAreaNamesFor(filtered);
+
       emit(
         CategoriesLoadSuccess(
           filter: current.filter,
@@ -181,8 +192,10 @@ class CategoriesCubit extends Cubit<CategoriesState> {
     if (current == null ||
         !current.hasMore ||
         state is CategoriesLoadMoreInProgress ||
-        state is CategoriesRefreshing)
+        state is CategoriesRefreshing) {
       return;
+    }
+
     emit(
       CategoriesLoadMoreInProgress(
         filter: current.filter,
@@ -193,6 +206,7 @@ class CategoriesCubit extends Cubit<CategoriesState> {
         hasMore: current.hasMore,
       ),
     );
+
     try {
       final page = await _fetchPageForRole(
         startAfter: current.lastDoc,
@@ -202,6 +216,7 @@ class CategoriesCubit extends Cubit<CategoriesState> {
       final filtered = _filterForRole(page.items);
       final items = List<Property>.from(current.items)..addAll(filtered);
       final areaNames = await _fetchAreaNamesFor(filtered);
+
       emit(
         CategoriesLoadSuccess(
           filter: current.filter,
@@ -245,9 +260,8 @@ class CategoriesCubit extends Cubit<CategoriesState> {
   }
 
   CategoriesCoreState _coreState() {
-    if (state is CategoriesCoreState) {
-      return state as CategoriesCoreState;
-    }
+    final s = state;
+    if (s is CategoriesCoreState) return s;
     return const CategoriesInitial();
   }
 
@@ -261,6 +275,17 @@ class CategoriesCubit extends Cubit<CategoriesState> {
     required List<LocationArea> locations,
     required Map<String, LocationArea> cachedAreas,
   }) async {
+    if (filter.isEmpty) {
+      emit(
+        CategoriesInitial(
+          filter: filter,
+          locationAreas: locations,
+          areaNames: cachedAreas,
+        ),
+      );
+      return;
+    }
+
     emit(
       CategoriesLoadInProgress(
         filter: filter,
@@ -268,6 +293,7 @@ class CategoriesCubit extends Cubit<CategoriesState> {
         areaNames: cachedAreas,
       ),
     );
+
     try {
       final page = await _fetchPageForRole(
         limit: UiConstants.propertiesPageLimit,
@@ -275,6 +301,7 @@ class CategoriesCubit extends Cubit<CategoriesState> {
       );
       final filtered = _filterForRole(page.items);
       final areaNames = await _fetchAreaNamesFor(filtered);
+
       emit(
         CategoriesLoadSuccess(
           filter: filter,
@@ -286,29 +313,14 @@ class CategoriesCubit extends Cubit<CategoriesState> {
         ),
       );
     } catch (e) {
-      final previous = _asListState(state);
-      if (previous != null && previous.items.isNotEmpty) {
-        emit(
-          CategoriesPartialFailure(
-            filter: filter,
-            locationAreas: locations,
-            areaNames: cachedAreas,
-            items: previous.items,
-            lastDoc: previous.lastDoc,
-            hasMore: previous.hasMore,
-            message: mapErrorMessage(e),
-          ),
-        );
-      } else {
-        emit(
-          CategoriesFailure(
-            filter: filter,
-            locationAreas: locations,
-            areaNames: cachedAreas,
-            message: mapErrorMessage(e),
-          ),
-        );
-      }
+      emit(
+        CategoriesFailure(
+          filter: filter,
+          locationAreas: locations,
+          areaNames: cachedAreas,
+          message: mapErrorMessage(e),
+        ),
+      );
     }
   }
 
@@ -316,72 +328,62 @@ class CategoriesCubit extends Cubit<CategoriesState> {
     List<LocationArea> areas,
     Map<String, LocationArea> names,
   ) {
-    final current = _coreState();
-    if (state is CategoriesLoadSuccess) {
-      final listState = state as CategoriesLoadSuccess;
+    final s = state;
+    if (s is CategoriesLoadSuccess) {
       return CategoriesLoadSuccess(
-        filter: listState.filter,
+        filter: s.filter,
         locationAreas: areas,
-        areaNames: {...names, ...listState.areaNames},
-        items: listState.items,
-        lastDoc: listState.lastDoc,
-        hasMore: listState.hasMore,
+        areaNames: {...names, ...s.areaNames},
+        items: s.items,
+        lastDoc: s.lastDoc,
+        hasMore: s.hasMore,
       );
     }
-    if (state is CategoriesRefreshing) {
-      final listState = state as CategoriesRefreshing;
+    if (s is CategoriesRefreshing) {
       return CategoriesRefreshing(
-        filter: listState.filter,
+        filter: s.filter,
         locationAreas: areas,
-        areaNames: {...names, ...listState.areaNames},
-        items: listState.items,
-        lastDoc: listState.lastDoc,
-        hasMore: listState.hasMore,
+        areaNames: {...names, ...s.areaNames},
+        items: s.items,
+        lastDoc: s.lastDoc,
+        hasMore: s.hasMore,
       );
     }
-    if (state is CategoriesLoadMoreInProgress) {
-      final listState = state as CategoriesLoadMoreInProgress;
+    if (s is CategoriesLoadMoreInProgress) {
       return CategoriesLoadMoreInProgress(
-        filter: listState.filter,
+        filter: s.filter,
         locationAreas: areas,
-        areaNames: {...names, ...listState.areaNames},
-        items: listState.items,
-        lastDoc: listState.lastDoc,
-        hasMore: listState.hasMore,
+        areaNames: {...names, ...s.areaNames},
+        items: s.items,
+        lastDoc: s.lastDoc,
+        hasMore: s.hasMore,
       );
     }
-    if (state is CategoriesPartialFailure) {
-      final listState = state as CategoriesPartialFailure;
+    if (s is CategoriesPartialFailure) {
       return CategoriesPartialFailure(
-        filter: listState.filter,
+        filter: s.filter,
         locationAreas: areas,
-        areaNames: {...names, ...listState.areaNames},
-        items: listState.items,
-        lastDoc: listState.lastDoc,
-        hasMore: listState.hasMore,
-        message: listState.message,
+        areaNames: {...names, ...s.areaNames},
+        items: s.items,
+        lastDoc: s.lastDoc,
+        hasMore: s.hasMore,
+        message: s.message,
       );
     }
-    if (state is CategoriesFailure) {
-      final failure = state as CategoriesFailure;
+    if (s is CategoriesFailure) {
       return CategoriesFailure(
-        filter: failure.filter,
+        filter: s.filter,
         locationAreas: areas,
-        areaNames: {...names, ...failure.areaNames},
-        message: failure.message,
+        areaNames: {...names, ...s.areaNames},
+        message: s.message,
       );
     }
-    if (state is CategoriesLoadInProgress) {
-      return CategoriesInitial(
-        filter: current.filter,
-        locationAreas: areas,
-        areaNames: {...names, ...current.areaNames},
-      );
-    }
+
+    final currentCore = _coreState();
     return CategoriesInitial(
-      filter: current.filter,
+      filter: currentCore.filter,
       locationAreas: areas,
-      areaNames: {...names, ...current.areaNames},
+      areaNames: {...names, ...currentCore.areaNames},
     );
   }
 

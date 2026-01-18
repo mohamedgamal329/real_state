@@ -37,7 +37,7 @@ class _CompanyAreasPageState extends State<CompanyAreasPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: 'home_company_areas_title'),
+      appBar: CustomAppBar(title: 'home_company_areas_title'.tr()),
       body: BlocConsumer<CompanyAreasBloc, CompanyAreasState>(
         listener: (context, state) {
           if (state is CompanyAreasLoadSuccess ||

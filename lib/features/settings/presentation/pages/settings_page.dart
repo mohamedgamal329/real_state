@@ -59,9 +59,9 @@ class SettingsPage extends StatelessWidget {
                 12,
                 12,
                 kBottomNavigationBarHeight +
-                    100 +
-                    MediaQuery.of(context).padding.bottom +
-                    MediaQuery.of(context).viewInsets.bottom,
+                    kBottomNavigationBarHeight +
+                    140 + // Increased from 100 to ensure visibility
+                    MediaQuery.of(context).padding.bottom,
               ),
               children: [
                 Container(

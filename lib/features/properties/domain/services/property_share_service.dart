@@ -75,20 +75,34 @@ class PropertyShareService {
     );
     _reportProgress(onProgress, PropertyShareStage.generatingPdf);
 
-    // FIX 5: Write to real temp file so Gmail sees correct filename (not UUID)
+    // FIX F: Write to real temp file so Gmail sees correct filename (not UUID)
     final title = property.title?.trim();
-    final fileName = title?.isNotEmpty == true
-        ? '$title.pdf'
-        : '${'property'.tr()}.pdf';
+    final baseTitle = title?.isNotEmpty == true ? title! : 'property'.tr();
+    // Sanitization logic matching multi_pdf_share.dart
+    final sanitizedBase = baseTitle
+        .replaceAll(RegExp(r'[^\w\s\-]'), '_')
+        .replaceAll(RegExp(r'[\s_]+'), ' ')
+        .trim();
+    final fileName = '$sanitizedBase.pdf';
 
     final tempDir = await getTemporaryDirectory();
-    final shareDir = Directory('${tempDir.path}/share_pdfs');
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final shareDir = Directory('${tempDir.path}/share_pdf_$timestamp');
     if (!await shareDir.exists()) {
       await shareDir.create(recursive: true);
     }
     final tempFile = File('${shareDir.path}/$fileName');
     await tempFile.writeAsBytes(pdfBytes);
-    final file = XFile(tempFile.path);
+    // Flush to ensure OS sees it.
+    await tempFile.parent.create(recursive: true);
+
+    // EXTREMELY CRITICAL: Use XFile with the explicit name
+    final file = XFile(tempFile.path, name: fileName);
+
+    debugPrint(
+      'share_single_pdf_path=${tempFile.path} size=${pdfBytes.length}',
+    );
+    debugPrint('share_dir=${shareDir.path}');
 
     _reportProgress(onProgress, PropertyShareStage.uploadingSharing);
     // ignore: deprecated_member_use

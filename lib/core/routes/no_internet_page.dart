@@ -9,7 +9,7 @@ class NoInternetPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: 'no_internet'),
+      appBar: CustomAppBar(title: 'no_internet'.tr()),
       body: Center(child: Text('check_connection'.tr())),
     );
   }

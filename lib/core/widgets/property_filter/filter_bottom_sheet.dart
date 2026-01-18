@@ -23,6 +23,8 @@ class FilterBottomSheet extends StatefulWidget {
   final Future<void> Function() onAddLocation;
   final Function(PropertyFilter) onApply;
   final VoidCallback? onClear;
+  final bool closeOnApply;
+  final bool closeOnClear;
 
   const FilterBottomSheet({
     super.key,
@@ -31,6 +33,8 @@ class FilterBottomSheet extends StatefulWidget {
     required this.onAddLocation,
     required this.onApply,
     this.onClear,
+    this.closeOnApply = true,
+    this.closeOnClear = true,
   });
 
   @override
@@ -85,7 +89,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       return;
     }
     widget.onApply(validation.filter!);
-    context.pop();
+    if (widget.closeOnApply) {
+      context.pop();
+    }
   }
 
   String _stripCurrency(String input) {
@@ -107,7 +113,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
   void _onClear() {
     widget.onClear?.call();
-    context.pop();
+    if (widget.closeOnClear) {
+      context.pop();
+    }
   }
 
   void _formatPrice(TextEditingController controller) {
@@ -145,6 +153,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         final candidateFilter = _buildCandidateFilter();
         final validation = _filterController.validate(candidateFilter);
         final isApplyEnabled = validation.isSuccess;
+        // DEBUG
         final validationErrorKey = validation.error?.messageKey;
         final selectedExists = locationAreas.any(
           (l) => l.id == _selectedLocationId,

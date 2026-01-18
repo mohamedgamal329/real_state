@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
@@ -51,7 +52,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     return BlocProvider.value(
       value: _bloc,
       child: Scaffold(
-        appBar: const CustomAppBar(title: 'notifications'),
+        appBar: CustomAppBar(title: 'notifications'.tr()),
         body: NotificationsView(
           refreshController: _refreshController,
           onRefresh: _onRefresh,

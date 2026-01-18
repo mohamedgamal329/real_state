@@ -9,13 +9,13 @@ import 'package:real_state/features/categories/presentation/cubit/categories_cub
 Future<void> showPropertyFilterBottomSheet(
   BuildContext context, {
   required PropertyFilter initialFilter,
-  required List<LocationArea> locationAreas,
+  List<LocationArea>? locationAreas,
   required ValueChanged<PropertyFilter> onApply,
   VoidCallback? onClear,
   Future<void> Function()? onAddLocation,
-}) {
+}) async {
   final cubit = context.read<CategoriesCubit>();
-  unawaited(cubit.ensureLocationsLoaded());
+  await cubit.ensureLocationsLoaded();
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,

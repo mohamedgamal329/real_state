@@ -8,9 +8,11 @@ import 'package:real_state/core/selection/property_selection_policy.dart';
 import 'package:real_state/core/selection/selection_app_bar.dart';
 import 'package:real_state/core/components/app_svg_icon.dart';
 import 'package:real_state/core/constants/app_images.dart';
-import 'package:real_state/core/widgets/property_filter/show_property_filter_bottom_sheet.dart';
+
+import 'package:real_state/core/widgets/property_filter/filter_bottom_sheet.dart';
 import 'package:real_state/core/widgets/property_paginated_list_view.dart';
 import 'package:real_state/features/categories/presentation/cubit/categories_cubit.dart';
+import 'package:real_state/features/notifications/presentation/widgets/notifications_icon_button.dart';
 import 'package:real_state/features/categories/presentation/cubit/categories_state.dart';
 import 'package:real_state/features/categories/presentation/widgets/category_property_card.dart';
 import 'package:real_state/core/utils/multi_pdf_share.dart';
@@ -64,6 +66,8 @@ class _CategoriesPageState extends State<CategoriesPage>
     _clearSelection();
   }
 
+  bool _showResults = false;
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -79,30 +83,29 @@ class _CategoriesPageState extends State<CategoriesPage>
             )
           : CustomAppBar(
               title: 'categories'.tr(),
-              actions: [
-                BlocBuilder<CategoriesCubit, CategoriesState>(
-                  builder: (context, state) {
-                    final core = state is CategoriesCoreState
-                        ? state
-                        : const CategoriesInitial();
-                    return IconButton(
+              leading: _showResults
+                  ? BackButton(
                       onPressed: () {
-                        showPropertyFilterBottomSheet(
-                          context,
-                          initialFilter: core.filter,
-                          locationAreas: core.locationAreas,
-                          onApply: (filter) {
-                            context.read<CategoriesCubit>().applyFilter(filter);
-                          },
-                          onClear: () {
-                            context.read<CategoriesCubit>().clearFilters();
-                          },
-                        );
+                        setState(() => _showResults = false);
                       },
-                      icon: const AppSvgIcon(AppSVG.filter),
-                    );
-                  },
-                ),
+                    )
+                  : null,
+              actions: [
+                const NotificationsIconButton(),
+                if (_showResults)
+                  BlocBuilder<CategoriesCubit, CategoriesState>(
+                    builder: (context, state) {
+                      return IconButton(
+                        onPressed: () {
+                          // Allow re-opening filter as modal (or just switch back to filter view?)
+                          // Requirement says "Back returns to filter".
+                          // Let's just switch back to filter view.
+                          setState(() => _showResults = false);
+                        },
+                        icon: const AppSvgIcon(AppSVG.filter),
+                      );
+                    },
+                  ),
               ],
             ),
       body: BaseGradientPage(
@@ -123,20 +126,43 @@ class _CategoriesPageState extends State<CategoriesPage>
             }
           },
           builder: (context, state) {
-            final core = state as CategoriesCoreState;
+            final core = state is CategoriesCoreState
+                ? state
+                : const CategoriesInitial();
             final dataState = state is CategoriesListState ? state : null;
             final isInitialLoading =
                 state is CategoriesInitial || state is CategoriesLoadInProgress;
+            final isFilterEmpty = core.filter.isEmpty;
 
             final items = dataState?.items ?? const [];
             _currentItems = items.where((p) => p.id.isNotEmpty).toList();
 
             final isError =
-                (state is CategoriesFailure ||
-                (state is CategoriesPartialFailure && items.isEmpty));
+                state is CategoriesFailure ||
+                (state is CategoriesPartialFailure && items.isEmpty);
             final errorMessage = state is CategoriesFailure
                 ? state.message
                 : (state is CategoriesPartialFailure ? state.message : null);
+
+            if (!_showResults) {
+              return FilterBottomSheet(
+                currentFilter: core.filter,
+                locationAreas: null, // Uses Cubit
+                onAddLocation: () async {}, // TODO: Implement if needed
+                onApply: (filter) {
+                  context.read<CategoriesCubit>().applyFilter(filter);
+                  setState(() => _showResults = true);
+                },
+                onClear: () {
+                  context.read<CategoriesCubit>().clearFilters();
+                  // Stay in filter view on clear? Or go to results?
+                  // Usually clear updates the filter state.
+                  // Let's keep it in filter view to let user see it's cleared.
+                },
+                closeOnApply: false,
+                closeOnClear: false,
+              );
+            }
 
             return PropertyPaginatedListView(
               refreshController: _refreshController,
@@ -149,11 +175,13 @@ class _CategoriesPageState extends State<CategoriesPage>
               onRefresh: () => context.read<CategoriesCubit>().refresh(),
               onLoadMore: () => context.read<CategoriesCubit>().loadMore(),
               onRetry: () => context.read<CategoriesCubit>().loadFirstPage(),
-              emptyMessage: 'no_properties_title'.tr(),
-              emptyAction: () =>
-                  context.read<CategoriesCubit>().loadFirstPage(),
-              emptyFooter:
-                  !isInitialLoading && items.isEmpty && !core.filter.isEmpty
+              emptyMessage: isFilterEmpty
+                  ? 'filter_properties'.tr()
+                  : 'no_properties_title'.tr(),
+              emptyAction: isFilterEmpty
+                  ? () => setState(() => _showResults = false)
+                  : () => context.read<CategoriesCubit>().loadFirstPage(),
+              emptyFooter: !isInitialLoading && items.isEmpty && !isFilterEmpty
                   ? TextButton(
                       onPressed: () =>
                           context.read<CategoriesCubit>().clearFilters(),

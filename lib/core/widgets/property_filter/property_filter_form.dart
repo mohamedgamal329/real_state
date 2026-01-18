@@ -1,7 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:real_state/core/components/app_text_field.dart';
-import 'package:real_state/core/components/primary_button.dart';
+
 import 'package:real_state/core/constants/aed_text.dart';
 import 'package:real_state/core/components/app_svg_icon.dart';
 import 'package:real_state/core/constants/app_colors.dart';
