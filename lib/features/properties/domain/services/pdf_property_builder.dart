@@ -44,6 +44,7 @@ class PdfPropertyBuilder {
     );
 
     if (kDebugMode) {
+      debugPrint('pdf_details_render_path=PdfPropertyBuilder.build');
       debugPrint('pdf_details_png_bytes=${detailsImageBytes.length}');
     }
 

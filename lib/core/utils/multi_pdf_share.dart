@@ -147,7 +147,9 @@ Future<void> shareMultiplePropertyPdfs({
       );
     }
 
-    debugPrint('share_pdfs_share_call_files=${xFiles.length}');
+    debugPrint(
+      'share_pdfs_share_call_files=${xFiles.length} selected=${properties.length}',
+    );
 
     // ignore: deprecated_member_use
     await Share.shareXFiles(
