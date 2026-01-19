@@ -90,24 +90,22 @@ class PropertyImagesSection extends StatelessWidget {
 
     return SizedBox(
       height: 160,
-      child: ListView.builder(
+      child: ListView.separated(
         controller: scrollController,
         scrollDirection: Axis.horizontal,
         itemCount: (property.imageUrls.length < imagesToShow)
             ? property.imageUrls.length
             : imagesToShow,
-        itemBuilder: (c, i) => Padding(
-          padding: EdgeInsets.only(right: i == imagesToShow - 1 ? 0 : 12.0),
-          child: GestureDetector(
-            onTap: onImageTap != null ? () => onImageTap!(i) : null,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: AppNetworkImage(
-                url: property.imageUrls[i],
-                width: 200,
-                height: 160,
-                borderRadius: 0,
-              ),
+        separatorBuilder: (_, __) => const SizedBox(width: 16),
+        itemBuilder: (c, i) => GestureDetector(
+          onTap: onImageTap != null ? () => onImageTap!(i) : null,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: AppNetworkImage(
+              url: property.imageUrls[i],
+              width: 200,
+              height: 160,
+              borderRadius: 0,
             ),
           ),
         ),

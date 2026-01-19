@@ -21,13 +21,8 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
         _kitchensCtrl.text = prop.kitchens?.toString() ?? '';
         _floorsCtrl.text = prop.floors?.toString() ?? '';
         _phoneCtrl.text = prop.ownerPhoneEncryptedOrHiddenStored ?? '';
-        _securityGuardPhoneCtrl.text =
-            prop.securityGuardPhoneEncryptedOrHiddenStored ?? '';
         _securityNumberCtrl.text =
             prop.securityNumberEncryptedOrHiddenStored ?? '';
-        _showSecurityGuardPhone = _securityGuardPhoneCtrl.text
-            .trim()
-            .isNotEmpty;
         _showSecurityNumber = _securityNumberCtrl.text.trim().isNotEmpty;
         _hasPool = prop.hasPool;
         _isImagesHidden = prop.isImagesHidden;
@@ -204,8 +199,6 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
       final description = _descCtrl.text.trim();
       final phone = _phoneCtrl.text.trim();
       final phoneValue = phone.isEmpty ? null : phone;
-      final securityPhone = _securityGuardPhoneCtrl.text.trim();
-      final securityPhoneValue = securityPhone.isEmpty ? null : securityPhone;
       final securityNumber = _securityNumberCtrl.text.trim();
       final securityNumberValue = securityNumber.isEmpty
           ? null
@@ -238,7 +231,6 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
           price: price,
           locationUrl: locationValue,
           ownerPhoneEncryptedOrHiddenStored: phoneValue,
-          securityGuardPhoneEncryptedOrHiddenStored: securityPhoneValue,
           securityNumberEncryptedOrHiddenStored: securityNumberValue,
           isImagesHidden: _isImagesHidden,
           imageUrls: upload.urls,
@@ -267,7 +259,6 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
           price: price,
           locationUrl: locationValue,
           ownerPhoneEncryptedOrHiddenStored: phoneValue,
-          securityGuardPhoneEncryptedOrHiddenStored: securityPhoneValue,
           securityNumberEncryptedOrHiddenStored: securityNumberValue,
           isImagesHidden: _isImagesHidden,
           imageUrls: upload.urls,

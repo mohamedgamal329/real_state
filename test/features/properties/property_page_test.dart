@@ -274,7 +274,6 @@ void main() {
       coverImageUrl: null,
       imageUrls: ['https://example.com/1.jpg'],
       ownerPhoneEncryptedOrHiddenStored: '123456',
-      securityGuardPhoneEncryptedOrHiddenStored: '999',
       isImagesHidden: true,
       status: PropertyStatus.active,
       isDeleted: false,

@@ -86,7 +86,12 @@ bool hasIntrinsicPropertyAccess({
   required String? userId,
 }) {
   if (userRole == UserRole.owner) {
-    return true;
+    // Owners have full access to company properties.
+    if (property.ownerScope == PropertyOwnerScope.company) return true;
+    // For broker properties, owner needs to request access (verified by tests).
+    // Unless they are the creator of this specific property.
+    if (userId != null && property.createdBy == userId) return true;
+    return false;
   }
   if (userId != null && property.createdBy == userId) return true;
   if (userRole == UserRole.broker && userId != null) {

@@ -23,7 +23,7 @@ void main() {
       locationAreaId: 'loc-1',
       imageUrls: ['http://img.com/1.jpg'],
       ownerPhoneEncryptedOrHiddenStored: '123456',
-      securityGuardPhoneEncryptedOrHiddenStored: '999999',
+      securityNumberEncryptedOrHiddenStored: '999999',
       locationUrl: 'http://maps.com',
       isImagesHidden: true, // Hidden by default
       status: PropertyStatus.active,
@@ -112,23 +112,20 @@ void main() {
       expect(state.phoneVisible, isTrue);
     });
 
-    test(
-      'PropertyDetailState.securityGuardPhoneVisible is TRUE for creator',
-      () {
-        final state = PropertyDetailLoaded(
-          property: property,
-          imagesToShow: 3,
-          userId: creatorId,
-          userRole: UserRole.broker,
-          imagesAccessGranted: false,
-          phoneAccessGranted: false,
-        );
+    test('PropertyDetailState.securityNumberVisible is TRUE for creator', () {
+      final state = PropertyDetailLoaded(
+        property: property,
+        imagesToShow: 3,
+        userId: creatorId,
+        userRole: UserRole.broker,
+        imagesAccessGranted: false,
+        phoneAccessGranted: false,
+      );
 
-        // Should be visible
-        expect(state.hasSecurityGuardPhone, isTrue);
-        expect(state.securityGuardPhoneVisible, isTrue);
-      },
-    );
+      // Should be visible
+      expect(state.hasSecurityNumber, isTrue);
+      expect(state.securityNumberVisible, isTrue);
+    });
 
     test('PropertyDetailState.locationVisible is TRUE for creator', () {
       final state = PropertyDetailLoaded(

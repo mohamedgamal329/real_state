@@ -83,6 +83,15 @@ class SettingsPage extends StatelessWidget {
                       ),
                       Divider(color: colorScheme.surfaceContainer),
                       ListTile(
+                        title: Text('my_added_properties'.tr()),
+                        dense: true,
+
+                        leading: const AppSvgIcon(AppSVG.mapsHomeWork),
+                        onTap: () => context.push('/properties/my-added'),
+                      ),
+
+                      Divider(color: colorScheme.surfaceContainer),
+                      ListTile(
                         title: Text('archive'.tr()),
 
                         dense: true,
@@ -91,15 +100,6 @@ class SettingsPage extends StatelessWidget {
                         onTap: () => context.push('/properties/archive'),
                       ),
 
-                      Divider(color: colorScheme.surfaceContainer),
-
-                      ListTile(
-                        title: Text('my_added_properties'.tr()),
-                        dense: true,
-
-                        leading: const AppSvgIcon(AppSVG.mapsHomeWork),
-                        onTap: () => context.push('/properties/my-added'),
-                      ),
                       Divider(color: colorScheme.surfaceContainer),
                       if (showAnyAdmin) ...[
                         if (showManageUsers) ...[
@@ -212,10 +212,17 @@ class SettingsPage extends StatelessWidget {
     SettingsState state, {
     required bool isLoading,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final themeIcon = isDark
+        ? Icons.dark_mode_outlined
+        : Icons.light_mode_outlined;
     return ListTile(
       title: Text('theme'.tr()),
       subtitle: Text(_themeModeLabel(state.themeMode)),
-      leading: const AppSvgIcon(AppSVG.theme),
+      leading: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: Icon(themeIcon, key: ValueKey(themeIcon)),
+      ),
       onTap: isLoading
           ? null
           : () async {

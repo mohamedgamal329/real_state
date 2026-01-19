@@ -131,7 +131,7 @@ class PropertyDetailBloc
               coverImageUrl: null,
               imageUrls: const [],
               ownerPhoneEncryptedOrHiddenStored: null,
-              securityGuardPhoneEncryptedOrHiddenStored: null,
+              securityNumberEncryptedOrHiddenStored: null,
               locationUrl: null,
               isImagesHidden: false,
               status: PropertyStatus.active,
@@ -202,7 +202,7 @@ class PropertyDetailBloc
                 ),
               ),
             );
-        if (emitted.hasPhone || emitted.hasSecurityGuardPhone) {
+        if (emitted.hasPhone) {
           _phoneReqSub = _accessRequestsRepository
               .watchLatestRequest(
                 propertyId: event.propertyId,

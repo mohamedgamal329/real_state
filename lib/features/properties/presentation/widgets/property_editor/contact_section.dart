@@ -7,31 +7,23 @@ class PropertyEditorContactSection extends StatelessWidget {
   const PropertyEditorContactSection({
     super.key,
     required this.phoneCtrl,
-    required this.securityGuardPhoneCtrl,
     required this.securityNumberCtrl,
     required this.hasPool,
     required this.isImagesHidden,
     required this.onTogglePool,
     required this.onToggleImagesHidden,
     required this.phoneValidator,
-    required this.securityGuardPhoneValidator,
-    required this.showSecurityGuardPhone,
-    required this.onShowSecurityGuardPhone,
     required this.showSecurityNumber,
     required this.onShowSecurityNumber,
   });
 
   final TextEditingController phoneCtrl;
-  final TextEditingController securityGuardPhoneCtrl;
   final TextEditingController securityNumberCtrl;
   final bool hasPool;
   final bool isImagesHidden;
   final ValueChanged<bool> onTogglePool;
   final ValueChanged<bool> onToggleImagesHidden;
   final FormFieldValidator<String>? phoneValidator;
-  final FormFieldValidator<String>? securityGuardPhoneValidator;
-  final bool showSecurityGuardPhone;
-  final VoidCallback onShowSecurityGuardPhone;
   final bool showSecurityNumber;
   final VoidCallback onShowSecurityNumber;
 
@@ -46,24 +38,7 @@ class PropertyEditorContactSection extends StatelessWidget {
           validator: phoneValidator,
           textInputAction: TextInputAction.done,
         ),
-        if (!showSecurityGuardPhone)
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton(
-              onPressed: onShowSecurityGuardPhone,
-              child: Text('add_security_guard_phone'.tr()),
-            ),
-          ),
-        if (showSecurityGuardPhone) ...[
-          SizedBox(height: AppSpacing.lg),
-          AppTextField(
-            label: 'security_guard_phone_optional'.tr(),
-            controller: securityGuardPhoneCtrl,
-            keyboardType: TextInputType.phone,
-            validator: securityGuardPhoneValidator,
-            textInputAction: TextInputAction.done,
-          ),
-        ],
+        // Only securityNumber is now shown in UI.
         if (!showSecurityNumber)
           Align(
             alignment: Alignment.centerLeft,
@@ -74,10 +49,10 @@ class PropertyEditorContactSection extends StatelessWidget {
           ),
         if (showSecurityNumber) ...[
           SizedBox(height: AppSpacing.lg),
-
           AppTextField(
             label: 'security_number_optional'.tr(),
             controller: securityNumberCtrl,
+            keyboardType: TextInputType.phone,
             textInputAction: TextInputAction.done,
           ),
         ],

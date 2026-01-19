@@ -53,13 +53,11 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
   final _kitchensCtrl = TextEditingController();
   final _floorsCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
-  final _securityGuardPhoneCtrl = TextEditingController();
   final _securityNumberCtrl = TextEditingController();
   bool _formattingPrice = false;
   bool _loading = true;
   bool _hasPool = false;
   bool _isImagesHidden = false;
-  bool _showSecurityGuardPhone = false;
   bool _showSecurityNumber = false;
   PropertyPurpose _purpose = PropertyPurpose.sale;
   String? _locationId;
@@ -93,7 +91,6 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
     _kitchensCtrl.dispose();
     _floorsCtrl.dispose();
     _phoneCtrl.dispose();
-    _securityGuardPhoneCtrl.dispose();
     _securityNumberCtrl.dispose();
     super.dispose();
   }
@@ -155,13 +152,11 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
         kitchensCtrl: _kitchensCtrl,
         floorsCtrl: _floorsCtrl,
         phoneCtrl: _phoneCtrl,
-        securityGuardPhoneCtrl: _securityGuardPhoneCtrl,
         securityNumberCtrl: _securityNumberCtrl,
         isEditing: widget.isEditing,
         showSkeleton: isLoading,
         hasPool: _hasPool,
         isImagesHidden: _isImagesHidden,
-        showSecurityGuardPhone: _showSecurityGuardPhone,
         showSecurityNumber: _showSecurityNumber,
         purpose: _purpose,
         locationId: _locationId,
@@ -176,8 +171,6 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
         onPurposeChanged: (p) => setState(() => _purpose = p),
         onLocationChanged: (v) => setState(() => _locationId = v),
         onAddLocation: _handleAddLocationTap,
-        onShowSecurityGuardPhone: () =>
-            setState(() => _showSecurityGuardPhone = true),
         onShowSecurityNumber: () => setState(() => _showSecurityNumber = true),
       );
     }

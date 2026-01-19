@@ -81,10 +81,6 @@ class PropertyDetailLoaded extends PropertyDetailState {
       property.ownerPhoneEncryptedOrHiddenStored != null &&
       property.ownerPhoneEncryptedOrHiddenStored!.trim().isNotEmpty;
 
-  bool get hasSecurityGuardPhone =>
-      property.securityGuardPhoneEncryptedOrHiddenStored != null &&
-      property.securityGuardPhoneEncryptedOrHiddenStored!.trim().isNotEmpty;
-
   bool get hasSecurityNumber =>
       property.securityNumberEncryptedOrHiddenStored != null &&
       property.securityNumberEncryptedOrHiddenStored!.trim().isNotEmpty;
@@ -179,23 +175,6 @@ class PropertyDetailLoaded extends PropertyDetailState {
 
   bool get phoneVisible {
     if (!hasPhone) return false;
-    if (isCreatorWithFullAccess(
-      property: property,
-      userId: userId,
-      userRole: userRole,
-    ))
-      return true;
-    if (_ownerRequiresBrokerPhoneAccess) {
-      return phoneAccessGranted || _isRequestGranted(phoneAccessRequest);
-    }
-    if (_hasIntrinsicAccess ||
-        canBypassPhoneRestrictions(role: userRole, property: property))
-      return true;
-    return phoneAccessGranted || _isRequestGranted(phoneAccessRequest);
-  }
-
-  bool get securityGuardPhoneVisible {
-    if (!hasSecurityGuardPhone) return false;
     if (isCreatorWithFullAccess(
       property: property,
       userId: userId,

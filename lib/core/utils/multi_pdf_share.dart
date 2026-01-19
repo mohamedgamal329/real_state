@@ -136,6 +136,19 @@ Future<void> shareMultiplePropertyPdfs({
 
     // FIX F: Share all XFiles gathered in the loop.
     // Passing full list ensures multi-attach in Gmail.
+
+    // Guard: ensure all selected properties are included
+    if (kDebugMode && xFiles.length != properties.length) {
+      debugPrint(
+        'share_pdfs_mismatch: expected=${properties.length} actual=${xFiles.length}',
+      );
+      throw StateError(
+        'Multi-share mismatch: ${xFiles.length} files for ${properties.length} properties',
+      );
+    }
+
+    debugPrint('share_pdfs_share_call_files=${xFiles.length}');
+
     // ignore: deprecated_member_use
     await Share.shareXFiles(
       xFiles,

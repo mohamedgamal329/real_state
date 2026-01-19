@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:pdf/pdf.dart' as pdf;
 import 'package:pdf/widgets.dart' as pw;
 import 'package:real_state/features/models/entities/property.dart';
@@ -15,8 +15,6 @@ class PdfImageData {
     required this.height,
   });
 }
-
-const double _kPdfLogoPageLogoFactor = 0.45;
 
 class PdfPropertyBuilder {
   Future<Uint8List> build({
@@ -39,17 +37,24 @@ class PdfPropertyBuilder {
     final doc = pw.Document(theme: theme);
     final sanitizedImages = includeImages ? images : const <PdfImageData>[];
 
-    // FIX E2: Render details as PNG to support Arabic
+    // FIX E2: Render details as PNG to support Arabic (NO pw.Text for Arabic)
     final detailsImageBytes = await PdfDetailsRenderer.renderToPng(
       title: titleText,
       description: descriptionText,
     );
 
+    if (kDebugMode) {
+      debugPrint('pdf_details_png_bytes=${detailsImageBytes.length}');
+    }
+
     _addImagePages(doc, sanitizedImages);
 
-    // FIX M: Move Details & Logo to END of PDF.
+    // FIX M: Move Details to END of PDF (NO LOGO on details page).
     _addDetailsPageImage(doc: doc, imageBytes: detailsImageBytes);
-    _addLogoPage(doc: doc, logoBytes: logoBytes);
+
+    if (kDebugMode) {
+      debugPrint('pdf_details_page_added=true');
+    }
 
     return doc.save();
   }
@@ -80,23 +85,6 @@ class PdfPropertyBuilder {
     );
   }
 
-  void _addLogoPage({required pw.Document doc, required Uint8List? logoBytes}) {
-    if (logoBytes == null) return;
-    doc.addPage(
-      pw.Page(
-        pageTheme: pw.PageTheme(
-          pageFormat: pdf.PdfPageFormat.a4,
-          margin: pw.EdgeInsets.zero,
-          buildBackground: (_) => pw.Container(color: pdf.PdfColors.grey900),
-        ),
-        build: (_) => _buildLogoPage(
-          logoBytes: logoBytes,
-          pageFormat: pdf.PdfPageFormat.a4,
-        ),
-      ),
-    );
-  }
-
   void _addImagePages(pw.Document doc, List<PdfImageData> images) {
     if (images.isEmpty) return;
     for (final data in images) {
@@ -119,24 +107,5 @@ class PdfPropertyBuilder {
         ),
       );
     }
-  }
-
-  pw.Widget _buildLogoPage({
-    required Uint8List? logoBytes,
-    required pdf.PdfPageFormat pageFormat,
-  }) {
-    if (logoBytes == null) {
-      return pw.SizedBox.shrink();
-    }
-
-    final pageHeight = pageFormat.availableHeight;
-    final logoHeight = pageHeight * _kPdfLogoPageLogoFactor;
-    return pw.Center(
-      child: pw.Image(
-        pw.MemoryImage(logoBytes),
-        height: logoHeight,
-        fit: pw.BoxFit.contain,
-      ),
-    );
   }
 }

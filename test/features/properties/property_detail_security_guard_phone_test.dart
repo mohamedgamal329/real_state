@@ -14,7 +14,6 @@ void main() {
       hasPool: false,
       ownerScope: PropertyOwnerScope.company,
       createdBy: createdBy,
-      securityGuardPhoneEncryptedOrHiddenStored: '0500000000',
       securityNumberEncryptedOrHiddenStored: securityNumber,
       status: PropertyStatus.active,
       isDeleted: false,
@@ -23,8 +22,8 @@ void main() {
     );
   }
 
-  test('creator can see security guard phone', () {
-    final property = _buildProperty(createdBy: 'u1');
+  test('creator can see security number', () {
+    final property = _buildProperty(createdBy: 'u1', securityNumber: 'S123');
     final state = PropertyDetailLoaded(
       property: property,
       userId: 'u1',
@@ -32,12 +31,12 @@ void main() {
       imagesToShow: 0,
     );
 
-    expect(state.hasSecurityGuardPhone, isTrue);
-    expect(state.securityGuardPhoneVisible, isTrue);
+    expect(state.hasSecurityNumber, isTrue);
+    expect(state.securityNumberVisible, isTrue);
   });
 
-  test('user without access cannot see security guard phone', () {
-    final property = _buildProperty(createdBy: 'u1');
+  test('user without access cannot see security number', () {
+    final property = _buildProperty(createdBy: 'u1', securityNumber: 'S123');
     final state = PropertyDetailLoaded(
       property: property,
       userId: 'u2',
@@ -45,11 +44,11 @@ void main() {
       imagesToShow: 0,
     );
 
-    expect(state.securityGuardPhoneVisible, isFalse);
+    expect(state.securityNumberVisible, isFalse);
   });
 
-  test('security guard phone shows after access granted', () {
-    final property = _buildProperty(createdBy: 'u1');
+  test('security number shows after access granted', () {
+    final property = _buildProperty(createdBy: 'u1', securityNumber: 'S123');
     final state = PropertyDetailLoaded(
       property: property,
       userId: 'u2',
@@ -58,7 +57,7 @@ void main() {
       phoneAccessGranted: true,
     );
 
-    expect(state.securityGuardPhoneVisible, isTrue);
+    expect(state.securityNumberVisible, isTrue);
   });
 
   group('Security Number State', () {

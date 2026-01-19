@@ -23,7 +23,6 @@ class PropertyDetailView extends StatefulWidget {
   final int imagesToShow;
   final bool imagesAccessible;
   final bool phoneAccessible;
-  final bool securityGuardPhoneAccessible;
   final bool securityNumberAccessible;
   final bool locationAccessible;
   final VoidCallback? onRequestImages;
@@ -39,7 +38,6 @@ class PropertyDetailView extends StatefulWidget {
     required this.imagesToShow,
     required this.imagesAccessible,
     required this.phoneAccessible,
-    required this.securityGuardPhoneAccessible,
     required this.securityNumberAccessible,
     required this.locationAccessible,
     this.onRequestImages,
@@ -67,8 +65,6 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
     final hasPhone = (p.ownerPhoneEncryptedOrHiddenStored ?? '')
         .trim()
         .isNotEmpty;
-    final hasSecurityGuardPhone =
-        (p.securityGuardPhoneEncryptedOrHiddenStored ?? '').trim().isNotEmpty;
     final hasLocation = Validators.isValidUrl(p.locationUrl);
     final hasSecurityNumber = (p.securityNumberEncryptedOrHiddenStored ?? '')
         .trim()
@@ -136,16 +132,7 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
             ),
             const SizedBox(height: 20),
           ],
-          if (hasSecurityGuardPhone) ...[
-            PropertyDetailPhoneSection(
-              labelKey: 'security_guard_phone',
-              phoneVisible: widget.securityGuardPhoneAccessible,
-              phoneText: p.securityGuardPhoneEncryptedOrHiddenStored,
-              onRequestAccess: widget.onRequestPhone,
-              keyPrefix: 'security_guard',
-            ),
-            const SizedBox(height: 20),
-          ],
+
           if (hasSecurityNumber) ...[
             PropertyDetailPhoneSection(
               labelKey: 'security_number',

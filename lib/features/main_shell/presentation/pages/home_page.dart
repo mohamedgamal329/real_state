@@ -11,6 +11,7 @@ import 'package:real_state/core/components/base_gradient_page.dart';
 import 'package:real_state/core/components/custom_app_bar.dart';
 import 'package:real_state/core/components/empty_state_widget.dart';
 import 'package:real_state/core/components/info_card.dart';
+import 'package:real_state/core/constants/app_colors.dart';
 import 'package:real_state/core/constants/app_images.dart';
 import 'package:real_state/features/auth/domain/entities/user_entity.dart';
 import 'package:real_state/features/auth/domain/repositories/auth_repository_domain.dart';
@@ -59,7 +60,7 @@ class _HomePageState extends State<HomePage>
         actions: const [
           NotificationsIconButton(),
           Padding(
-            padding: EdgeInsets.only(right: 12.0),
+            padding: EdgeInsetsDirectional.only(end: 12.0),
             child: CleanLogo(size: 32),
           ),
         ],
@@ -155,13 +156,15 @@ class _HomePageState extends State<HomePage>
           if (role == null || !canCreateProperty(role))
             return const SizedBox.shrink();
           return Padding(
-            padding: const EdgeInsets.only(bottom: 80),
+            padding: const EdgeInsets.only(bottom: 100),
             child: FloatingActionButton(
               onPressed: () async {
                 await context.push('/property/new');
               },
+
+              backgroundColor: AppColors.primary,
               heroTag: 'properties_fab',
-              child: const AppSvgIcon(AppSVG.add),
+              child: const AppSvgIcon(AppSVG.add, color: AppColors.background),
             ),
           );
         },
@@ -251,7 +254,10 @@ class _BrokersSectionState extends State<_BrokersSection> {
                         ? b.name!
                         : (b.email ?? 'broker_unknown_name'.tr()),
                   ),
-                  trailing: const AppSvgIcon(AppSVG.chevronRight),
+                  trailing: Icon(
+                    Icons.chevron_right,
+                    //  color: theme.colorScheme.onSurfaceVariant,
+                  ), //const AppSvgIcon(AppSVG.chevronRight),
                   onTap: () {
                     context.push(
                       '/broker/${b.id}/areas',

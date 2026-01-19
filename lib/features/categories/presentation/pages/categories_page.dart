@@ -8,6 +8,7 @@ import 'package:real_state/core/selection/property_selection_policy.dart';
 import 'package:real_state/core/selection/selection_app_bar.dart';
 import 'package:real_state/core/components/app_svg_icon.dart';
 import 'package:real_state/core/constants/app_images.dart';
+import 'package:real_state/core/widgets/clean_logo.dart';
 
 import 'package:real_state/core/widgets/property_filter/filter_bottom_sheet.dart';
 import 'package:real_state/core/widgets/property_paginated_list_view.dart';
@@ -92,14 +93,15 @@ class _CategoriesPageState extends State<CategoriesPage>
                   : null,
               actions: [
                 const NotificationsIconButton(),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12.0),
+                  child: CleanLogo(size: 32),
+                ),
                 if (_showResults)
                   BlocBuilder<CategoriesCubit, CategoriesState>(
                     builder: (context, state) {
                       return IconButton(
                         onPressed: () {
-                          // Allow re-opening filter as modal (or just switch back to filter view?)
-                          // Requirement says "Back returns to filter".
-                          // Let's just switch back to filter view.
                           setState(() => _showResults = false);
                         },
                         icon: const AppSvgIcon(AppSVG.filter),

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:real_state/features/notifications/presentation/widgets/notifications_icon_button.dart';
 
@@ -28,7 +29,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
     return AppBar(
       title: Text(
-        title,
+        title.tr(),
         style: theme.textTheme.titleMedium?.copyWith(
           fontWeight: FontWeight.w800,
           letterSpacing: -0.2,
