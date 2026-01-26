@@ -14,14 +14,14 @@ class PdfDetailsRenderer {
     final contentWidth = width - (padding * 2);
 
     final titleStyle = TextStyle(
-      fontSize: 48,
+      fontSize: 50,
       fontWeight: FontWeight.bold,
       color: Colors.white,
       fontFamily: 'Cairo',
     );
 
     final descStyle = TextStyle(
-      fontSize: 32,
+      fontSize: 36,
       fontWeight: FontWeight.normal,
       color: Colors.white,
       fontFamily: 'Cairo', // Ensures Arabic support
