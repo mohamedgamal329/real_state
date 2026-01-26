@@ -85,6 +85,13 @@ class _FakeAccessRepo implements AccessRequestsRepository {
   }) async => null;
 
   @override
+  Future<AccessRequest?> fetchLatestRequest({
+    required String propertyId,
+    required String requesterId,
+    required AccessRequestType type,
+  }) async => null;
+
+  @override
   Future<AccessRequest?> fetchById(String id) async => null;
 
   @override

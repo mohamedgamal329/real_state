@@ -100,6 +100,16 @@ class FakeAccessRequestsRepository implements AccessRequestsRepository {
   }
 
   @override
+  Future<AccessRequest?> fetchLatestRequest({
+    required String propertyId,
+    required String requesterId,
+    required AccessRequestType type,
+  }) async {
+    final key = _key(propertyId, requesterId, type);
+    return _latestForKey(key);
+  }
+
+  @override
   Stream<AccessRequest?> watchLatestRequest({
     required String propertyId,
     required String requesterId,

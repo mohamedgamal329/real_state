@@ -186,15 +186,21 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
     await doc.set(AppNotificationDto.toMap(notification));
     final targetUserId = notification.targetUserId;
     if (targetUserId == null || targetUserId.isEmpty) return;
-    final tokens = await _notificationDelivery.fetchTokensForUsers([
-      targetUserId,
-    ]);
-    await _notificationDelivery.sendNotificationToTokens(
-      tokens: tokens,
-      title: notification.title,
-      body: notification.body,
-      notificationData: _buildDataPayload(notification),
-    );
+    try {
+      final tokens = await _notificationDelivery.fetchTokensForUsers([
+        targetUserId,
+      ]);
+      await _notificationDelivery.sendNotificationToTokens(
+        tokens: tokens,
+        title: notification.title,
+        body: notification.body,
+        notificationData: _buildDataPayload(notification),
+      );
+    } catch (e, st) {
+      debugPrint(
+        '[NotificationsRepository] Push delivery failed (notification persisted): $e\n$st',
+      );
+    }
   }
 
   Map<String, dynamic> _buildDataPayload(AppNotification notification) {

@@ -156,7 +156,7 @@ class _HomePageState extends State<HomePage>
           if (role == null || !canCreateProperty(role))
             return const SizedBox.shrink();
           return Padding(
-            padding: const EdgeInsets.only(bottom: 100),
+            padding: const EdgeInsets.only(bottom: 60),
             child: FloatingActionButton(
               onPressed: () async {
                 await context.push('/property/new');
