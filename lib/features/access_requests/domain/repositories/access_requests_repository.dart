@@ -16,6 +16,12 @@ abstract class AccessRequestsRepository {
     String? message,
   });
 
+  Future<AccessRequest?> fetchLatestRequest({
+    required String propertyId,
+    required String requesterId,
+    required AccessRequestType type,
+  });
+
   Future<PageResult<AccessRequest>> fetchPage({
     PageToken? startAfter,
     int limit = 10,

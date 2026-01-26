@@ -121,8 +121,6 @@ class _PropertyPageBodyState extends State<PropertyPageBody> {
                 final canShare = allowActions && (loaded?.canShare ?? false);
                 final imagesAccessible = loaded?.imagesVisible ?? false;
                 final phoneAccessible = loaded?.phoneVisible ?? false;
-                final securityGuardPhoneAccessible =
-                    loaded?.securityGuardPhoneVisible ?? false;
                 final securityNumberAccessible =
                     loaded?.securityNumberVisible ?? false;
                 final canRequestAccess = loaded?.canRequestAccess ?? false;
@@ -133,10 +131,8 @@ class _PropertyPageBodyState extends State<PropertyPageBody> {
                 final canRequestPhone =
                     canRequestAccess &&
                     ((loaded?.hasPhone ?? false) ||
-                        (loaded?.hasSecurityGuardPhone ?? false) ||
                         (loaded?.hasSecurityNumber ?? false)) &&
                     !phoneAccessible &&
-                    !securityGuardPhoneAccessible &&
                     !securityNumberAccessible;
                 final canRequestLocation =
                     canRequestAccess &&
@@ -165,7 +161,6 @@ class _PropertyPageBodyState extends State<PropertyPageBody> {
                       loaded?.imagesToShow ?? property.imageUrls.length,
                   imagesAccessible: imagesAccessible,
                   phoneAccessible: phoneAccessible,
-                  securityGuardPhoneAccessible: securityGuardPhoneAccessible,
                   securityNumberAccessible: securityNumberAccessible,
                   locationAccessible: loaded?.locationVisible ?? false,
                   creatorName: loaded?.creatorName,

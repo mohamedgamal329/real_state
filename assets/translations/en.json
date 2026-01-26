@@ -316,11 +316,8 @@
   "assignment_specific": "Specific people",
   "assignment_hint": "Assignment defaults to all employees/brokers. You can adjust it after creation.",
   "owner_phone_optional": "Owner phone (optional)",
-  "security_guard_phone_optional": "Security guard phone (optional)",
-  "security_guard_phone": "Security Guard Phone",
   "security_number": "Security Number ",
   "security_number_optional": "Security Number (optional)",
-  "add_security_guard_phone": "Add security guard phone",
   "update": "Update",
   "create": "Create",
   "image_pick_failed": "Image pick failed: {}",
@@ -372,5 +369,7 @@
   "filtered_properties": "Filtered Properties",
   "no_properties_match_filters": "No properties match your filters.",
   "edit": "Edit",
-  "unknown": "Unknown"
+  "unknown": "Unknown",
+  "property_status_active": "Available",
+  "property_status_archived": "Archived"
 }

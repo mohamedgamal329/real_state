@@ -1,7 +1,9 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:real_state/core/components/app_skeletonizer.dart';
+import 'package:real_state/core/components/app_svg_icon.dart';
 import 'package:real_state/core/components/primary_button.dart';
+import 'package:real_state/core/constants/app_images.dart';
 import 'package:real_state/core/validation/validators.dart';
 import 'package:real_state/features/models/entities/location_area.dart';
 import 'package:real_state/features/models/entities/property.dart';
@@ -23,15 +25,12 @@ class PropertyEditorForm extends StatelessWidget {
   final TextEditingController kitchensCtrl;
   final TextEditingController floorsCtrl;
   final TextEditingController phoneCtrl;
-  final TextEditingController securityGuardPhoneCtrl;
   final TextEditingController securityNumberCtrl;
   final bool isEditing;
   final bool showSkeleton;
   final bool hasPool;
   final bool isImagesHidden;
-  final bool showSecurityGuardPhone;
   final bool showSecurityNumber;
-  final VoidCallback onShowSecurityGuardPhone;
   final VoidCallback onShowSecurityNumber;
   final PropertyPurpose purpose;
   final String? locationId;
@@ -58,15 +57,12 @@ class PropertyEditorForm extends StatelessWidget {
     required this.kitchensCtrl,
     required this.floorsCtrl,
     required this.phoneCtrl,
-    required this.securityGuardPhoneCtrl,
     required this.securityNumberCtrl,
     required this.isEditing,
     required this.showSkeleton,
     required this.hasPool,
     required this.isImagesHidden,
-    required this.showSecurityGuardPhone,
     required this.showSecurityNumber,
-    required this.onShowSecurityGuardPhone,
     required this.onShowSecurityNumber,
     required this.purpose,
     required this.locationId,
@@ -155,23 +151,14 @@ class PropertyEditorForm extends StatelessWidget {
                 title: 'settings'.tr(),
                 child: PropertyEditorContactSection(
                   phoneCtrl: phoneCtrl,
-                  securityGuardPhoneCtrl: securityGuardPhoneCtrl,
                   securityNumberCtrl: securityNumberCtrl,
                   hasPool: hasPool,
                   isImagesHidden: isImagesHidden,
                   onTogglePool: onTogglePool,
                   onToggleImagesHidden: onToggleImagesHidden,
-                  showSecurityGuardPhone: showSecurityGuardPhone,
-                  onShowSecurityGuardPhone: onShowSecurityGuardPhone,
                   showSecurityNumber: showSecurityNumber,
                   onShowSecurityNumber: onShowSecurityNumber,
                   phoneValidator: (v) {
-                    if (v == null || v.trim().isEmpty) return null;
-                    return Validators.isValidPhone(v)
-                        ? null
-                        : 'owner_phone_invalid'.tr();
-                  },
-                  securityGuardPhoneValidator: (v) {
                     if (v == null || v.trim().isEmpty) return null;
                     return Validators.isValidPhone(v)
                         ? null
@@ -193,8 +180,7 @@ class PropertyEditorForm extends StatelessWidget {
               const SizedBox(height: 24),
               PrimaryButton(
                 label: isEditing ? 'update'.tr() : 'create'.tr(),
-                icon: Icons.save,
-
+                iconWidget: AppSvgIcon(isEditing ? AppSVG.edit : AppSVG.upload),
                 onPressed: onSave,
               ),
             ],

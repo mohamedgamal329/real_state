@@ -28,7 +28,9 @@ class AccessRequestsRepositoryImpl implements AccessRequestsRepository {
       requesterId: requesterId,
       type: type,
     );
-    if (existing != null && existing.status == AccessRequestStatus.pending) {
+    if (existing != null &&
+        (existing.status == AccessRequestStatus.pending ||
+            existing.status == AccessRequestStatus.accepted)) {
       return existing;
     }
     if (targetUserId.isEmpty) {
@@ -52,6 +54,15 @@ class AccessRequestsRepositoryImpl implements AccessRequestsRepository {
         .add(map);
     final doc = await ref.get();
     return AccessRequestDto.fromDoc(doc);
+  }
+
+  @override
+  Future<AccessRequest?> fetchLatestRequest({
+    required String propertyId,
+    required String requesterId,
+    required AccessRequestType type,
+  }) {
+    return _fetchLatest(propertyId: propertyId, requesterId: requesterId, type: type);
   }
 
   /// Fetch a page of access requests. If [requesterId] is provided, fetch requests

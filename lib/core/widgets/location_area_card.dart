@@ -28,11 +28,9 @@ class LocationAreaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final localized = area.localizedName(localeCode: localeCode);
-    final displayName = localized.isNotEmpty
-        ? localized
+    final displayName = area.name.isNotEmpty
+        ? area.name
         : 'placeholder_dash'.tr();
-    final secondary = localeCode.startsWith('ar') ? area.nameEn : area.nameAr;
     return PressableScale(
       enabled: onTap != null || onEdit != null,
       scale: 0.985,
@@ -70,16 +68,7 @@ class LocationAreaCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: AppSpacing.sm),
-                      Text(
-                        secondary.isNotEmpty
-                            ? secondary
-                            : 'placeholder_dash'.tr(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
+
                       if (footer != null) ...[
                         const SizedBox(height: AppSpacing.sm),
                         Text(

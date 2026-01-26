@@ -131,7 +131,7 @@ class PropertyDetailBloc
               coverImageUrl: null,
               imageUrls: const [],
               ownerPhoneEncryptedOrHiddenStored: null,
-              securityGuardPhoneEncryptedOrHiddenStored: null,
+              securityNumberEncryptedOrHiddenStored: null,
               locationUrl: null,
               isImagesHidden: false,
               status: PropertyStatus.active,
@@ -202,7 +202,7 @@ class PropertyDetailBloc
                 ),
               ),
             );
-        if (emitted.hasPhone || emitted.hasSecurityGuardPhone) {
+        if (emitted.hasPhone) {
           _phoneReqSub = _accessRequestsRepository
               .watchLatestRequest(
                 propertyId: event.propertyId,
@@ -273,24 +273,32 @@ class PropertyDetailBloc
       return;
 
     try {
-      final created = await _createAccessRequestUseCase(
+      final result = await _createAccessRequestUseCase(
         property: loaded.property,
         requesterId: userId,
         type: event.type,
         message: event.message,
       );
-      final targetUserId = created.ownerId ?? '';
+      final request = result.request;
+      final targetUserId = request.ownerId ?? '';
       final currentUser = _authRepository.currentUser;
 
-      await _notificationsRepository.sendAccessRequest(
-        requestId: created.id,
-        propertyId: event.propertyId,
-        targetUserId: targetUserId,
-        requesterId: userId,
-        requesterName: currentUser?.name,
-        type: event.type,
-        message: event.message?.isEmpty == true ? null : event.message,
-      );
+      if (result.created) {
+        await _notificationsRepository.sendAccessRequest(
+          requestId: request.id,
+          propertyId: event.propertyId,
+          targetUserId: targetUserId,
+          requesterId: userId,
+          requesterName: currentUser?.name,
+          type: event.type,
+          message: event.message?.isEmpty == true ? null : event.message,
+        );
+      } else {
+        debugPrint(
+          '[PropertyDetailBloc] Existing access request found, skipping creation: '
+          'property=${event.propertyId} requester=$userId type=${event.type.name} status=${request.status.name}',
+        );
+      }
       emit(
         PropertyDetailActionSuccess(loaded, message: 'request_submitted'.tr()),
       );

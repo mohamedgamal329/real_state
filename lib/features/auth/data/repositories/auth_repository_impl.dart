@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:real_state/core/auth/current_user_accessor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,8 +15,30 @@ class AuthRepositoryImpl implements AuthRepositoryDomain, CurrentUserAccessor {
   final AuthRemoteDataSource remote;
   final FcmService? _fcmService;
 
+  final StreamController<UserEntity?> _userChangesController =
+      StreamController<UserEntity?>.broadcast(sync: true);
+  StreamSubscription<UserEntity?>? _authStateSub;
+  bool _hasAuthState = false;
+  UserEntity? _cachedUser;
+
   AuthRepositoryImpl(this.remote, {FcmService? fcmService})
-    : _fcmService = fcmService;
+    : _fcmService = fcmService {
+    _authStateSub = remote.authStateChanges().listen(
+      (user) {
+        _hasAuthState = true;
+        _cachedUser = user == null
+            ? null
+            : UserEntity(
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                role: user.role,
+              );
+        _userChangesController.add(_cachedUser);
+      },
+      onError: _userChangesController.addError,
+    );
+  }
 
   @override
   Future<UserEntity> signInWithEmail(String email, String password) async {
@@ -85,18 +109,30 @@ class AuthRepositoryImpl implements AuthRepositoryDomain, CurrentUserAccessor {
   }
 
   @override
-  Stream<UserEntity?> get userChanges => remote.authStateChanges();
+  Stream<UserEntity?> get userChanges => Stream<UserEntity?>.multi((controller) {
+    if (_hasAuthState) {
+      controller.add(_cachedUser);
+    }
+    final sub = _userChangesController.stream.listen(
+      controller.add,
+      onError: controller.addError,
+    );
+    controller.onCancel = sub.cancel;
+  });
 
   @override
-  UserRole? get currentRole => remote.currentUser?.role;
+  UserRole? get currentRole => _cachedUser?.role;
 
   @override
-  String? get currentUserId => remote.currentUser?.id;
+  String? get currentUserId => _cachedUser?.id;
 
   @override
-  UserEntity? get currentUser {
-    final u = remote.currentUser;
-    if (u == null) return null;
-    return UserEntity(id: u.id, email: u.email, name: u.name, role: u.role);
+  UserEntity? get currentUser => _cachedUser;
+
+  @visibleForTesting
+  void disposeForTests() {
+    _authStateSub?.cancel();
+    _authStateSub = null;
+    _userChangesController.close();
   }
 }

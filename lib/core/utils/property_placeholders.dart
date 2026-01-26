@@ -22,7 +22,7 @@ Property placeholderProperty({int index = 0}) {
     coverImageUrl: null,
     imageUrls: const [],
     ownerPhoneEncryptedOrHiddenStored: '',
-    securityGuardPhoneEncryptedOrHiddenStored: '',
+    securityNumberEncryptedOrHiddenStored: '',
     isImagesHidden: false,
     status: PropertyStatus.active,
     isDeleted: false,

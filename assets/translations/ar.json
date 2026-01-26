@@ -318,11 +318,8 @@
   "assignment_specific": "أشخاص محددون",
   "assignment_hint": "التوزيع افتراضيًا لكل الموظفين/الوسطاء ويمكن تعديله بعد الإنشاء.",
   "owner_phone_optional": "هاتف المالك (اختياري)",
-  "security_guard_phone_optional": "هاتف الحارس (اختياري)",
-  "security_guard_phone": "هاتف الحارس",
   "security_number": "رقم الأمن ",
   "security_number_optional": "رقم الأمن (اختياري)",
-  "add_security_guard_phone": "إضافة هاتف الحارس",
   "update": "تحديث",
   "create": "إنشاء",
   "image_pick_failed": "فشل اختيار الصور: {}",
@@ -375,5 +372,7 @@
   "filtered_properties": "عقارات مفلترة",
   "no_properties_match_filters": "لا توجد عقارات تطابق بحثك.",
   "edit": "تعديل",
-  "unknown": "غير معروف"
+  "unknown": "غير معروف",
+  "property_status_active": "متاح",
+  "property_status_archived": "مؤرشف"
 }

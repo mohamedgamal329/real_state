@@ -19,7 +19,6 @@ class PropertyPageView extends StatelessWidget {
     required this.imagesToShow,
     required this.imagesAccessible,
     required this.phoneAccessible,
-    required this.securityGuardPhoneAccessible,
     required this.securityNumberAccessible,
     required this.locationAccessible,
     required this.creatorName,
@@ -46,7 +45,6 @@ class PropertyPageView extends StatelessWidget {
   final int imagesToShow;
   final bool imagesAccessible;
   final bool phoneAccessible;
-  final bool securityGuardPhoneAccessible;
   final bool securityNumberAccessible;
   final bool locationAccessible;
   final String? creatorName;
@@ -99,6 +97,7 @@ class PropertyPageView extends StatelessWidget {
     return Scaffold(
       appBar: CustomAppBar(title: 'property'.tr(), actions: appBarActions),
       body: BaseGradientPage(
+        safeBottom: false,
         child: showErrorView
             ? AppErrorView(
                 message: errorMessage ?? 'property_not_found'.tr(),
@@ -112,7 +111,6 @@ class PropertyPageView extends StatelessWidget {
                   imagesToShow: imagesToShow,
                   imagesAccessible: imagesAccessible,
                   phoneAccessible: phoneAccessible,
-                  securityGuardPhoneAccessible: securityGuardPhoneAccessible,
                   securityNumberAccessible: securityNumberAccessible,
                   locationAccessible: locationAccessible,
                   creatorName: creatorName,

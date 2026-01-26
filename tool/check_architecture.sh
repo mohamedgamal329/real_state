@@ -26,7 +26,7 @@ check_layer_imports() {
       continue
     fi
     local matches
-    matches=$(rg -n --glob '*.dart' "import .*\\/data\\/" "$target_dir" 2>/dev/null || true)
+    matches=$(grep -r "import .*/data/" "$target_dir" --include "*.dart" -n 2>/dev/null || true)
     if [[ -n "$matches" ]]; then
       log_error "Layer '$layer' in feature '$feature' imports from a data package"
       echo "$matches"
@@ -36,7 +36,7 @@ check_layer_imports() {
 
 check_firestore_types() {
   local matches
-  matches=$(rg -n --glob '*.dart' -g '!**/data/**' "DocumentSnapshot|Timestamp" lib 2>/dev/null || true)
+  matches=$(grep -rE "DocumentSnapshot|Timestamp" lib --include "*.dart" -n 2>/dev/null | grep -v "/data/" || true)
   if [[ -n "$matches" ]]; then
     log_error "Firestore types referenced outside lib/**/data/**"
     echo "$matches"

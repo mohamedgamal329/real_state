@@ -54,7 +54,9 @@ class PropertyDetailMetaSection extends StatelessWidget {
     chips.add(
       _InfoChip(
         icon: const AppSvgIcon(AppSVG.success, size: 18),
-        label: 'status_with_value'.tr(args: [p.status.name]),
+        label: 'status_with_value'.tr(
+          args: ['property_status_${p.status.name}'.tr()],
+        ),
       ),
     );
     if (p.hasPool) {

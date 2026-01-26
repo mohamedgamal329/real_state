@@ -3,7 +3,12 @@ import 'package:real_state/core/constants/app_colors.dart';
 
 class BaseGradientPage extends StatelessWidget {
   final Widget child;
-  const BaseGradientPage({super.key, required this.child});
+  final bool safeBottom;
+  const BaseGradientPage({
+    super.key,
+    required this.child,
+    this.safeBottom = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +40,7 @@ class BaseGradientPage extends StatelessWidget {
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeOut,
       decoration: BoxDecoration(gradient: gradient),
-      child: SafeArea(top: false, child: child),
+      child: SafeArea(top: false, bottom: safeBottom, child: child),
     );
   }
 }

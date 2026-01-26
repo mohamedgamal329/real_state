@@ -147,7 +147,7 @@ class _CategoriesFilterPageState extends State<CategoriesFilterPage> {
         actions: const [
           NotificationsIconButton(),
           Padding(
-            padding: EdgeInsets.only(right: 12.0),
+            padding: EdgeInsetsDirectional.only(end: 12.0),
             child: CleanLogo(size: 32),
           ),
         ],

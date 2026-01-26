@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:real_state/core/constants/user_role.dart';
 import 'package:real_state/features/auth/domain/entities/user_entity.dart';
 import 'package:real_state/features/auth/domain/repositories/auth_repository_domain.dart';
@@ -24,10 +22,8 @@ class FakeAuthRepo implements AuthRepositoryDomain {
   UserEntity? get currentUser => _user;
 
   @override
-  Stream<UserEntity?> get userChanges {
-    final ctrl = StreamController<UserEntity?>.broadcast(sync: true);
-    ctrl.onListen = () => ctrl.add(_user);
-    return ctrl.stream;
+  Stream<UserEntity?> get userChanges async* {
+    yield _user;
   }
 
   @override

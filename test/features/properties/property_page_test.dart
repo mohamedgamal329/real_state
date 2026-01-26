@@ -85,6 +85,13 @@ class _FakeAccessRepo implements AccessRequestsRepository {
   }) async => null;
 
   @override
+  Future<AccessRequest?> fetchLatestRequest({
+    required String propertyId,
+    required String requesterId,
+    required AccessRequestType type,
+  }) async => null;
+
+  @override
   Future<AccessRequest?> fetchById(String id) async => null;
 
   @override
@@ -274,7 +281,6 @@ void main() {
       coverImageUrl: null,
       imageUrls: ['https://example.com/1.jpg'],
       ownerPhoneEncryptedOrHiddenStored: '123456',
-      securityGuardPhoneEncryptedOrHiddenStored: '999',
       isImagesHidden: true,
       status: PropertyStatus.active,
       isDeleted: false,

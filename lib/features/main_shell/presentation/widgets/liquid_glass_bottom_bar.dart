@@ -43,10 +43,10 @@ class LiquidGlassBottomBar extends StatelessWidget {
               boxShadow: [
                 if (!isDark)
                   BoxShadow(
-                    blurRadius: 18,
+                    blurRadius: 12,
                     spreadRadius: 0,
-                    offset: const Offset(0, 8),
-                    color: colorScheme.shadow.withValues(alpha: 0.08),
+                    offset: const Offset(0, 4),
+                    color: colorScheme.shadow.withValues(alpha: 0.05),
                   ),
                 BoxShadow(
                   inset: true,
@@ -55,7 +55,7 @@ class LiquidGlassBottomBar extends StatelessWidget {
                   offset: const Offset(4, 2),
                   blurStyle: BlurStyle.inner,
                   color: colorScheme.shadow.withValues(
-                    alpha: isDark ? 0.2 : 0.12,
+                    alpha: isDark ? 0.2 : 0.06,
                   ),
                 ),
               ],
@@ -64,15 +64,15 @@ class LiquidGlassBottomBar extends StatelessWidget {
                 begin: AlignmentDirectional.centerStart,
                 colors: [
                   Color.alphaBlend(
-                    colorScheme.primary.withValues(alpha: isDark ? 0.16 : 0.12),
-                    colorScheme.surface.withValues(alpha: isDark ? 0.24 : 0.38),
+                    colorScheme.primary.withValues(alpha: isDark ? 0.16 : 0.05),
+                    colorScheme.surface.withValues(alpha: isDark ? 0.24 : 0.94),
                   ),
                   Color.alphaBlend(
                     colorScheme.secondary.withValues(
-                      alpha: isDark ? 0.12 : 0.1,
+                      alpha: isDark ? 0.12 : 0.04,
                     ),
                     colorScheme.surfaceContainerHighest.withValues(
-                      alpha: isDark ? 0.12 : 0.18,
+                      alpha: isDark ? 0.12 : 0.82,
                     ),
                   ),
                 ],
@@ -80,9 +80,9 @@ class LiquidGlassBottomBar extends StatelessWidget {
               border: Border.all(
                 width: 1.6,
                 color: Color.alphaBlend(
-                  colorScheme.primary.withValues(alpha: isDark ? 0.1 : 0.08),
+                  colorScheme.primary.withValues(alpha: isDark ? 0.1 : 0.04),
                   colorScheme.outlineVariant.withValues(
-                    alpha: isDark ? 0.28 : 0.2,
+                    alpha: isDark ? 0.28 : 0.15,
                   ),
                 ),
               ),
