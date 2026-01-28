@@ -80,7 +80,7 @@ class PdfPropertyBuilder {
           pageFormat: pageFormat,
           margin: pw.EdgeInsets.zero,
           buildBackground: (_) => pw.Container(
-            color: pdf.PdfColors.grey900, // Match dark theme
+            color: pdf.PdfColors.grey800, // Match dark theme
           ),
         ),
         build: (_) => pw.SizedBox(
@@ -106,7 +106,7 @@ class PdfPropertyBuilder {
           pageFormat: pdf.PdfPageFormat(data.width, data.height),
           margin: pw.EdgeInsets.zero,
           build: (_) => pw.Container(
-            color: pdf.PdfColors.grey900,
+            color: pdf.PdfColors.grey800,
             child: pw.Center(
               child: pw.Image(
                 image,
