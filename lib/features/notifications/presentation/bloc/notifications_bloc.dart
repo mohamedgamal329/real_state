@@ -169,10 +169,26 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
       );
       _hasLoadedOnce = true;
     } catch (e) {
-      if (_hasLoadedOnce) {
+      final message = mapErrorMessage(e);
+      final current = _dataState(state);
+      if (current != null) {
+        emit(
+          NotificationsPartialFailure(
+            items: current.items,
+            lastDoc: current.lastDoc,
+            hasMore: current.hasMore,
+            isOwner: current.isOwner,
+            isCollector: current.isCollector,
+            propertySummaries: current.propertySummaries,
+            pendingRequestIds: current.pendingRequestIds,
+            actionStatuses: current.actionStatuses,
+            message: message,
+          ),
+        );
+      } else {
         emit(
           NotificationsFailure(
-            message: mapErrorMessage(e),
+            message: message,
             isOwner: _isOwner,
             isCollector: _isCollector,
           ),

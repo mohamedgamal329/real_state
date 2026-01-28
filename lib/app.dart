@@ -13,6 +13,7 @@ import 'features/settings/domain/usecases/load_theme_mode_usecase.dart';
 import 'features/settings/domain/usecases/update_theme_mode_usecase.dart';
 import 'features/settings/presentation/cubit/settings_cubit.dart';
 import 'features/users/domain/repositories/user_management_repository.dart';
+import 'features/notifications/presentation/widgets/notification_initializer.dart';
 
 class App extends StatelessWidget {
   App({super.key, AppDi? di}) : _di = di ?? AppDi();
@@ -52,15 +53,21 @@ class App extends StatelessWidget {
                   supportedLocales: context.supportedLocales,
                   locale: context.locale,
                   builder: (context, child) {
-                    return GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () {
-                        final primaryFocus = FocusManager.instance.primaryFocus;
-                        if (primaryFocus != null && primaryFocus.hasFocus) {
-                          primaryFocus.unfocus();
-                        }
-                      },
-                      child: child,
+                    final wrappedChild =
+                        child ?? const SizedBox.shrink();
+                    return NotificationInitializer(
+                      router: _router,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          final primaryFocus =
+                              FocusManager.instance.primaryFocus;
+                          if (primaryFocus != null && primaryFocus.hasFocus) {
+                            primaryFocus.unfocus();
+                          }
+                        },
+                        child: wrappedChild,
+                      ),
                     );
                   },
                 );

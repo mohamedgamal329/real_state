@@ -324,13 +324,24 @@ class FcmService
   }
 
   Future<void> _requestPermission() async {
-    final settings = await _messaging.requestPermission(
+    final current = await _messaging.getNotificationSettings();
+    if (kDebugMode) {
+      debugPrint('FCM permission status: ${current.authorizationStatus}');
+    }
+    if (current.authorizationStatus != AuthorizationStatus.notDetermined) {
+      return;
+    }
+    final requested = await _messaging.requestPermission(
       alert: true,
       badge: true,
       sound: true,
       provisional: false,
     );
-    debugPrint('FCM permission: ${settings.authorizationStatus}');
+    if (kDebugMode) {
+      debugPrint(
+        'FCM permission requested: ${requested.authorizationStatus}',
+      );
+    }
   }
 
   void _handleForegroundMessage(RemoteMessage message) {
@@ -409,6 +420,9 @@ class FcmService
   Future<void> _handleTokenRefresh(String token) async {
     final previousToken = _cachedToken;
     _cachedToken = token;
+    if (kDebugMode) {
+      debugPrint('FCM token updated: $token');
+    }
     if (_currentUserId == null) return;
     final userId = _currentUserId!;
     if (!_canWriteForUser(userId)) {
