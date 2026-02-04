@@ -22,7 +22,11 @@ class ManageLocationsCubit extends Cubit<ManageLocationsState> {
 
   Future<void> initialize() async {
     emit(const ManageLocationsCheckingAccess());
-    final user = await _auth.userChanges.first;
+    final user = _auth.currentUser ??
+        await _auth.userChanges.first.timeout(
+          const Duration(seconds: 4),
+          onTimeout: () => _auth.currentUser,
+        );
     _canManage = user?.role == UserRole.owner || user?.role == UserRole.broker;
     if (!_canManage) {
       emit(ManageLocationsAccessDenied(message: 'access_denied'.tr()));

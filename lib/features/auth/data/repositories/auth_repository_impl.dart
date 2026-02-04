@@ -47,7 +47,6 @@ class AuthRepositoryImpl implements AuthRepositoryDomain, CurrentUserAccessor {
     await prefs.setString('user_token', user.id);
     await prefs.setString('user_role', roleToString(user.role));
     await prefs.setString('user_email', email);
-    await prefs.setString('user_password', password);
     await prefs.setString('user_name', user.name ?? '');
     return user;
   }
@@ -69,7 +68,6 @@ class AuthRepositoryImpl implements AuthRepositoryDomain, CurrentUserAccessor {
     await prefs.setString('user_token', user.id);
     await prefs.setString('user_role', roleToString(user.role));
     await prefs.setString('user_email', email);
-    await prefs.setString('user_password', password);
     await prefs.setString('user_name', user.name ?? '');
     return user;
   }
@@ -111,6 +109,11 @@ class AuthRepositoryImpl implements AuthRepositoryDomain, CurrentUserAccessor {
   @override
   Stream<UserEntity?> get userChanges => Stream<UserEntity?>.multi((controller) {
     if (_hasAuthState) {
+      if (kDebugMode) {
+        debugPrint(
+          'auth_user_replay id=${_cachedUser?.id ?? 'null'} role=${_cachedUser?.role.name ?? 'null'}',
+        );
+      }
       controller.add(_cachedUser);
     }
     final sub = _userChangesController.stream.listen(

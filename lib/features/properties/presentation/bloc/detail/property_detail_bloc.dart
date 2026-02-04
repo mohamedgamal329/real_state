@@ -102,7 +102,10 @@ class PropertyDetailBloc
     try {
       final user =
           _authRepository.currentUser ??
-          await _authRepository.userChanges.first;
+          await _authRepository.userChanges.first.timeout(
+            const Duration(seconds: 4),
+            onTimeout: () => _authRepository.currentUser,
+          );
       final property = await _propertiesRepository.getById(event.propertyId);
       final userId = user?.id;
       final role = user?.role;
@@ -475,6 +478,9 @@ class PropertyDetailBloc
       );
       return;
     }
+    if (_shareCubit.state is PropertyShareInProgress) {
+      return;
+    }
     if (!loaded.imagesVisible) {
       emit(
         PropertyDetailActionSuccess(
@@ -507,6 +513,9 @@ class PropertyDetailBloc
           isError: true,
         ),
       );
+      return;
+    }
+    if (_shareCubit.state is PropertyShareInProgress) {
       return;
     }
     final includeImages = loaded.imagesVisible;

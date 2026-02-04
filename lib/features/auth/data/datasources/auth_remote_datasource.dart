@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:real_state/core/constants/app_collections.dart';
 import 'package:real_state/core/constants/user_role.dart';
 import 'package:real_state/core/failure/firestore_failure.dart';
@@ -130,17 +131,18 @@ class AuthRemoteDataSource {
         );
       } on AuthFailure catch (e) {
         debugPrint('Auth stream failed to fetch profile: $e');
-        await _auth.signOut();
-        return null;
+        if (e.error == 'profile_missing' || e.error == 'inactive_user') {
+          await _auth.signOut();
+          return null;
+        }
+        return _fallbackUser(u);
       } on FirestoreFailure catch (e) {
         debugPrint('Auth stream firestore failure: ${e.error}');
-        await _auth.signOut();
-        return null;
+        return _fallbackUser(u);
       } catch (e, st) {
         final failure = mapExceptionToFailure(e, st);
         debugPrint('Auth stream unexpected error: $failure');
-        await _auth.signOut();
-        return null;
+        return _fallbackUser(u);
       }
     });
   }
@@ -178,5 +180,14 @@ class AuthRemoteDataSource {
       if (e is AuthFailure) rethrow;
       throw AuthFailure(error: e);
     }
+  }
+
+  Future<UserModel?> _fallbackUser(fb.User user) async {
+    final prefs = await SharedPreferences.getInstance();
+    final role = roleFromString(prefs.getString('user_role'));
+    if (role == null) return null;
+    final name = prefs.getString('user_name');
+    final email = prefs.getString('user_email') ?? user.email;
+    return UserModel(id: user.uid, email: email, name: name, role: role);
   }
 }

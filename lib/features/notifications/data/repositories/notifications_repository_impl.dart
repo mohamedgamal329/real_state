@@ -42,9 +42,11 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
         q = q.startAfterDocument(startAfterDoc);
       }
 
-      debugPrint(
-        '[NotificationsRepository] fetchPage user=$userId limit=$limit startAfter=${startAfterDoc?.id}',
-      );
+      if (kDebugMode) {
+        debugPrint(
+          '[NotificationsRepository] fetchPage user=$userId limit=$limit startAfter=${startAfterDoc?.id}',
+        );
+      }
 
       final snap = await q.get();
       final items = snap.docs.map(AppNotificationDto.fromDoc).toList();
@@ -55,9 +57,11 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
         hasMore: snap.docs.length == limit,
       );
     } catch (e, st) {
-      debugPrint(
-        '[NotificationsRepository] fetchPage failed for user=$userId: $e\n$st',
-      );
+      if (kDebugMode) {
+        debugPrint(
+          '[NotificationsRepository] fetchPage failed for user=$userId: $e\n$st',
+        );
+      }
       rethrow;
     }
   }
@@ -183,6 +187,11 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
 
   Future<void> _persistAndSend(AppNotification notification) async {
     final doc = AppNotificationDto.collection(_firestore).doc(notification.id);
+    if (kDebugMode) {
+      debugPrint(
+        '[NotificationsRepository] persist notification id=${notification.id} type=${notification.type.code} target=${notification.targetUserId}',
+      );
+    }
     await doc.set(AppNotificationDto.toMap(notification));
     final targetUserId = notification.targetUserId;
     if (targetUserId == null || targetUserId.isEmpty) return;
@@ -190,6 +199,11 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
       final tokens = await _notificationDelivery.fetchTokensForUsers([
         targetUserId,
       ]);
+      if (kDebugMode) {
+        debugPrint(
+          '[NotificationsRepository] push attempt id=${notification.id} tokens=${tokens.length}',
+        );
+      }
       await _notificationDelivery.sendNotificationToTokens(
         tokens: tokens,
         title: notification.title,
@@ -197,9 +211,11 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
         notificationData: _buildDataPayload(notification),
       );
     } catch (e, st) {
-      debugPrint(
-        '[NotificationsRepository] Push delivery failed (notification persisted): $e\n$st',
-      );
+      if (kDebugMode) {
+        debugPrint(
+          '[NotificationsRepository] Push delivery failed (notification persisted): $e\n$st',
+        );
+      }
     }
   }
 
@@ -254,7 +270,9 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
       if (q.docs.isEmpty) return;
       await q.docs.first.reference.update({'requestStatus': status.name});
     } catch (e) {
-      debugPrint('Failed to update owner notification status: $e');
+      if (kDebugMode) {
+        debugPrint('Failed to update owner notification status: $e');
+      }
     }
   }
 }

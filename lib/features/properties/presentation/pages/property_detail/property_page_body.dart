@@ -118,7 +118,10 @@ class _PropertyPageBodyState extends State<PropertyPageBody> {
                 final canModify = allowActions && (loaded?.canModify ?? false);
                 final canArchiveOrDelete =
                     allowActions && (loaded?.canArchiveOrDelete ?? false);
-                final canShare = allowActions && (loaded?.canShare ?? false);
+                final canShare =
+                    allowActions &&
+                    (loaded?.canShare ?? false) &&
+                    _currentShareProgress == null;
                 final imagesAccessible = loaded?.imagesVisible ?? false;
                 final phoneAccessible = loaded?.phoneVisible ?? false;
                 final securityNumberAccessible =

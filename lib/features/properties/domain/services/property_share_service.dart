@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
@@ -14,6 +15,10 @@ import 'package:share_plus/share_plus.dart';
 import '../models/property_share_progress.dart';
 
 class PropertyShareService {
+  static const int _maxShareImages = 20;
+  static const int _maxImageLongEdge = 1600;
+  static const int _jpegQuality = 80;
+  static const Duration _imageDownloadTimeout = Duration(seconds: 20);
   final BaseCacheManager _cacheManager;
   final PdfPropertyBuilder _pdfBuilder;
   Uint8List? _logoBytes;
@@ -66,7 +71,11 @@ class PropertyShareService {
     bool includeImages = true,
     PropertyShareProgressCallback? onProgress,
   }) async {
+    final stopwatch = Stopwatch()..start();
     _reportProgress(onProgress, PropertyShareStage.preparingData);
+    if (kDebugMode) {
+      debugPrint('share_pdf_start ts=${DateTime.now().toIso8601String()}');
+    }
     final pdfBytes = await buildPdfBytes(
       property: property,
       localeCode: localeCode,
@@ -74,6 +83,11 @@ class PropertyShareService {
       onProgress: onProgress,
     );
     _reportProgress(onProgress, PropertyShareStage.generatingPdf);
+    if (kDebugMode) {
+      debugPrint(
+        'share_pdf_built bytes=${pdfBytes.length} ms=${stopwatch.elapsedMilliseconds}',
+      );
+    }
 
     // FIX F: Write to real temp file so Gmail sees correct filename (not UUID)
     final title = property.title?.trim();
@@ -99,14 +113,22 @@ class PropertyShareService {
     // EXTREMELY CRITICAL: Use XFile with the explicit name
     final file = XFile(tempFile.path, name: fileName);
 
-    debugPrint(
-      'share_single_pdf_path=${tempFile.path} size=${pdfBytes.length}',
-    );
-    debugPrint('share_dir=${shareDir.path}');
+    if (kDebugMode) {
+      debugPrint(
+        'share_single_pdf_path=${tempFile.path} size=${pdfBytes.length}',
+      );
+      debugPrint('share_dir=${shareDir.path}');
+    }
 
     _reportProgress(onProgress, PropertyShareStage.uploadingSharing);
     // ignore: deprecated_member_use
+    if (kDebugMode) {
+      debugPrint('share_pdf_share_invoke ts=${DateTime.now().toIso8601String()}');
+    }
     await Share.shareXFiles([file], text: 'share_details_pdf'.tr());
+    if (kDebugMode) {
+      debugPrint('share_pdf_share_done ms=${stopwatch.elapsedMilliseconds}');
+    }
     _reportProgress(onProgress, PropertyShareStage.finalizing);
   }
 
@@ -122,6 +144,9 @@ class PropertyShareService {
         : 'property'.tr();
     final descriptionText = property.description ?? '';
     _reportProgress(onProgress, PropertyShareStage.preparingData);
+    if (_imageCache.length > _maxShareImages) {
+      _imageCache.clear();
+    }
     final images = includeImages
         ? await _loadImagesOrThrow(
             _collectImageUrls(property),
@@ -170,8 +195,12 @@ class PropertyShareService {
 
   Future<File?> _loadImageFile(String url) async {
     try {
-      final cached = await _cacheManager.getSingleFile(url);
+      final cached = await _cacheManager
+          .getSingleFile(url)
+          .timeout(_imageDownloadTimeout);
       if (await cached.exists()) return cached;
+      return null;
+    } on TimeoutException {
       return null;
     } catch (_) {
       return null;
@@ -183,35 +212,72 @@ class PropertyShareService {
     PropertyShareProgressCallback? onProgress,
   }) async {
     final images = <PdfImageData>[];
-    for (var i = 0; i < urls.length; i++) {
+    final effectiveUrls =
+        urls.length > _maxShareImages ? urls.take(_maxShareImages).toList() : urls;
+    if (kDebugMode && effectiveUrls.length != urls.length) {
+      debugPrint(
+        'share_pdf_images_capped total=${urls.length} used=${effectiveUrls.length}',
+      );
+    }
+    for (var i = 0; i < effectiveUrls.length; i++) {
       try {
         _reportProgressFraction(
           onProgress,
           PropertyShareStage.preparingData,
-          (i / urls.length).clamp(0.0, 1.0),
+          (i / effectiveUrls.length).clamp(0.0, 1.0),
         );
-        final url = urls[i];
+        final url = effectiveUrls[i];
         final cachedImage = _imageCache[url];
         if (cachedImage != null) {
           images.add(cachedImage);
           continue;
         }
         final file = await _loadImageFile(url);
-        if (file == null) throw const LocalizedException('unable_load_images');
+        if (file == null) {
+          if (kDebugMode) {
+            debugPrint('share_pdf_image_skip url=$url reason=load_failed');
+          }
+          continue;
+        }
         final bytes = await file.readAsBytes();
-        final decoded = await compute(_decodeImageDimensions, bytes);
-        if (decoded == null)
-          throw const LocalizedException('unable_load_images');
+        if (kDebugMode) {
+          debugPrint('share_pdf_image_bytes url=$url size=${bytes.length}');
+        }
+        final decoded = await compute(
+          _resizeAndCompressImage,
+          _ResizeRequest(
+            bytes: bytes,
+            maxLongEdge: _maxImageLongEdge,
+            jpegQuality: _jpegQuality,
+          ),
+        );
+        if (decoded == null) {
+          if (kDebugMode) {
+            debugPrint('share_pdf_image_skip url=$url reason=decode_failed');
+          }
+          continue;
+        }
         final data = PdfImageData(
-          bytes: bytes,
-          width: decoded[0].toDouble(),
-          height: decoded[1].toDouble(),
+          bytes: decoded.bytes,
+          width: decoded.width.toDouble(),
+          height: decoded.height.toDouble(),
         );
         _imageCache[url] = data;
         images.add(data);
+        if (kDebugMode) {
+          debugPrint(
+            'share_pdf_image_processed url=$url size=${data.bytes.length} dim=${data.width}x${data.height}',
+          );
+        }
       } catch (_) {
-        throw const LocalizedException('unable_load_images');
+        if (kDebugMode) {
+          debugPrint('share_pdf_image_skip url=${effectiveUrls[i]} reason=exception');
+        }
+        continue;
       }
+    }
+    if (images.isEmpty) {
+      throw const LocalizedException('unable_load_images');
     }
     return images;
   }
@@ -273,8 +339,49 @@ class PropertyShareService {
   }
 }
 
-List<int>? _decodeImageDimensions(Uint8List bytes) {
-  final decoded = img.decodeImage(bytes);
+class _ResizeRequest {
+  final Uint8List bytes;
+  final int maxLongEdge;
+  final int jpegQuality;
+
+  const _ResizeRequest({
+    required this.bytes,
+    required this.maxLongEdge,
+    required this.jpegQuality,
+  });
+}
+
+class _ResizeResult {
+  final Uint8List bytes;
+  final int width;
+  final int height;
+
+  const _ResizeResult({
+    required this.bytes,
+    required this.width,
+    required this.height,
+  });
+}
+
+_ResizeResult? _resizeAndCompressImage(_ResizeRequest request) {
+  final decoded = img.decodeImage(request.bytes);
   if (decoded == null) return null;
-  return [decoded.width, decoded.height];
+  final width = decoded.width;
+  final height = decoded.height;
+  final longEdge = width > height ? width : height;
+  final scale =
+      longEdge > request.maxLongEdge ? request.maxLongEdge / longEdge : 1.0;
+  final resized = scale < 1.0
+      ? img.copyResize(
+          decoded,
+          width: (width * scale).round(),
+          height: (height * scale).round(),
+        )
+      : decoded;
+  final jpeg = img.encodeJpg(resized, quality: request.jpegQuality);
+  return _ResizeResult(
+    bytes: Uint8List.fromList(jpeg),
+    width: resized.width,
+    height: resized.height,
+  );
 }

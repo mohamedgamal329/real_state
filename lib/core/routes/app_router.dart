@@ -1,9 +1,7 @@
 // no direct material import needed here
-import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:real_state/core/components/app_snackbar.dart';
+import 'package:real_state/core/routes/route_guards.dart';
 import 'package:real_state/features/brokers/presentation/pages/broker_areas_page.dart';
 import 'package:real_state/features/company_areas/presentation/bloc/company_areas_bloc.dart';
 import 'package:real_state/features/location/domain/repositories/location_areas_repository.dart';
@@ -38,7 +36,6 @@ import '../../features/settings/presentation/pages/my_added_properties/my_added_
 import '../../features/settings/presentation/pages/profile_info_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
 import 'not_found_page.dart';
-import 'route_guards.dart';
 
 /// Creates a GoRouter configured with redirects that depend on
 /// the provided [AuthRepository]. The router refreshes whenever the
@@ -61,35 +58,21 @@ class AppRouter {
         ),
         GoRoute(
           path: '/settings/users',
+          redirect: (context, state) {
+            if (!canManageUsers(auth.role)) return '/main';
+            return null;
+          },
           builder: (c, s) {
-            if (!canManageUsers(auth.role)) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                AppSnackbar.show(
-                  c,
-                  'access_denied'.tr(),
-                  type: AppSnackbarType.error,
-                );
-                c.go('/main');
-              });
-              return const SizedBox.shrink();
-            }
             return const ManageUsersPage();
           },
         ),
         GoRoute(
           path: '/settings/locations',
+          redirect: (context, state) {
+            if (!canManageLocations(auth.role)) return '/main';
+            return null;
+          },
           builder: (c, s) {
-            if (!canManageLocations(auth.role)) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                AppSnackbar.show(
-                  c,
-                  'access_denied'.tr(),
-                  type: AppSnackbarType.error,
-                );
-                c.go('/main');
-              });
-              return const SizedBox.shrink();
-            }
             return const ManageLocationsPage();
           },
         ),
@@ -132,20 +115,11 @@ class AppRouter {
         ),
         GoRoute(
           path: '/broker/:id',
+          redirect: (context, state) {
+            if (!canAccessBrokersRoutes(auth.role)) return '/main';
+            return null;
+          },
           builder: (c, s) {
-            // Reusing existing guard logic if needed, or keeping it open if this page is public?
-            // Assuming access control is same as areas page for now.
-            if (!canAccessBrokersRoutes(auth.role)) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                AppSnackbar.show(
-                  c,
-                  'access_denied'.tr(),
-                  type: AppSnackbarType.error,
-                );
-                c.go('/main');
-              });
-              return const SizedBox.shrink();
-            }
             String? brokerName;
             if (s.extra is Map) {
               final extra = s.extra as Map;
@@ -168,18 +142,11 @@ class AppRouter {
         ),
         GoRoute(
           path: '/broker/:brokerId/area/:areaId',
+          redirect: (context, state) {
+            if (!canAccessBrokersRoutes(auth.role)) return '/main';
+            return null;
+          },
           builder: (c, s) {
-            if (!canAccessBrokersRoutes(auth.role)) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                AppSnackbar.show(
-                  c,
-                  'access_denied'.tr(),
-                  type: AppSnackbarType.error,
-                );
-                c.go('/main');
-              });
-              return const SizedBox.shrink();
-            }
             final brokerId = s.pathParameters['brokerId']!;
             final areaId = s.pathParameters['areaId']!;
             String areaName = '';

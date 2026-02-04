@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:real_state/core/components/base_gradient_page.dart';
 import 'package:real_state/core/components/custom_app_bar.dart';
@@ -150,7 +151,9 @@ class _CategoriesPageState extends State<CategoriesPage>
               return FilterBottomSheet(
                 currentFilter: core.filter,
                 locationAreas: null, // Uses Cubit
-                onAddLocation: () async {}, // TODO: Implement if needed
+                onAddLocation: () async {
+                  await context.push('/settings/locations');
+                },
                 onApply: (filter) {
                   context.read<CategoriesCubit>().applyFilter(filter);
                   setState(() => _showResults = true);

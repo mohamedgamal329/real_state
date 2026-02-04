@@ -43,9 +43,16 @@ class BrokerPropertiesBloc
     on<BrokerPropertiesLoadMore>(_onLoadMore);
     on<BrokerPropertiesFilterChanged>(_onFilterChanged);
 
-    _auth.userChanges.first.then(
-      (user) => _isCollector = user?.role == UserRole.collector,
-    );
+    _isCollector = _auth.currentUser?.role == UserRole.collector;
+    _auth.userChanges.first
+        .timeout(
+          const Duration(seconds: 4),
+          onTimeout: () => _auth.currentUser,
+        )
+        .then(
+          (user) => _isCollector = user?.role == UserRole.collector,
+        )
+        .catchError((_) => _isCollector);
     _authSub = _auth.userChanges.listen((user) {
       _isCollector = user?.role == UserRole.collector;
     });

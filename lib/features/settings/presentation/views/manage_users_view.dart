@@ -55,7 +55,11 @@ class _ManageUsersViewState extends State<ManageUsersView>
 
   Future<void> _loadRole() async {
     final auth = context.read<AuthRepositoryDomain>();
-    final user = auth.currentUser ?? await auth.userChanges.first;
+    final user = auth.currentUser ??
+        await auth.userChanges.first.timeout(
+          const Duration(seconds: 4),
+          onTimeout: () => auth.currentUser,
+        );
     setState(() {
       _isOwner = user?.role == UserRole.owner;
       _loadingRole = false;

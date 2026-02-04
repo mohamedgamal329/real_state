@@ -150,10 +150,12 @@ class FcmService
       _logDeliveryResult(deliveryResult);
       return deliveryResult;
     } on FirebaseFunctionsException catch (e) {
-      if (e.code == 'not-found') {
-        debugPrint('sendNotification not deployed or wrong project/region');
+      if (kDebugMode) {
+        if (e.code == 'not-found') {
+          debugPrint('sendNotification not deployed or wrong project/region');
+        }
+        debugPrint('sendNotification failed (${e.code}): ${e.message}');
       }
-      debugPrint('sendNotification failed (${e.code}): ${e.message}');
       return NotificationDeliveryResult(
         successCount: 0,
         failureCount: tokens.length,
@@ -165,8 +167,8 @@ class FcmService
         ],
       );
     } catch (e, st) {
-      debugPrint('sendNotification call failed: $e');
       if (kDebugMode) {
+        debugPrint('sendNotification call failed: $e');
         debugPrint('Stacktrace: $st');
       }
       return NotificationDeliveryResult(
@@ -230,7 +232,9 @@ class FcmService
     if (_requiresApns) {
       final apns = await _messaging.getAPNSToken();
       if (apns == null || apns.isEmpty) {
-        debugPrint('Awaiting APNs token before requesting FCM token');
+        if (kDebugMode) {
+          debugPrint('Awaiting APNs token before requesting FCM token');
+        }
         _scheduleApnsRetry(userId);
         return;
       }
@@ -268,7 +272,9 @@ class FcmService
           }, SetOptions(merge: true));
     } catch (e, st) {
       final failure = mapExceptionToFailure(e, st);
-      debugPrint('Unable to save FCM token: $failure');
+      if (kDebugMode) {
+        debugPrint('Unable to save FCM token: $failure');
+      }
       throw failure;
     }
   }
@@ -453,7 +459,9 @@ class FcmService
           }, SetOptions(merge: true));
     } catch (e, st) {
       final failure = mapExceptionToFailure(e, st);
-      debugPrint('Unable to deactivate FCM token: $failure');
+      if (kDebugMode) {
+        debugPrint('Unable to deactivate FCM token: $failure');
+      }
       throw failure;
     }
   }
@@ -473,9 +481,11 @@ class FcmService
       }
     } catch (e, st) {
       final failure = mapExceptionToFailure(e, st);
-      debugPrint(
-        'Unable to deactivate all FCM tokens for user $userId: $failure',
-      );
+      if (kDebugMode) {
+        debugPrint(
+          'Unable to deactivate all FCM tokens for user $userId: $failure',
+        );
+      }
       throw failure;
     }
   }
@@ -513,9 +523,11 @@ class FcmService
 
   void _logFailure(String context, Object error, [StackTrace? st]) {
     final failure = mapExceptionToFailure(error, st);
-    debugPrint('$context: $failure');
-    if (st != null) {
-      debugPrint('Stacktrace: $st');
+    if (kDebugMode) {
+      debugPrint('$context: $failure');
+      if (st != null) {
+        debugPrint('Stacktrace: $st');
+      }
     }
   }
 
@@ -525,7 +537,9 @@ class FcmService
 
   void _logCleanupFailure(String context, Object error, [StackTrace? st]) {
     if (_isPermissionDenied(error)) {
-      debugPrint('$context skipped (permission-denied)');
+      if (kDebugMode) {
+        debugPrint('$context skipped (permission-denied)');
+      }
       return;
     }
     _logFailure(context, error, st);

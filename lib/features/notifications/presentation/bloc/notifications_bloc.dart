@@ -382,7 +382,9 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
       final batch = await _propertiesRepo.fetchByIds(missingIds);
       fetched.addAll(batch);
     } catch (e, st) {
-      debugPrint('[NotificationsBloc] Failed batch fetch: $e\n$st');
+      if (kDebugMode) {
+        debugPrint('[NotificationsBloc] Failed batch fetch: $e\n$st');
+      }
       firstError ??= mapErrorMessage(e, stackTrace: st);
       for (final id in missingIds) {
         fetched[id] = null;
@@ -399,7 +401,9 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     try {
       areaNames = await _locationAreas.fetchNamesByIds(areaIds);
     } catch (e, st) {
-      debugPrint('[NotificationsBloc] Failed to fetch location names: $e\n$st');
+      if (kDebugMode) {
+        debugPrint('[NotificationsBloc] Failed to fetch location names: $e\n$st');
+      }
       firstError ??= mapErrorMessage(e, stackTrace: st);
     }
 
@@ -640,7 +644,9 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
       );
       _emitSuccessFrom(loaded, emit);
     } catch (e, st) {
-      debugPrint('[NotificationsBloc] markRead failed: $e\n$st');
+      if (kDebugMode) {
+        debugPrint('[NotificationsBloc] markRead failed: $e\n$st');
+      }
       _emitWithMessage(mapErrorMessage(e, stackTrace: st), emit);
     }
   }
