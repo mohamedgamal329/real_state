@@ -4,10 +4,26 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
   Future<void> _initData() async {
     try {
       final auth = context.read<AuthRepositoryDomain>();
-      final user = await auth.userChanges.first;
+      final user = auth.currentUser ??
+          await auth.userChanges.first.timeout(
+            const Duration(seconds: 4),
+            onTimeout: () => auth.currentUser,
+          );
+      if (user == null) {
+        if (mounted) {
+          AppSnackbar.show(
+            context,
+            'access_denied'.tr(),
+            type: AppSnackbarType.error,
+          );
+          // ignore: invalid_use_of_protected_member
+          setState(() => _loading = false);
+        }
+        return;
+      }
       if (!mounted) return;
-      _userRole = user?.role ?? UserRole.owner;
-      _userId = user?.id;
+      _userRole = user.role;
+      _userId = user.id;
 
       final prop = widget.property;
       if (prop != null) {

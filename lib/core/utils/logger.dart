@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart';
+
 class Logger {
   Logger._();
 
   static void event(String name, {String? detail}) {
+    if (!kDebugMode) return;
     // Lightweight analytics-friendly log hook; replace with real sink if needed.
     // Avoid spamming by keeping only key events.
     // ignore: avoid_print

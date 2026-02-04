@@ -26,7 +26,12 @@ Future<void> shareMultiplePropertyPdfs({
   if (properties.isEmpty) return;
   UserRole? role;
   try {
-    final user = await context.read<AuthRepositoryDomain>().userChanges.first;
+    final auth = context.read<AuthRepositoryDomain>();
+    final user = auth.currentUser ??
+        await auth.userChanges.first.timeout(
+          const Duration(seconds: 4),
+          onTimeout: () => auth.currentUser,
+        );
     role = user?.role;
   } catch (_) {
     role = null;
@@ -63,7 +68,9 @@ Future<void> shareMultiplePropertyPdfs({
     final xFiles = <XFile>[];
     final usedNames = <String>{};
 
-    debugPrint('share_pdfs_selected=${properties.length}');
+    if (kDebugMode) {
+      debugPrint('share_pdfs_selected=${properties.length}');
+    }
 
     // Batch process properties to build PDFs
     for (var i = 0; i < properties.length; i++) {
@@ -105,10 +112,12 @@ Future<void> shareMultiplePropertyPdfs({
       final xFile = XFile(tempFile.path, name: fileName);
       xFiles.add(xFile);
 
-      debugPrint('share_dir=${shareDir.path}');
-      debugPrint(
-        'share_pdf_${i + 1}_path=${tempFile.path} size=${bytes.length}',
-      );
+      if (kDebugMode) {
+        debugPrint('share_dir=${shareDir.path}');
+        debugPrint(
+          'share_pdf_${i + 1}_path=${tempFile.path} size=${bytes.length}',
+        );
+      }
       if (kDebugMode) {
         debugPrint(
           'share_pdf: ${property.id} built in ${itemStopwatch.elapsedMilliseconds}ms -> $fileName',
@@ -120,8 +129,10 @@ Future<void> shareMultiplePropertyPdfs({
       throw const LocalizedException('share_pdf_not_allowed');
     }
 
-    debugPrint('share_pdfs_created=${xFiles.length}');
-    debugPrint('share_pdfs_count=${xFiles.length}');
+    if (kDebugMode) {
+      debugPrint('share_pdfs_created=${xFiles.length}');
+      debugPrint('share_pdfs_count=${xFiles.length}');
+    }
 
     overlayController.update(
       _batchProgress(
@@ -147,9 +158,11 @@ Future<void> shareMultiplePropertyPdfs({
       );
     }
 
-    debugPrint(
-      'share_pdfs_share_call_files=${xFiles.length} selected=${properties.length}',
-    );
+    if (kDebugMode) {
+      debugPrint(
+        'share_pdfs_share_call_files=${xFiles.length} selected=${properties.length}',
+      );
+    }
 
     // ignore: deprecated_member_use
     await Share.shareXFiles(

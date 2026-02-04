@@ -48,6 +48,9 @@ class PropertyShareCubit extends Cubit<PropertyShareState> {
   Future<void> _performShare(
     Future<void> Function(PropertyShareProgressCallback?) job,
   ) async {
+    if (state is PropertyShareInProgress) {
+      return;
+    }
     emit(
       PropertyShareInProgress(
         PropertyShareProgress(

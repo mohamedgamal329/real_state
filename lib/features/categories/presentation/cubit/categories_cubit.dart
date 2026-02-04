@@ -53,9 +53,16 @@ class CategoriesCubit extends Cubit<CategoriesState> {
       }
     });
 
-    _auth.userChanges.first.then((u) {
-      _isCollector = u?.role == UserRole.collector;
-    });
+    _isCollector = _auth.currentUser?.role == UserRole.collector;
+    _auth.userChanges.first
+        .timeout(
+          const Duration(seconds: 4),
+          onTimeout: () => _auth.currentUser,
+        )
+        .then((u) {
+          _isCollector = u?.role == UserRole.collector;
+        })
+        .catchError((_) {});
 
     // Load locations once on init
     unawaited(ensureLocationsLoaded());

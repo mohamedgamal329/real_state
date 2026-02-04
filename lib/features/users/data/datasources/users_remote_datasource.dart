@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:real_state/firebase_options.dart';
 
 import '../../../../core/constants/user_role.dart';
@@ -99,7 +98,7 @@ class UsersRemoteDataSource {
     });
   }
 
-  /// Returns (email, password) for the current owner after verifying active role.
+  /// Returns owner session after verifying active role.
   Future<_OwnerSession> _ensureOwnerWithCredentials() async {
     final owner = auth.currentUser;
     if (owner == null) throw const LocalizedException('error_auth_required');
@@ -111,14 +110,8 @@ class UsersRemoteDataSource {
     if (!isOwner || !isActive)
       throw const LocalizedException('error_owner_access');
 
-    final prefs = await SharedPreferences.getInstance();
-    final ownerEmail = prefs.getString('user_email');
-    final ownerPassword = prefs.getString('user_password');
-    if (ownerEmail == null || ownerPassword == null) {
-      throw const LocalizedException('error_owner_session');
-    }
     final companyId = (data?['companyId'] as String?) ?? owner.uid;
-    return _OwnerSession(ownerEmail, ownerPassword, companyId);
+    return _OwnerSession(companyId);
   }
 
   Future<FirebaseAuth> _secondaryAuth() async {
@@ -137,9 +130,7 @@ class UsersRemoteDataSource {
 }
 
 class _OwnerSession {
-  final String email;
-  final String password;
   final String companyId;
 
-  const _OwnerSession(this.email, this.password, this.companyId);
+  const _OwnerSession(this.companyId);
 }

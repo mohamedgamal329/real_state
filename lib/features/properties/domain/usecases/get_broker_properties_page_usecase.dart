@@ -18,18 +18,24 @@ class GetBrokerPropertiesPageUseCase {
     PageToken? startAfter,
     int limit = 20,
     PropertyFilter? filter,
-  }) {
-    return _auth.userChanges.first.then((user) async {
-      if (user?.role == UserRole.collector) {
-        throw const LocalizedException('access_denied_broker_data');
-      }
-      return _repository.fetchBrokerPage(
-        brokerId: brokerId,
-        startAfter: startAfter,
-        limit: limit,
-        filter: filter,
-        role: user?.role,
-      );
-    });
+  }) async {
+    final user = _auth.currentUser ??
+        await _auth.userChanges.first.timeout(
+          const Duration(seconds: 4),
+          onTimeout: () => _auth.currentUser,
+        );
+    if (user == null) {
+      throw const LocalizedException('access_denied_broker_data');
+    }
+    if (user.role == UserRole.collector) {
+      throw const LocalizedException('access_denied_broker_data');
+    }
+    return _repository.fetchBrokerPage(
+      brokerId: brokerId,
+      startAfter: startAfter,
+      limit: limit,
+      filter: filter,
+      role: user.role,
+    );
   }
 }

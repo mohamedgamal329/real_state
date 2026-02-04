@@ -1,116 +1,167 @@
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class PdfDetailsRenderer {
+  static const double _a4Width = 595.0;
+  static const double _a4Height = 842.0;
+  static const int _pageBgColor = 0xFF212121;
+
   static Future<Uint8List> renderToPng({
     required String title,
     required String description,
-    double width = 595.0 * 2.0, // A4 width * 2 for high density
+    double width = _a4Width * 2.0, // A4 width * 2 for high density
+    double height = _a4Height * 2.0,
   }) async {
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
+    final pages = await renderToPngPages(
+      title: title,
+      description: description,
+      width: width,
+      height: height,
+    );
+    return pages.first;
+  }
+
+  static Future<List<Uint8List>> renderToPngPages({
+    required String title,
+    required String description,
+    double width = _a4Width * 2.0, // A4 width * 2 for high density
+    double height = _a4Height * 2.0,
+  }) async {
     const padding = 48.0;
+    const topPaddingFirstPage = 64.0;
+    const titleToDescriptionGap = 40.0;
     final contentWidth = width - (padding * 2);
+    if (kDebugMode) {
+      final bgHex = _pageBgColor.toRadixString(16).padLeft(8, '0');
+      debugPrint(
+        'pdf_details_png_size=${width.toStringAsFixed(1)}x${height.toStringAsFixed(1)} '
+        'contentWidth=${contentWidth.toStringAsFixed(1)} padding=$padding '
+        'pageBg=0x$bgHex',
+      );
+    }
 
     final titleStyle = TextStyle(
-      fontSize: 50,
+      fontSize: 68,
       fontWeight: FontWeight.bold,
       color: Colors.white,
       fontFamily: 'Cairo',
+      height: 1.3,
     );
 
     final descStyle = TextStyle(
-      fontSize: 36,
+      fontSize: 42,
       fontWeight: FontWeight.normal,
       color: Colors.white,
       fontFamily: 'Cairo', // Ensures Arabic support
-      height: 1.5,
+      height: 1.6,
     );
+
+    final titleDirection = _detectDirection(title);
+    final descriptionDirection = _detectDirection(description);
+    final titleAlign =
+        titleDirection == TextDirection.rtl ? TextAlign.right : TextAlign.left;
+    if (kDebugMode) {
+      debugPrint(
+        'pdf_details_text_align title=$titleAlign desc=${descriptionDirection == TextDirection.rtl ? TextAlign.right : TextAlign.left} '
+        'textStartX=$padding',
+      );
+    }
 
     final titlePainter = TextPainter(
       text: TextSpan(text: title, style: titleStyle),
-      textDirection: _detectDirection(title),
-      textAlign: TextAlign.center,
+      textDirection: titleDirection,
+      textAlign: titleAlign,
+      textWidthBasis: TextWidthBasis.parent,
     );
     titlePainter.layout(maxWidth: contentWidth);
 
-    final descPainter = TextPainter(
-      text: TextSpan(text: description, style: descStyle),
-      textDirection: _detectDirection(description),
-      textAlign: _detectDirection(description) == TextDirection.rtl
-          ? TextAlign.right
-          : TextAlign.center,
-    );
-    descPainter.layout(maxWidth: contentWidth);
+    final descAlign =
+        descriptionDirection == TextDirection.rtl ? TextAlign.right : TextAlign.left;
 
-    // Calculate height
-    final height =
-        padding +
-        titlePainter.height +
-        40.0 + // Gap
-        descPainter.height +
-        padding;
+    final pages = <Uint8List>[];
+    var remaining = description;
+    var isFirstPage = true;
 
-    // Draw Background
-    final bgPaint = Paint()..color = Colors.grey[900]!;
-    canvas.drawRect(Rect.fromLTWH(0, 0, width, height), bgPaint);
+    while (remaining.trim().isNotEmpty) {
+      final pageRecorder = ui.PictureRecorder();
+      final canvas = Canvas(pageRecorder);
+      // Transparent background: paint text only so PDF page color is single source of truth.
 
-    // Draw Title
-    titlePainter.paint(
-      canvas,
-      Offset((width - titlePainter.width) / 2, padding),
-    );
+      double descTop = padding;
+      if (isFirstPage) {
+        // Draw Title
+        titlePainter.paint(
+          canvas,
+          Offset(padding, topPaddingFirstPage),
+        );
 
-    // Draw Divider (Optional)
-    final dividerY = padding + titlePainter.height + 20.0;
-    canvas.drawLine(
-      Offset(padding + 20, dividerY),
-      Offset(width - padding - 20, dividerY),
-      Paint()
-        ..color = Colors.grey.shade400
-        ..strokeWidth = 2.0,
-    );
+        // Draw Divider
+        final dividerY = topPaddingFirstPage + titlePainter.height + 20.0;
+        canvas.drawLine(
+          Offset(padding + 20, dividerY),
+          Offset(width - padding - 20, dividerY),
+          Paint()
+            ..color = Colors.grey.shade400
+            ..strokeWidth = 2.0,
+        );
 
-    // Draw Description
+        descTop = topPaddingFirstPage + titlePainter.height + titleToDescriptionGap;
+      } else {
+        descTop = padding;
+      }
 
-    // For RTL text aligned right, descX should be width - padding - width.
-    // Wait, TextAlign.right aligns within the layout width.
-    // If we want it visually right-aligned in the canvas:
-    // If RTL, TextPainter aligns lines to right.
-    // We just need to position the Top-Left of the painter box.
-    // TextPainter.width is the width of the longest line.
+      final availableHeight = height - descTop - padding;
+      final maxChars = _fitTextLength(
+        text: remaining,
+        style: descStyle,
+        maxWidth: contentWidth,
+        maxHeight: availableHeight,
+        textDirection: descriptionDirection,
+        textAlign: descAlign,
+      );
 
-    // Simplification: Just center the painter box horizontally if Center alignment,
-    // or properly position for Right alignment.
-    // Above I set TextAlign.right for RTL.
-    // So simple offset calculation:
-    double descOffsetX = padding;
-    if (_detectDirection(description) == TextDirection.rtl) {
-      // If RTL, we usually want it aligned to the right edge.
-      // But TextPainter width might be smaller than contentWidth.
-      // Let's force it to fill content width to respect alignment?
-      // No, TextPainter.layout(maxWidth: contentWidth) constraints it.
-      // If we want true right align relative to page, we should use contentWidth
-      // and let TextAlign handle it?
-      // Actually, TextPainter doesn't have "width=contentWidth" by default, it shrinks wraps.
-      // So we should position it at (width - padding - painter.width) if we want right alignment visually.
-      // But TextAlign.right only affects internal line alignment.
-      descOffsetX = width - padding - descPainter.width;
-    } else {
-      // Center for English
-      descOffsetX = (width - descPainter.width) / 2;
+      int end;
+      if (maxChars <= 0) {
+        end = remaining.length < 200 ? remaining.length : 200;
+        assert(() {
+          debugPrint('pdf_details_paginate_fallback=true chunk=$end');
+          return true;
+        }());
+      } else {
+        end = _adjustCutIndex(remaining, maxChars);
+      }
+      final pageText = remaining.substring(0, end).trimRight();
+      remaining = remaining.substring(end).trimLeft();
+
+      final descPainter = TextPainter(
+        text: TextSpan(text: pageText, style: descStyle),
+        textDirection: descriptionDirection,
+        textAlign: descAlign,
+        textWidthBasis: TextWidthBasis.parent,
+      );
+      descPainter.layout(maxWidth: contentWidth);
+      descPainter.paint(canvas, Offset(padding, descTop));
+
+      final picture = pageRecorder.endRecording();
+      final img = await picture.toImage(width.toInt(), height.toInt());
+      final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+      pages.add(byteData!.buffer.asUint8List());
+      isFirstPage = false;
     }
 
-    descPainter.paint(
-      canvas,
-      Offset(descOffsetX, padding + titlePainter.height + 40.0),
-    );
+    if (pages.isEmpty) {
+      final emptyRecorder = ui.PictureRecorder();
+      final emptyCanvas = Canvas(emptyRecorder);
+      // Keep transparent output for empty details pages as well.
+      final picture = emptyRecorder.endRecording();
+      final img = await picture.toImage(width.toInt(), height.toInt());
+      final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+      pages.add(byteData!.buffer.asUint8List());
+    }
 
-    final picture = recorder.endRecording();
-    final img = await picture.toImage(width.toInt(), height.toInt());
-    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
-    return byteData!.buffer.asUint8List();
+    return pages;
   }
 
   static TextDirection _detectDirection(String text) {
@@ -128,5 +179,56 @@ class PdfDetailsRenderer {
       }
     }
     return false;
+  }
+
+  static int _fitTextLength({
+    required String text,
+    required TextStyle style,
+    required double maxWidth,
+    required double maxHeight,
+    required TextDirection textDirection,
+    required TextAlign textAlign,
+  }) {
+    if (text.isEmpty) return 0;
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: textDirection,
+      textAlign: textAlign,
+      textWidthBasis: TextWidthBasis.parent,
+    );
+    painter.layout(maxWidth: maxWidth);
+    if (painter.height <= maxHeight) return text.length;
+
+    final position = painter.getPositionForOffset(Offset(maxWidth, maxHeight));
+    var end = position.offset;
+    if (end <= 0) return 0;
+
+    for (var i = end - 1; i > 0; i--) {
+      final char = text[i];
+      if (char.trim().isEmpty) {
+        end = i;
+        break;
+      }
+    }
+
+    return end;
+  }
+
+  static int _adjustCutIndex(String text, int end) {
+    final safeEnd = end > text.length ? text.length : end;
+    final windowStart = safeEnd - 80 > 0 ? safeEnd - 80 : 0;
+    final window = text.substring(windowStart, safeEnd);
+
+    final lastNewline = window.lastIndexOf('\n');
+    if (lastNewline != -1) {
+      return windowStart + lastNewline;
+    }
+
+    final lastSpace = window.lastIndexOf(' ');
+    if (lastSpace != -1) {
+      return windowStart + lastSpace;
+    }
+
+    return safeEnd > 0 ? safeEnd : 1;
   }
 }

@@ -13,16 +13,22 @@ class GetBrokerAreasUseCase {
   Future<List<BrokerArea>> call(
     String brokerId, {
     Map<String, String> cachedAreaNames = const {},
-  }) {
-    return _auth.userChanges.first.then((user) async {
-      if (user?.role == UserRole.collector) {
-        throw const LocalizedException('access_denied_broker_data');
-      }
-      return _repository.fetchBrokerAreas(
-        brokerId,
-        role: user?.role,
-        cachedAreaNames: cachedAreaNames,
-      );
-    });
+  }) async {
+    final user = _auth.currentUser ??
+        await _auth.userChanges.first.timeout(
+          const Duration(seconds: 4),
+          onTimeout: () => _auth.currentUser,
+        );
+    if (user == null) {
+      throw const LocalizedException('access_denied_broker_data');
+    }
+    if (user.role == UserRole.collector) {
+      throw const LocalizedException('access_denied_broker_data');
+    }
+    return _repository.fetchBrokerAreas(
+      brokerId,
+      role: user.role,
+      cachedAreaNames: cachedAreaNames,
+    );
   }
 }

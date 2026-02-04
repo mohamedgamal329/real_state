@@ -29,9 +29,16 @@ class BrokersListBloc extends Bloc<BrokersListEvent, BrokersListState> {
     on<BrokersListRequested>(_onRequested);
     on<BrokersListRefreshed>(_onRequested);
 
-    _auth.userChanges.first.then((user) {
-      _isCollector = user?.role == UserRole.collector;
-    });
+    _isCollector = _auth.currentUser?.role == UserRole.collector;
+    _auth.userChanges.first
+        .timeout(
+          const Duration(seconds: 4),
+          onTimeout: () => _auth.currentUser,
+        )
+        .then((user) {
+          _isCollector = user?.role == UserRole.collector;
+        })
+        .catchError((_) {});
     _authSub = _auth.userChanges.listen((user) {
       _isCollector = user?.role == UserRole.collector;
     });
