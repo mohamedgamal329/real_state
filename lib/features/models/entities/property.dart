@@ -16,6 +16,7 @@ class Property {
   final int? floors;
   final bool hasPool;
   final String? locationAreaId;
+  final String? subLocationId;
   final String? locationUrl;
   final String? coverImageUrl;
   final List<String> imageUrls;
@@ -49,6 +50,7 @@ class Property {
     this.floors,
     this.hasPool = false,
     this.locationAreaId,
+    this.subLocationId,
     this.locationUrl,
     this.coverImageUrl,
     this.imageUrls = const [],

@@ -44,6 +44,7 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
         _isImagesHidden = prop.isImagesHidden;
         _purpose = prop.purpose;
         _locationId = prop.locationAreaId;
+        _subLocationId = prop.subLocationId;
         for (final url in prop.imageUrls) {
           _images.add(
             EditableImage(remoteUrl: url, isCover: url == prop.coverImageUrl),
@@ -62,7 +63,9 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
       _locations = locations;
       if (_locationId != null && !_locations.any((l) => l.id == _locationId)) {
         _locationId = null;
+        _subLocationId = null;
       }
+      await _refreshSubLocations(_locationId);
     } catch (e, st) {
       AppSnackbar.show(
         context,
@@ -244,6 +247,7 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
           floors: int.tryParse(_floorsCtrl.text),
           hasPool: _hasPool,
           locationAreaId: _locationId,
+          subLocationId: _subLocationId,
           price: price,
           locationUrl: locationValue,
           ownerPhoneEncryptedOrHiddenStored: phoneValue,
@@ -272,6 +276,7 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
           floors: int.tryParse(_floorsCtrl.text),
           hasPool: _hasPool,
           locationAreaId: _locationId,
+          subLocationId: _subLocationId,
           price: price,
           locationUrl: locationValue,
           ownerPhoneEncryptedOrHiddenStored: phoneValue,

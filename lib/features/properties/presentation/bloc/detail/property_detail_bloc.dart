@@ -131,6 +131,7 @@ class PropertyDetailBloc
               floors: null,
               hasPool: false,
               locationAreaId: null,
+              subLocationId: null,
               coverImageUrl: null,
               imageUrls: const [],
               ownerPhoneEncryptedOrHiddenStored: null,

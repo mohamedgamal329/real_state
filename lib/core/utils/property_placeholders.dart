@@ -18,6 +18,7 @@ Property placeholderProperty({int index = 0}) {
     floors: 2,
     hasPool: index.isEven,
     locationAreaId: 'area-$index',
+    subLocationId: null,
     locationUrl: 'https://maps.example.com/$index',
     coverImageUrl: null,
     imageUrls: const [],

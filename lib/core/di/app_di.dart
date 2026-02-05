@@ -14,8 +14,11 @@ import '../../core/auth/current_user_accessor.dart';
 import '../../features/auth/domain/repositories/auth_repository_domain.dart';
 import '../../features/location/data/repositories/location_repository_impl.dart';
 import '../../features/location/data/repositories/location_areas_repository_impl.dart';
+import '../../features/location/data/repositories/sub_locations_repository_impl.dart';
 import '../../features/location/domain/repositories/location_areas_repository.dart';
 import '../../features/location/domain/repositories/location_repository.dart';
+import '../../features/location/domain/repositories/sub_locations_repository.dart';
+import '../../features/location/domain/usecases/get_sub_locations_usecase.dart';
 import '../../features/notifications/data/repositories/notifications_repository_impl.dart';
 import '../../features/notifications/data/services/fcm_service.dart';
 import '../../features/notifications/domain/services/notification_delivery_service.dart';
@@ -132,6 +135,8 @@ class AppDi {
       LocationAreaRemoteDataSource(firestore);
   late final LocationAreasRepository locationAreasRepository =
       LocationAreasRepositoryImpl(locationAreaRemoteDataSource);
+  late final SubLocationsRepository subLocationsRepository =
+      SubLocationsRepositoryImpl(firestore);
   late final LocationRepository locationRepository = LocationRepositoryImpl(
     firestore,
   );
@@ -141,6 +146,8 @@ class AppDi {
   );
   late final GetLocationAreasUseCase getLocationAreasUseCase =
       GetLocationAreasUseCase(locationAreasCache);
+  late final GetSubLocationsUseCase getSubLocationsUseCase =
+      GetSubLocationsUseCase(subLocationsRepository);
   late final CategoriesRepository categoriesRepository =
       const CategoriesRepositoryImpl();
   late final GetCategoriesUseCase getCategoriesUseCase = GetCategoriesUseCase(
@@ -299,6 +306,12 @@ class AppDi {
       ),
       RepositoryProvider<LocationAreasRepository>.value(
         value: locationAreasRepository,
+      ),
+      RepositoryProvider<SubLocationsRepository>.value(
+        value: subLocationsRepository,
+      ),
+      RepositoryProvider<GetSubLocationsUseCase>.value(
+        value: getSubLocationsUseCase,
       ),
     ];
   }

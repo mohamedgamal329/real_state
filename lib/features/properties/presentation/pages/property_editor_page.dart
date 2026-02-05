@@ -14,8 +14,10 @@ import 'package:real_state/core/validation/validators.dart';
 import 'package:real_state/features/auth/domain/repositories/auth_repository_domain.dart';
 import 'package:real_state/features/location/domain/repositories/location_repository.dart';
 import 'package:real_state/features/location/domain/usecases/get_location_areas_usecase.dart';
+import 'package:real_state/features/location/domain/usecases/get_sub_locations_usecase.dart';
 import 'package:real_state/features/location/presentation/widgets/location_area_form_dialog.dart';
 import 'package:real_state/features/models/entities/location_area.dart';
+import 'package:real_state/features/models/entities/sub_location.dart';
 import 'package:real_state/features/models/entities/property.dart';
 import 'package:real_state/features/notifications/domain/repositories/notifications_repository.dart';
 import 'package:real_state/features/properties/domain/models/property_mutation.dart';
@@ -61,11 +63,13 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
   bool _showSecurityNumber = false;
   PropertyPurpose _purpose = PropertyPurpose.sale;
   String? _locationId;
+  String? _subLocationId;
 
   UserRole _userRole = UserRole.owner;
   String? _userId;
 
   List<LocationArea> _locations = [];
+  List<SubLocation> _subLocations = [];
 
   final List<EditableImage> _images = [];
   final _picker = ImagePicker();
@@ -160,7 +164,9 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
         showSecurityNumber: _showSecurityNumber,
         purpose: _purpose,
         locationId: _locationId,
+        subLocationId: _subLocationId,
         locations: isLoading ? _placeholderLocations() : _locations,
+        subLocations: _subLocations,
         images: _images,
         onSave: _save,
         onPickImages: _pickImages,
@@ -169,7 +175,15 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
         onTogglePool: (v) => setState(() => _hasPool = v),
         onToggleImagesHidden: (v) => setState(() => _isImagesHidden = v),
         onPurposeChanged: (p) => setState(() => _purpose = p),
-        onLocationChanged: (v) => setState(() => _locationId = v),
+        onLocationChanged: (v) {
+          setState(() {
+            _locationId = v;
+            _subLocationId = null;
+            _subLocations = [];
+          });
+          _refreshSubLocations(v);
+        },
+        onSubLocationChanged: (v) => setState(() => _subLocationId = v),
         onAddLocation: _handleAddLocationTap,
         onShowSecurityNumber: () => setState(() => _showSecurityNumber = true),
       );
@@ -205,6 +219,39 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
         if (_locationId != null &&
             !_locations.any((l) => l.id == _locationId)) {
           _locationId = null;
+          _subLocationId = null;
+          _subLocations = [];
+        }
+      });
+    } catch (e, st) {
+      if (mounted) {
+        AppSnackbar.show(
+          context,
+          mapErrorMessage(e, stackTrace: st),
+          type: AppSnackbarType.error,
+        );
+      }
+    }
+  }
+
+  Future<void> _refreshSubLocations(String? areaId) async {
+    if (areaId == null || areaId.isEmpty) {
+      if (!mounted) return;
+      setState(() {
+        _subLocations = [];
+        _subLocationId = null;
+      });
+      return;
+    }
+    try {
+      final getSubs = context.read<GetSubLocationsUseCase>();
+      final items = await getSubs(areaId);
+      if (!mounted) return;
+      setState(() {
+        _subLocations = items;
+        if (_subLocationId != null &&
+            !_subLocations.any((s) => s.id == _subLocationId)) {
+          _subLocationId = null;
         }
       });
     } catch (e, st) {

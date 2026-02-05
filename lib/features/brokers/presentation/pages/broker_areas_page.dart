@@ -77,7 +77,7 @@ class BrokerAreasPage extends StatelessWidget {
                     propertyCount: area.propertyCount,
                     onTap: () {
                       context.push(
-                        '/broker/$brokerId/area/${area.id}',
+                        '/broker/$brokerId/area/${area.id}/sub-locations',
                         extra: {
                           'areaName': area.name,
                           'brokerName': brokerName ?? '',
