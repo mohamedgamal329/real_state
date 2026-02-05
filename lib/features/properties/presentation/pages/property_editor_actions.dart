@@ -25,6 +25,9 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
       _userRole = user.role;
       _userId = user.id;
 
+      // Resume any pending uploads if the app was backgrounded or restarted.
+      await context.read<PropertyUploadService>().resumePendingUploads();
+
       final prop = widget.property;
       if (prop != null) {
         _titleCtrl.text = prop.title ?? '';
@@ -199,20 +202,28 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
       overlayController.update(
         const PropertyEditorProgress(
           stage: PropertyEditorStage.uploadingImages,
-          fraction: 0.2,
+          fraction: 0.1,
         ),
       );
 
       final upload = await context.read<UploadPropertyImagesUseCase>().call(
         _images,
         propertyId,
+        onProgress: (fraction) {
+          overlayController.update(
+            PropertyEditorProgress(
+              stage: PropertyEditorStage.uploadingImages,
+              fraction: (0.1 + (fraction * 0.5)).clamp(0.1, 0.6),
+            ),
+          );
+        },
       );
 
       // Stage 2: Saving details
       overlayController.update(
         const PropertyEditorProgress(
           stage: PropertyEditorStage.savingDetails,
-          fraction: 0.6,
+          fraction: 0.7,
         ),
       );
       final nowCover = upload.coverUrl;

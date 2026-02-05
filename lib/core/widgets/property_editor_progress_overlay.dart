@@ -13,6 +13,8 @@ class PropertyEditorProgressOverlay extends StatelessWidget {
     final clampedProgress = progress.clamp();
     final percent = (clampedProgress.fraction * 100).clamp(0, 100).toInt();
     final stageLabel = clampedProgress.stage.translationKey().tr();
+    final showBackgroundHint =
+        clampedProgress.stage == PropertyEditorStage.uploadingImages;
 
     return Stack(
       children: [
@@ -59,6 +61,13 @@ class PropertyEditorProgressOverlay extends StatelessWidget {
                         ),
                       ],
                     ),
+                    if (showBackgroundHint) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'upload_continues_background'.tr(),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
                   ],
                 ),
               ),

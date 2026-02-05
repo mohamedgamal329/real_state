@@ -29,6 +29,7 @@ import 'package:real_state/features/properties/presentation/side_effects/propert
 import 'package:real_state/features/properties/models/property_editor_models.dart';
 import 'package:real_state/features/properties/domain/usecases/upload_property_images_usecase.dart';
 import 'package:real_state/features/properties/domain/usecases/delete_property_images_usecase.dart';
+import 'package:real_state/features/properties/domain/services/property_upload_service.dart';
 import 'package:real_state/features/properties/presentation/widgets/property_editor_form.dart';
 import 'package:real_state/core/widgets/property_editor_progress.dart';
 import 'package:real_state/core/widgets/property_editor_progress_overlay.dart';

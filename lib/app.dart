@@ -14,6 +14,7 @@ import 'features/settings/domain/usecases/update_theme_mode_usecase.dart';
 import 'features/settings/presentation/cubit/settings_cubit.dart';
 import 'features/users/domain/repositories/user_management_repository.dart';
 import 'features/notifications/presentation/widgets/notification_initializer.dart';
+import 'features/properties/presentation/widgets/property_upload_initializer.dart';
 
 class App extends StatelessWidget {
   App({super.key, AppDi? di}) : _di = di ?? AppDi();
@@ -57,16 +58,19 @@ class App extends StatelessWidget {
                         child ?? const SizedBox.shrink();
                     return NotificationInitializer(
                       router: _router,
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {
-                          final primaryFocus =
-                              FocusManager.instance.primaryFocus;
-                          if (primaryFocus != null && primaryFocus.hasFocus) {
-                            primaryFocus.unfocus();
-                          }
-                        },
-                        child: wrappedChild,
+                      child: PropertyUploadInitializer(
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {
+                            final primaryFocus =
+                                FocusManager.instance.primaryFocus;
+                            if (primaryFocus != null &&
+                                primaryFocus.hasFocus) {
+                              primaryFocus.unfocus();
+                            }
+                          },
+                          child: wrappedChild,
+                        ),
                       ),
                     );
                   },
