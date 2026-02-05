@@ -14,8 +14,10 @@ import 'package:real_state/core/validation/validators.dart';
 import 'package:real_state/features/auth/domain/repositories/auth_repository_domain.dart';
 import 'package:real_state/features/location/domain/repositories/location_repository.dart';
 import 'package:real_state/features/location/domain/usecases/get_location_areas_usecase.dart';
+import 'package:real_state/features/location/domain/usecases/get_sub_locations_usecase.dart';
 import 'package:real_state/features/location/presentation/widgets/location_area_form_dialog.dart';
 import 'package:real_state/features/models/entities/location_area.dart';
+import 'package:real_state/features/models/entities/sub_location.dart';
 import 'package:real_state/features/models/entities/property.dart';
 import 'package:real_state/features/notifications/domain/repositories/notifications_repository.dart';
 import 'package:real_state/features/properties/domain/models/property_mutation.dart';
@@ -27,6 +29,7 @@ import 'package:real_state/features/properties/presentation/side_effects/propert
 import 'package:real_state/features/properties/models/property_editor_models.dart';
 import 'package:real_state/features/properties/domain/usecases/upload_property_images_usecase.dart';
 import 'package:real_state/features/properties/domain/usecases/delete_property_images_usecase.dart';
+import 'package:real_state/features/properties/domain/services/property_upload_service.dart';
 import 'package:real_state/features/properties/presentation/widgets/property_editor_form.dart';
 import 'package:real_state/core/widgets/property_editor_progress.dart';
 import 'package:real_state/core/widgets/property_editor_progress_overlay.dart';
@@ -52,6 +55,7 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
   final _roomsCtrl = TextEditingController();
   final _kitchensCtrl = TextEditingController();
   final _floorsCtrl = TextEditingController();
+  final _ownerNameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _securityNumberCtrl = TextEditingController();
   bool _formattingPrice = false;
@@ -61,11 +65,13 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
   bool _showSecurityNumber = false;
   PropertyPurpose _purpose = PropertyPurpose.sale;
   String? _locationId;
+  String? _subLocationId;
 
   UserRole _userRole = UserRole.owner;
   String? _userId;
 
   List<LocationArea> _locations = [];
+  List<SubLocation> _subLocations = [];
 
   final List<EditableImage> _images = [];
   final _picker = ImagePicker();
@@ -90,6 +96,7 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
     _roomsCtrl.dispose();
     _kitchensCtrl.dispose();
     _floorsCtrl.dispose();
+    _ownerNameCtrl.dispose();
     _phoneCtrl.dispose();
     _securityNumberCtrl.dispose();
     super.dispose();
@@ -151,6 +158,7 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
         roomsCtrl: _roomsCtrl,
         kitchensCtrl: _kitchensCtrl,
         floorsCtrl: _floorsCtrl,
+        ownerNameCtrl: _ownerNameCtrl,
         phoneCtrl: _phoneCtrl,
         securityNumberCtrl: _securityNumberCtrl,
         isEditing: widget.isEditing,
@@ -160,7 +168,9 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
         showSecurityNumber: _showSecurityNumber,
         purpose: _purpose,
         locationId: _locationId,
+        subLocationId: _subLocationId,
         locations: isLoading ? _placeholderLocations() : _locations,
+        subLocations: _subLocations,
         images: _images,
         onSave: _save,
         onPickImages: _pickImages,
@@ -169,7 +179,15 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
         onTogglePool: (v) => setState(() => _hasPool = v),
         onToggleImagesHidden: (v) => setState(() => _isImagesHidden = v),
         onPurposeChanged: (p) => setState(() => _purpose = p),
-        onLocationChanged: (v) => setState(() => _locationId = v),
+        onLocationChanged: (v) {
+          setState(() {
+            _locationId = v;
+            _subLocationId = null;
+            _subLocations = [];
+          });
+          _refreshSubLocations(v);
+        },
+        onSubLocationChanged: (v) => setState(() => _subLocationId = v),
         onAddLocation: _handleAddLocationTap,
         onShowSecurityNumber: () => setState(() => _showSecurityNumber = true),
       );
@@ -205,6 +223,39 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
         if (_locationId != null &&
             !_locations.any((l) => l.id == _locationId)) {
           _locationId = null;
+          _subLocationId = null;
+          _subLocations = [];
+        }
+      });
+    } catch (e, st) {
+      if (mounted) {
+        AppSnackbar.show(
+          context,
+          mapErrorMessage(e, stackTrace: st),
+          type: AppSnackbarType.error,
+        );
+      }
+    }
+  }
+
+  Future<void> _refreshSubLocations(String? areaId) async {
+    if (areaId == null || areaId.isEmpty) {
+      if (!mounted) return;
+      setState(() {
+        _subLocations = [];
+        _subLocationId = null;
+      });
+      return;
+    }
+    try {
+      final getSubs = context.read<GetSubLocationsUseCase>();
+      final items = await getSubs(areaId);
+      if (!mounted) return;
+      setState(() {
+        _subLocations = items;
+        if (_subLocationId != null &&
+            !_subLocations.any((s) => s.id == _subLocationId)) {
+          _subLocationId = null;
         }
       });
     } catch (e, st) {

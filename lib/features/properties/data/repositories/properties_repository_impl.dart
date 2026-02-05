@@ -261,6 +261,9 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
       }
       q = q.where('isDeleted', isEqualTo: false);
     }
+    if (filter?.subLocationId != null) {
+      q = q.where('subLocationId', isEqualTo: filter!.subLocationId);
+    }
     return q.orderBy('createdAt', descending: true);
   }
 
@@ -279,6 +282,9 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
         q = q.where('brokerId', isEqualTo: brokerId);
       }
       q = q.where('isDeleted', isEqualTo: false);
+    }
+    if (filter?.subLocationId != null) {
+      q = q.where('subLocationId', isEqualTo: filter!.subLocationId);
     }
 
     if (filter?.minPrice != null) {
@@ -323,6 +329,10 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
         property.locationAreaId != filter!.locationAreaId) {
       return false;
     }
+    if (filter?.subLocationId != null &&
+        property.subLocationId != filter!.subLocationId) {
+      return false;
+    }
     if (filter == null) return true;
     if (filter.rooms != null) {
       if (filter.rooms == 5) {
@@ -344,6 +354,10 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
     if (filter == null) return true;
     if (filter.locationAreaId != null &&
         property.locationAreaId != filter.locationAreaId) {
+      return false;
+    }
+    if (filter.subLocationId != null &&
+        property.subLocationId != filter.subLocationId) {
       return false;
     }
     if (filter.rooms != null) {
@@ -420,8 +434,10 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
     int? floors,
     bool hasPool = false,
     String? locationAreaId,
+    String? subLocationId,
     String? locationUrl,
     double? price,
+    String? ownerNameEncryptedOrHiddenStored,
     String? ownerPhoneEncryptedOrHiddenStored,
     String? securityNumberEncryptedOrHiddenStored,
     bool isImagesHidden = false,
@@ -446,9 +462,11 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
       floors: floors,
       hasPool: hasPool,
       locationAreaId: locationAreaId,
+      subLocationId: subLocationId,
       locationUrl: locationUrl,
       coverImageUrl: coverImageUrl,
       imageUrls: imageUrls,
+      ownerNameEncryptedOrHiddenStored: ownerNameEncryptedOrHiddenStored,
       ownerPhoneEncryptedOrHiddenStored: ownerPhoneEncryptedOrHiddenStored,
       securityNumberEncryptedOrHiddenStored:
           securityNumberEncryptedOrHiddenStored,
@@ -481,8 +499,10 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
     int? floors,
     bool? hasPool,
     String? locationAreaId,
+    String? subLocationId,
     String? locationUrl,
     double? price,
+    String? ownerNameEncryptedOrHiddenStored,
     String? ownerPhoneEncryptedOrHiddenStored,
     String? securityNumberEncryptedOrHiddenStored,
     bool? isImagesHidden,
@@ -513,8 +533,13 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
     if (floors != null) updateMap['floors'] = floors;
     if (hasPool != null) updateMap['hasPool'] = hasPool;
     if (locationAreaId != null) updateMap['locationAreaId'] = locationAreaId;
+    if (subLocationId != null) updateMap['subLocationId'] = subLocationId;
     if (locationUrl != null) updateMap['locationUrl'] = locationUrl;
     if (price != null) updateMap['price'] = price;
+    if (ownerNameEncryptedOrHiddenStored != null) {
+      updateMap['ownerNameEncryptedOrHiddenStored'] =
+          ownerNameEncryptedOrHiddenStored;
+    }
     if (ownerPhoneEncryptedOrHiddenStored != null) {
       updateMap['ownerPhoneEncryptedOrHiddenStored'] =
           ownerPhoneEncryptedOrHiddenStored;

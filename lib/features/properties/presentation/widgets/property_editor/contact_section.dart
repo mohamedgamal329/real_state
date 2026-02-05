@@ -6,6 +6,7 @@ import 'package:real_state/core/constants/app_spacing.dart';
 class PropertyEditorContactSection extends StatelessWidget {
   const PropertyEditorContactSection({
     super.key,
+    required this.ownerNameCtrl,
     required this.phoneCtrl,
     required this.securityNumberCtrl,
     required this.hasPool,
@@ -17,6 +18,7 @@ class PropertyEditorContactSection extends StatelessWidget {
     required this.onShowSecurityNumber,
   });
 
+  final TextEditingController ownerNameCtrl;
   final TextEditingController phoneCtrl;
   final TextEditingController securityNumberCtrl;
   final bool hasPool;
@@ -31,6 +33,12 @@ class PropertyEditorContactSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        AppTextField(
+          label: 'owner_name_optional'.tr(),
+          controller: ownerNameCtrl,
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: AppSpacing.lg),
         AppTextField(
           label: 'owner_phone_optional'.tr(),
           controller: phoneCtrl,

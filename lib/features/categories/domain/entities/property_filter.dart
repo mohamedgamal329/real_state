@@ -14,6 +14,7 @@ enum PropertyFilterValidationError {
 @immutable
 class PropertyFilter extends Equatable {
   final String? locationAreaId;
+  final String? subLocationId;
   final double? minPrice;
   final double? maxPrice;
   final int? rooms;
@@ -23,6 +24,7 @@ class PropertyFilter extends Equatable {
 
   const PropertyFilter({
     this.locationAreaId,
+    this.subLocationId,
     this.minPrice,
     this.maxPrice,
     this.rooms,
@@ -35,6 +37,7 @@ class PropertyFilter extends Equatable {
 
   bool get isEmpty =>
       locationAreaId == null &&
+      subLocationId == null &&
       minPrice == null &&
       maxPrice == null &&
       rooms == null &&
@@ -57,6 +60,7 @@ class PropertyFilter extends Equatable {
 
   PropertyFilter copyWith({
     String? locationAreaId,
+    String? subLocationId,
     double? minPrice,
     double? maxPrice,
     int? rooms,
@@ -64,6 +68,7 @@ class PropertyFilter extends Equatable {
     String? createdBy,
     List<String>? categoryIds,
     bool clearLocationAreaId = false,
+    bool clearSubLocationId = false,
     bool clearMinPrice = false,
     bool clearMaxPrice = false,
     bool clearRooms = false,
@@ -75,6 +80,9 @@ class PropertyFilter extends Equatable {
       locationAreaId: clearLocationAreaId
           ? null
           : (locationAreaId ?? this.locationAreaId),
+      subLocationId: clearSubLocationId
+          ? null
+          : (subLocationId ?? this.subLocationId),
       minPrice: clearMinPrice ? null : (minPrice ?? this.minPrice),
       maxPrice: clearMaxPrice ? null : (maxPrice ?? this.maxPrice),
       rooms: clearRooms ? null : (rooms ?? this.rooms),
@@ -89,6 +97,7 @@ class PropertyFilter extends Equatable {
   @override
   List<Object?> get props => [
     locationAreaId,
+    subLocationId,
     minPrice,
     maxPrice,
     rooms,

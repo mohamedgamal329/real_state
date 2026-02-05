@@ -84,7 +84,7 @@ class _CompanyAreasPageState extends State<CompanyAreasPage> {
                         onTap: area.areaId.isNotEmpty
                             ? () {
                                 context.push(
-                                  '/company/area/${area.areaId}',
+                                  '/company/area/${area.areaId}/sub-locations',
                                   extra: area.name,
                                 );
                               }

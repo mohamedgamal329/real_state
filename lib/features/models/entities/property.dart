@@ -16,12 +16,14 @@ class Property {
   final int? floors;
   final bool hasPool;
   final String? locationAreaId;
+  final String? subLocationId;
   final String? locationUrl;
   final String? coverImageUrl;
   final List<String> imageUrls;
   final double? price;
 
   // Stored as string but should never be exposed by default in DTO->UI
+  final String? ownerNameEncryptedOrHiddenStored;
   final String? ownerPhoneEncryptedOrHiddenStored;
   final String? securityNumberEncryptedOrHiddenStored;
   final bool isImagesHidden;
@@ -49,9 +51,11 @@ class Property {
     this.floors,
     this.hasPool = false,
     this.locationAreaId,
+    this.subLocationId,
     this.locationUrl,
     this.coverImageUrl,
     this.imageUrls = const [],
+    this.ownerNameEncryptedOrHiddenStored,
     this.ownerPhoneEncryptedOrHiddenStored,
     this.securityNumberEncryptedOrHiddenStored,
     this.isImagesHidden = false,

@@ -6,7 +6,15 @@ class UploadPropertyImagesUseCase {
 
   final PropertyUploadService _uploadService;
 
-  Future<UploadResult> call(List<EditableImage> images, String propertyId) {
-    return _uploadService.uploadImages(images, propertyId);
+  Future<UploadResult> call(
+    List<EditableImage> images,
+    String propertyId, {
+    void Function(double fraction)? onProgress,
+  }) {
+    return _uploadService.uploadImages(
+      images,
+      propertyId,
+      onProgress: onProgress,
+    );
   }
 }

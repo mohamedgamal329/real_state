@@ -4,8 +4,11 @@ import 'package:real_state/features/properties/models/property_editor_models.dar
 abstract class PropertyUploadService {
   Future<UploadResult> uploadImages(
     List<EditableImage> images,
-    String propertyId,
-  );
+    String propertyId, {
+    void Function(double fraction)? onProgress,
+  });
 
   Future<void> deleteRemovedRemoteImages({required List<String> removedUrls});
+
+  Future<void> resumePendingUploads({void Function(double fraction)? onProgress});
 }

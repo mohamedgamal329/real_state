@@ -134,6 +134,7 @@ class _PropertyPageBodyState extends State<PropertyPageBody> {
                 final canRequestPhone =
                     canRequestAccess &&
                     ((loaded?.hasPhone ?? false) ||
+                        (loaded?.hasOwnerName ?? false) ||
                         (loaded?.hasSecurityNumber ?? false)) &&
                     !phoneAccessible &&
                     !securityNumberAccessible;

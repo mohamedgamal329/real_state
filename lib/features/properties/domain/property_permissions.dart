@@ -95,7 +95,10 @@ bool hasIntrinsicPropertyAccess({
   }
   if (userId != null && property.createdBy == userId) return true;
   if (userRole == UserRole.broker && userId != null) {
-    if (property.brokerId == userId) return true;
+    if (property.ownerScope == PropertyOwnerScope.broker &&
+        property.brokerId == userId) {
+      return true;
+    }
   }
   return false;
 }

@@ -25,6 +25,9 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
       _userRole = user.role;
       _userId = user.id;
 
+      // Resume any pending uploads if the app was backgrounded or restarted.
+      await context.read<PropertyUploadService>().resumePendingUploads();
+
       final prop = widget.property;
       if (prop != null) {
         _titleCtrl.text = prop.title ?? '';
@@ -40,10 +43,12 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
         _securityNumberCtrl.text =
             prop.securityNumberEncryptedOrHiddenStored ?? '';
         _showSecurityNumber = _securityNumberCtrl.text.trim().isNotEmpty;
+        _ownerNameCtrl.text = prop.ownerNameEncryptedOrHiddenStored ?? '';
         _hasPool = prop.hasPool;
         _isImagesHidden = prop.isImagesHidden;
         _purpose = prop.purpose;
         _locationId = prop.locationAreaId;
+        _subLocationId = prop.subLocationId;
         for (final url in prop.imageUrls) {
           _images.add(
             EditableImage(remoteUrl: url, isCover: url == prop.coverImageUrl),
@@ -62,7 +67,9 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
       _locations = locations;
       if (_locationId != null && !_locations.any((l) => l.id == _locationId)) {
         _locationId = null;
+        _subLocationId = null;
       }
+      await _refreshSubLocations(_locationId);
     } catch (e, st) {
       AppSnackbar.show(
         context,
@@ -195,24 +202,34 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
       overlayController.update(
         const PropertyEditorProgress(
           stage: PropertyEditorStage.uploadingImages,
-          fraction: 0.2,
+          fraction: 0.1,
         ),
       );
 
       final upload = await context.read<UploadPropertyImagesUseCase>().call(
         _images,
         propertyId,
+        onProgress: (fraction) {
+          overlayController.update(
+            PropertyEditorProgress(
+              stage: PropertyEditorStage.uploadingImages,
+              fraction: (0.1 + (fraction * 0.5)).clamp(0.1, 0.6),
+            ),
+          );
+        },
       );
 
       // Stage 2: Saving details
       overlayController.update(
         const PropertyEditorProgress(
           stage: PropertyEditorStage.savingDetails,
-          fraction: 0.6,
+          fraction: 0.7,
         ),
       );
       final nowCover = upload.coverUrl;
       final description = _descCtrl.text.trim();
+      final ownerName = _ownerNameCtrl.text.trim();
+      final ownerNameValue = ownerName.isEmpty ? null : ownerName;
       final phone = _phoneCtrl.text.trim();
       final phoneValue = phone.isEmpty ? null : phone;
       final securityNumber = _securityNumberCtrl.text.trim();
@@ -244,8 +261,10 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
           floors: int.tryParse(_floorsCtrl.text),
           hasPool: _hasPool,
           locationAreaId: _locationId,
+          subLocationId: _subLocationId,
           price: price,
           locationUrl: locationValue,
+          ownerNameEncryptedOrHiddenStored: ownerNameValue,
           ownerPhoneEncryptedOrHiddenStored: phoneValue,
           securityNumberEncryptedOrHiddenStored: securityNumberValue,
           isImagesHidden: _isImagesHidden,
@@ -272,8 +291,10 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
           floors: int.tryParse(_floorsCtrl.text),
           hasPool: _hasPool,
           locationAreaId: _locationId,
+          subLocationId: _subLocationId,
           price: price,
           locationUrl: locationValue,
+          ownerNameEncryptedOrHiddenStored: ownerNameValue,
           ownerPhoneEncryptedOrHiddenStored: phoneValue,
           securityNumberEncryptedOrHiddenStored: securityNumberValue,
           isImagesHidden: _isImagesHidden,

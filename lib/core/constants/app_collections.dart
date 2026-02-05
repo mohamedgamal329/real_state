@@ -4,6 +4,7 @@ enum AppCollections {
   properties,
   accessRequests,
   locationAreas,
+  subLocations,
   fcmTokens,
 }
 
@@ -20,6 +21,8 @@ extension AppCollectionsX on AppCollections {
         return 'access_requests';
       case AppCollections.locationAreas:
         return 'location_areas';
+      case AppCollections.subLocations:
+        return 'sub_locations';
       case AppCollections.fcmTokens:
         return 'fcmTokens';
     }

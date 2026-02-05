@@ -60,6 +60,32 @@ void main() {
     expect(state.securityNumberVisible, isTrue);
   });
 
+  test('broker assigned to company property still needs phone access', () {
+    final property = Property(
+      id: 'p2',
+      title: 'Test',
+      description: 'desc',
+      purpose: PropertyPurpose.sale,
+      hasPool: false,
+      ownerScope: PropertyOwnerScope.company,
+      createdBy: 'owner1',
+      brokerId: 'b1',
+      ownerPhoneEncryptedOrHiddenStored: '010',
+      status: PropertyStatus.active,
+      isDeleted: false,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+    final state = PropertyDetailLoaded(
+      property: property,
+      userId: 'b1',
+      userRole: UserRole.broker,
+      imagesToShow: 0,
+    );
+
+    expect(state.phoneVisible, isFalse);
+  });
+
   group('Security Number State', () {
     test('reflects hasSecurityNumber correctly', () {
       final p1 = _buildProperty(createdBy: 'u1', securityNumber: 'S-123');

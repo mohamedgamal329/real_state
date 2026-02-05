@@ -66,6 +66,9 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
         .trim()
         .isNotEmpty;
     final hasLocation = Validators.isValidUrl(p.locationUrl);
+    final hasOwnerName = (p.ownerNameEncryptedOrHiddenStored ?? '')
+        .trim()
+        .isNotEmpty;
     final hasSecurityNumber = (p.securityNumberEncryptedOrHiddenStored ?? '')
         .trim()
         .isNotEmpty;
@@ -129,6 +132,19 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
               phoneVisible: widget.phoneAccessible,
               phoneText: p.ownerPhoneEncryptedOrHiddenStored,
               onRequestAccess: widget.onRequestPhone,
+            ),
+            const SizedBox(height: 20),
+          ],
+          if (hasOwnerName) ...[
+            PropertyDetailPhoneSection(
+              labelKey: 'owner_name',
+              phoneVisible: widget.phoneAccessible,
+              phoneText: p.ownerNameEncryptedOrHiddenStored,
+              onRequestAccess: widget.onRequestPhone,
+              keyPrefix: 'owner_name',
+              icon: AppSVG.profile,
+              showCallButton: false,
+              hiddenLabelKey: 'owner_name_hidden',
             ),
             const SizedBox(height: 20),
           ],

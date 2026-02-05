@@ -81,6 +81,10 @@ class PropertyDetailLoaded extends PropertyDetailState {
       property.ownerPhoneEncryptedOrHiddenStored != null &&
       property.ownerPhoneEncryptedOrHiddenStored!.trim().isNotEmpty;
 
+  bool get hasOwnerName =>
+      property.ownerNameEncryptedOrHiddenStored != null &&
+      property.ownerNameEncryptedOrHiddenStored!.trim().isNotEmpty;
+
   bool get hasSecurityNumber =>
       property.securityNumberEncryptedOrHiddenStored != null &&
       property.securityNumberEncryptedOrHiddenStored!.trim().isNotEmpty;

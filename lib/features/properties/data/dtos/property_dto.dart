@@ -38,9 +38,12 @@ class PropertyDto {
               : null),
       hasPool: (data['hasPool'] as bool?) ?? false,
       locationAreaId: data['locationAreaId'] as String?,
+      subLocationId: data['subLocationId'] as String?,
       locationUrl: data['locationUrl'] as String?,
       coverImageUrl: data['coverImageUrl'] as String?,
       imageUrls: List<String>.from((data['imageUrls'] as List?) ?? const []),
+      ownerNameEncryptedOrHiddenStored:
+          data['ownerNameEncryptedOrHiddenStored'] as String?,
       ownerPhoneEncryptedOrHiddenStored:
           data['ownerPhoneEncryptedOrHiddenStored'] as String?,
       securityNumberEncryptedOrHiddenStored:
@@ -68,9 +71,11 @@ class PropertyDto {
     'floors': p.floors,
     'hasPool': p.hasPool,
     'locationAreaId': p.locationAreaId,
+    'subLocationId': p.subLocationId,
     'locationUrl': p.locationUrl,
     'coverImageUrl': p.coverImageUrl,
     'imageUrls': p.imageUrls,
+    'ownerNameEncryptedOrHiddenStored': p.ownerNameEncryptedOrHiddenStored,
     'ownerPhoneEncryptedOrHiddenStored': p.ownerPhoneEncryptedOrHiddenStored,
     'securityNumberEncryptedOrHiddenStored':
         p.securityNumberEncryptedOrHiddenStored,

@@ -1,5 +1,18 @@
 # Firestore Composite Indexes (properties)
 
-Current queries now fetch with minimal Firestore filters (order by `createdAt` for base list, or price range + order by `price`), and apply `isDeleted/status/location/rooms/hasPool` client-side to avoid composite index prompts. With this approach, **no composite indexes are required** for the properties list/filters.
+Properties queries use server-side equality filters for scope and soft-delete:
+- Base list: `where(ownerScope == ...)`, optional `where(brokerId == ...)`, `where(isDeleted == false)`, optional `where(subLocationId == ...)`, `orderBy(createdAt desc)`.
+- Price range list: same equality filters + `where(price >= ...)` / `where(price <= ...)`, `orderBy(price)`.
 
-If you later reintroduce server-side equality filters (e.g., `isDeleted == false`, `status == active`, `locationAreaId == X`) alongside `orderBy`, you will need composite indexes matching those fields. Use the Firebase console prompt or add definitions to `firestore.indexes.json` as needed.
+Firestore may require composite indexes when equality filters are combined with `orderBy`. If prompted, create composite indexes matching the exact field combinations in the console or `firestore.indexes.json`.
+
+## SubLocations + OwnerName Notes
+- `sub_locations` collection:
+  - Fields: `areaId` (String), `nameAr` (String), `nameEn` (String), `imageUrl` (String?), `isActive` (bool), `createdAt` (Timestamp).
+  - Query used: `where(areaId == ...)` + `where(isActive == true)` + `orderBy(createdAt)`.
+  - Required composite index if Firestore prompts: `(areaId ASC, isActive ASC, createdAt ASC)`.
+- `properties` documents:
+  - New fields: `subLocationId` (String?), `ownerNameEncryptedOrHiddenStored` (String?).
+  - `subLocationId` is optional for backward compatibility; missing values are treated as "unassigned" and excluded when filtering by sublocation.
+  - `ownerNameEncryptedOrHiddenStored` is optional; if missing/empty, UI hides the owner name section.
+  - When filtering by `subLocationId`, Firestore may require a composite index that includes `subLocationId` plus any other `where` fields and the active `orderBy` field (`createdAt` or `price`).

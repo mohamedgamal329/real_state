@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:real_state/core/constants/app_images.dart';
 import 'package:real_state/core/constants/user_role.dart';
 import 'package:real_state/core/pagination/page_token.dart';
 import 'package:real_state/features/access_requests/domain/repositories/access_requests_repository.dart';
@@ -13,6 +14,7 @@ import 'package:real_state/features/properties/domain/property_owner_scope.dart'
 import 'package:real_state/features/properties/data/repositories/properties_repository_impl.dart';
 import 'package:real_state/features/properties/domain/repositories/properties_repository.dart';
 import 'package:real_state/features/properties/presentation/pages/property_detail/property_page.dart';
+import 'package:real_state/features/properties/presentation/widgets/property_detail/property_detail_phone_section.dart';
 import 'package:real_state/features/properties/presentation/widgets/property_images_section.dart';
 import 'package:real_state/features/properties/presentation/widgets/property_phone_section.dart';
 import 'package:real_state/features/users/domain/entities/managed_user.dart';
@@ -263,6 +265,21 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(PropertyPhoneSection), findsOneWidget);
   }, skip: true);
+
+  test('owner name locked until phone access is granted', () {
+    const detailSection = PropertyDetailPhoneSection(
+      labelKey: 'owner_name',
+      phoneVisible: false,
+      phoneText: 'John Doe',
+      onRequestAccess: null,
+      keyPrefix: 'owner_name',
+      icon: AppSVG.profile,
+      showCallButton: false,
+      hiddenLabelKey: 'owner_name_hidden',
+    );
+    expect(detailSection.keyPrefix, 'owner_name');
+    expect(detailSection.phoneVisible, isFalse);
+  });
 
   testWidgets('creator sees images and phone without access request', (
     tester,

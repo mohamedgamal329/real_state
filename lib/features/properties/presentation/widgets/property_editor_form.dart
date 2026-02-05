@@ -6,6 +6,7 @@ import 'package:real_state/core/components/primary_button.dart';
 import 'package:real_state/core/constants/app_images.dart';
 import 'package:real_state/core/validation/validators.dart';
 import 'package:real_state/features/models/entities/location_area.dart';
+import 'package:real_state/features/models/entities/sub_location.dart';
 import 'package:real_state/features/models/entities/property.dart';
 
 import 'package:real_state/features/properties/models/property_editor_models.dart';
@@ -24,6 +25,7 @@ class PropertyEditorForm extends StatelessWidget {
   final TextEditingController roomsCtrl;
   final TextEditingController kitchensCtrl;
   final TextEditingController floorsCtrl;
+  final TextEditingController ownerNameCtrl;
   final TextEditingController phoneCtrl;
   final TextEditingController securityNumberCtrl;
   final bool isEditing;
@@ -34,7 +36,9 @@ class PropertyEditorForm extends StatelessWidget {
   final VoidCallback onShowSecurityNumber;
   final PropertyPurpose purpose;
   final String? locationId;
+  final String? subLocationId;
   final List<LocationArea> locations;
+  final List<SubLocation> subLocations;
   final List<EditableImage> images;
   final VoidCallback onSave;
   final VoidCallback onPickImages;
@@ -43,6 +47,7 @@ class PropertyEditorForm extends StatelessWidget {
   final ValueChanged<bool> onTogglePool;
   final ValueChanged<bool> onToggleImagesHidden;
   final ValueChanged<String?> onLocationChanged;
+  final ValueChanged<String?> onSubLocationChanged;
   final VoidCallback onAddLocation;
   final ValueChanged<PropertyPurpose> onPurposeChanged;
 
@@ -56,6 +61,7 @@ class PropertyEditorForm extends StatelessWidget {
     required this.roomsCtrl,
     required this.kitchensCtrl,
     required this.floorsCtrl,
+    required this.ownerNameCtrl,
     required this.phoneCtrl,
     required this.securityNumberCtrl,
     required this.isEditing,
@@ -66,7 +72,9 @@ class PropertyEditorForm extends StatelessWidget {
     required this.onShowSecurityNumber,
     required this.purpose,
     required this.locationId,
+    required this.subLocationId,
     required this.locations,
+    required this.subLocations,
     required this.images,
     required this.onSave,
     required this.onPickImages,
@@ -75,6 +83,7 @@ class PropertyEditorForm extends StatelessWidget {
     required this.onTogglePool,
     required this.onToggleImagesHidden,
     required this.onLocationChanged,
+    required this.onSubLocationChanged,
     required this.onAddLocation,
     required this.onPurposeChanged,
   });
@@ -120,9 +129,12 @@ class PropertyEditorForm extends StatelessWidget {
                       locationUrlCtrl: locationUrlCtrl,
                       purpose: purpose,
                       locationId: locationId,
+                      subLocationId: subLocationId,
                       locations: locations,
+                      subLocations: subLocations,
                       onPurposeChanged: onPurposeChanged,
                       onLocationChanged: onLocationChanged,
+                      onSubLocationChanged: onSubLocationChanged,
                       onAddLocation: onAddLocation,
                       locationUrlValidator: (v) {
                         if (v == null || v.trim().isEmpty) return null;
@@ -136,6 +148,9 @@ class PropertyEditorForm extends StatelessWidget {
                       locationValidator: (v) => Validators.isSelected(v)
                           ? null
                           : 'location_required'.tr(),
+                      subLocationValidator: (v) => Validators.isSelected(v)
+                          ? null
+                          : 'sub_location_required'.tr(),
                     ),
                     const SizedBox(height: 12),
                     PropertyEditorAttributesSection(
@@ -150,6 +165,7 @@ class PropertyEditorForm extends StatelessWidget {
               _SectionCard(
                 title: 'settings'.tr(),
                 child: PropertyEditorContactSection(
+                  ownerNameCtrl: ownerNameCtrl,
                   phoneCtrl: phoneCtrl,
                   securityNumberCtrl: securityNumberCtrl,
                   hasPool: hasPool,
