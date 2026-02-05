@@ -11,6 +11,7 @@ import 'package:real_state/features/properties/models/property_editor_models.dar
 
 class PropertyUploadServiceImpl implements PropertyUploadService {
   static const String _pendingKey = 'pending_property_uploads_v1';
+  static const int _maxBackoffMs = 30000;
 
   /// Uploads images and returns their URLs plus cover.
   /// Does not delete remote assets; caller can decide cleanup.
@@ -36,12 +37,14 @@ class PropertyUploadServiceImpl implements PropertyUploadService {
       }
       final localPath = imgItem.file?.path;
       if (localPath != null && localPath.isNotEmpty) {
+        final storagePath = _buildStoragePath(propertyId, i);
         _upsertPending(
           pending,
           _PendingUpload(
             propertyId: propertyId,
             index: i,
             localPath: localPath,
+            storagePath: storagePath,
           ),
         );
         await _savePending(pending);
@@ -50,9 +53,9 @@ class PropertyUploadServiceImpl implements PropertyUploadService {
           imgItem.preview ?? await imgItem.file?.readAsBytes() ?? Uint8List(0);
       if (rawBytes.isEmpty) continue;
       final data = await _compress(rawBytes);
-      final ref = storage.ref().child(
-        'properties/$propertyId/${DateTime.now().millisecondsSinceEpoch}_$i.jpg',
-      );
+      final ref = storage
+          .ref()
+          .child(_buildStoragePath(propertyId, i));
       try {
         await ref.putData(data, SettableMetadata(contentType: 'image/jpeg'));
         final url = await ref.getDownloadURL();
@@ -100,7 +103,13 @@ class PropertyUploadServiceImpl implements PropertyUploadService {
     final storage = FirebaseStorage.instance;
     var completed = 0;
     final total = pending.length;
+    final now = DateTime.now().millisecondsSinceEpoch;
     for (final item in List<_PendingUpload>.from(pending)) {
+      if (item.nextAttemptAtMs != null && now < item.nextAttemptAtMs!) {
+        completed++;
+        onProgress?.call(_progress(completed, total));
+        continue;
+      }
       try {
         final bytes = await _readLocalBytes(item.localPath);
         final data = await _compress(bytes);
@@ -112,13 +121,23 @@ class PropertyUploadServiceImpl implements PropertyUploadService {
           continue;
         }
         final ref = storage.ref().child(
-          'properties/${item.propertyId}/${DateTime.now().millisecondsSinceEpoch}_${item.index}.jpg',
+          item.storagePath ??
+              _buildStoragePath(item.propertyId, item.index),
         );
         await ref.putData(data, SettableMetadata(contentType: 'image/jpeg'));
         _removePending(pending, item.propertyId, item.index);
         await _savePending(pending);
       } catch (_) {
-        // Keep pending for retry on next resume.
+        final nextAttempt = item.attempts + 1;
+        final backoffMs = _computeBackoffMs(nextAttempt);
+        _updatePending(
+          pending,
+          item.copyWith(
+            attempts: nextAttempt,
+            nextAttemptAtMs: now + backoffMs,
+          ),
+        );
+        await _savePending(pending);
       }
       completed++;
       onProgress?.call(_progress(completed, total));
@@ -184,10 +203,34 @@ class PropertyUploadServiceImpl implements PropertyUploadService {
     }
   }
 
+  void _updatePending(List<_PendingUpload> items, _PendingUpload item) {
+    final index = items.indexWhere(
+      (e) => e.propertyId == item.propertyId && e.index == item.index,
+    );
+    if (index == -1) return;
+    items[index] = item;
+  }
+
   void _removePending(List<_PendingUpload> items, String propertyId, int index) {
     items.removeWhere(
       (e) => e.propertyId == propertyId && e.index == index,
     );
+  }
+
+  String _buildStoragePath(String propertyId, int index) {
+    return 'properties/$propertyId/pending_$index.jpg';
+  }
+
+  int _computeBackoffMs(int attempt) {
+    final clamped = attempt.clamp(1, 5);
+    final delay = switch (clamped) {
+      1 => 2000,
+      2 => 5000,
+      3 => 10000,
+      4 => 20000,
+      _ => _maxBackoffMs,
+    };
+    return delay;
   }
 }
 
@@ -195,11 +238,17 @@ class _PendingUpload {
   final String propertyId;
   final int index;
   final String localPath;
+  final String? storagePath;
+  final int attempts;
+  final int? nextAttemptAtMs;
 
   const _PendingUpload({
     required this.propertyId,
     required this.index,
     required this.localPath,
+    this.storagePath,
+    this.attempts = 0,
+    this.nextAttemptAtMs,
   });
 
   factory _PendingUpload.fromMap(Map<String, dynamic> map) {
@@ -207,6 +256,9 @@ class _PendingUpload {
       propertyId: map['propertyId'] as String? ?? '',
       index: (map['index'] as num?)?.toInt() ?? 0,
       localPath: map['localPath'] as String? ?? '',
+      storagePath: map['storagePath'] as String?,
+      attempts: (map['attempts'] as num?)?.toInt() ?? 0,
+      nextAttemptAtMs: (map['nextAttemptAtMs'] as num?)?.toInt(),
     );
   }
 
@@ -214,5 +266,23 @@ class _PendingUpload {
     'propertyId': propertyId,
     'index': index,
     'localPath': localPath,
+    'storagePath': storagePath,
+    'attempts': attempts,
+    'nextAttemptAtMs': nextAttemptAtMs,
   };
+
+  _PendingUpload copyWith({
+    String? storagePath,
+    int? attempts,
+    int? nextAttemptAtMs,
+  }) {
+    return _PendingUpload(
+      propertyId: propertyId,
+      index: index,
+      localPath: localPath,
+      storagePath: storagePath ?? this.storagePath,
+      attempts: attempts ?? this.attempts,
+      nextAttemptAtMs: nextAttemptAtMs ?? this.nextAttemptAtMs,
+    );
+  }
 }
