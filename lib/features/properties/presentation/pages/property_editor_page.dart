@@ -54,6 +54,7 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
   final _roomsCtrl = TextEditingController();
   final _kitchensCtrl = TextEditingController();
   final _floorsCtrl = TextEditingController();
+  final _ownerNameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _securityNumberCtrl = TextEditingController();
   bool _formattingPrice = false;
@@ -94,6 +95,7 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
     _roomsCtrl.dispose();
     _kitchensCtrl.dispose();
     _floorsCtrl.dispose();
+    _ownerNameCtrl.dispose();
     _phoneCtrl.dispose();
     _securityNumberCtrl.dispose();
     super.dispose();
@@ -155,6 +157,7 @@ class _PropertyEditorPageState extends State<PropertyEditorPage> {
         roomsCtrl: _roomsCtrl,
         kitchensCtrl: _kitchensCtrl,
         floorsCtrl: _floorsCtrl,
+        ownerNameCtrl: _ownerNameCtrl,
         phoneCtrl: _phoneCtrl,
         securityNumberCtrl: _securityNumberCtrl,
         isEditing: widget.isEditing,

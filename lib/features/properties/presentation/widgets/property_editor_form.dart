@@ -25,6 +25,7 @@ class PropertyEditorForm extends StatelessWidget {
   final TextEditingController roomsCtrl;
   final TextEditingController kitchensCtrl;
   final TextEditingController floorsCtrl;
+  final TextEditingController ownerNameCtrl;
   final TextEditingController phoneCtrl;
   final TextEditingController securityNumberCtrl;
   final bool isEditing;
@@ -60,6 +61,7 @@ class PropertyEditorForm extends StatelessWidget {
     required this.roomsCtrl,
     required this.kitchensCtrl,
     required this.floorsCtrl,
+    required this.ownerNameCtrl,
     required this.phoneCtrl,
     required this.securityNumberCtrl,
     required this.isEditing,
@@ -163,6 +165,7 @@ class PropertyEditorForm extends StatelessWidget {
               _SectionCard(
                 title: 'settings'.tr(),
                 child: PropertyEditorContactSection(
+                  ownerNameCtrl: ownerNameCtrl,
                   phoneCtrl: phoneCtrl,
                   securityNumberCtrl: securityNumberCtrl,
                   hasPool: hasPool,

@@ -40,6 +40,7 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
         _securityNumberCtrl.text =
             prop.securityNumberEncryptedOrHiddenStored ?? '';
         _showSecurityNumber = _securityNumberCtrl.text.trim().isNotEmpty;
+        _ownerNameCtrl.text = prop.ownerNameEncryptedOrHiddenStored ?? '';
         _hasPool = prop.hasPool;
         _isImagesHidden = prop.isImagesHidden;
         _purpose = prop.purpose;
@@ -216,6 +217,8 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
       );
       final nowCover = upload.coverUrl;
       final description = _descCtrl.text.trim();
+      final ownerName = _ownerNameCtrl.text.trim();
+      final ownerNameValue = ownerName.isEmpty ? null : ownerName;
       final phone = _phoneCtrl.text.trim();
       final phoneValue = phone.isEmpty ? null : phone;
       final securityNumber = _securityNumberCtrl.text.trim();
@@ -250,6 +253,7 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
           subLocationId: _subLocationId,
           price: price,
           locationUrl: locationValue,
+          ownerNameEncryptedOrHiddenStored: ownerNameValue,
           ownerPhoneEncryptedOrHiddenStored: phoneValue,
           securityNumberEncryptedOrHiddenStored: securityNumberValue,
           isImagesHidden: _isImagesHidden,
@@ -279,6 +283,7 @@ extension _PropertyEditorActions on _PropertyEditorPageState {
           subLocationId: _subLocationId,
           price: price,
           locationUrl: locationValue,
+          ownerNameEncryptedOrHiddenStored: ownerNameValue,
           ownerPhoneEncryptedOrHiddenStored: phoneValue,
           securityNumberEncryptedOrHiddenStored: securityNumberValue,
           isImagesHidden: _isImagesHidden,

@@ -134,6 +134,7 @@ class PropertyDetailBloc
               subLocationId: null,
               coverImageUrl: null,
               imageUrls: const [],
+              ownerNameEncryptedOrHiddenStored: null,
               ownerPhoneEncryptedOrHiddenStored: null,
               securityNumberEncryptedOrHiddenStored: null,
               locationUrl: null,

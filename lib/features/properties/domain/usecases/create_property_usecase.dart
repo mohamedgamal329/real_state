@@ -24,6 +24,7 @@ class CreatePropertyUseCase {
     required String? subLocationId,
     required double price,
     String? locationUrl,
+    required String? ownerNameEncryptedOrHiddenStored,
     required String? ownerPhoneEncryptedOrHiddenStored,
     required String? securityNumberEncryptedOrHiddenStored,
     required bool isImagesHidden,
@@ -48,6 +49,7 @@ class CreatePropertyUseCase {
       subLocationId: subLocationId,
       price: price,
       locationUrl: locationUrl,
+      ownerNameEncryptedOrHiddenStored: ownerNameEncryptedOrHiddenStored,
       ownerPhoneEncryptedOrHiddenStored: ownerPhoneEncryptedOrHiddenStored,
       securityNumberEncryptedOrHiddenStored:
           securityNumberEncryptedOrHiddenStored,

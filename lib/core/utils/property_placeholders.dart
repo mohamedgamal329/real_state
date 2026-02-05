@@ -22,6 +22,7 @@ Property placeholderProperty({int index = 0}) {
     locationUrl: 'https://maps.example.com/$index',
     coverImageUrl: null,
     imageUrls: const [],
+    ownerNameEncryptedOrHiddenStored: '',
     ownerPhoneEncryptedOrHiddenStored: '',
     securityNumberEncryptedOrHiddenStored: '',
     isImagesHidden: false,

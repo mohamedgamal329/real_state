@@ -24,6 +24,7 @@ class UpdatePropertyUseCase {
     required String? subLocationId,
     required double price,
     String? locationUrl,
+    required String? ownerNameEncryptedOrHiddenStored,
     required String? ownerPhoneEncryptedOrHiddenStored,
     required String? securityNumberEncryptedOrHiddenStored,
     required bool isImagesHidden,
@@ -52,6 +53,7 @@ class UpdatePropertyUseCase {
       subLocationId: subLocationId,
       price: price,
       locationUrl: locationUrl,
+      ownerNameEncryptedOrHiddenStored: ownerNameEncryptedOrHiddenStored,
       ownerPhoneEncryptedOrHiddenStored: ownerPhoneEncryptedOrHiddenStored,
       securityNumberEncryptedOrHiddenStored:
           securityNumberEncryptedOrHiddenStored,

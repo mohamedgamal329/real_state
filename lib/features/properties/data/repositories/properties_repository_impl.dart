@@ -437,6 +437,7 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
     String? subLocationId,
     String? locationUrl,
     double? price,
+    String? ownerNameEncryptedOrHiddenStored,
     String? ownerPhoneEncryptedOrHiddenStored,
     String? securityNumberEncryptedOrHiddenStored,
     bool isImagesHidden = false,
@@ -465,6 +466,7 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
       locationUrl: locationUrl,
       coverImageUrl: coverImageUrl,
       imageUrls: imageUrls,
+      ownerNameEncryptedOrHiddenStored: ownerNameEncryptedOrHiddenStored,
       ownerPhoneEncryptedOrHiddenStored: ownerPhoneEncryptedOrHiddenStored,
       securityNumberEncryptedOrHiddenStored:
           securityNumberEncryptedOrHiddenStored,
@@ -500,6 +502,7 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
     String? subLocationId,
     String? locationUrl,
     double? price,
+    String? ownerNameEncryptedOrHiddenStored,
     String? ownerPhoneEncryptedOrHiddenStored,
     String? securityNumberEncryptedOrHiddenStored,
     bool? isImagesHidden,
@@ -533,6 +536,10 @@ class PropertiesRepositoryImpl implements PropertiesRepository {
     if (subLocationId != null) updateMap['subLocationId'] = subLocationId;
     if (locationUrl != null) updateMap['locationUrl'] = locationUrl;
     if (price != null) updateMap['price'] = price;
+    if (ownerNameEncryptedOrHiddenStored != null) {
+      updateMap['ownerNameEncryptedOrHiddenStored'] =
+          ownerNameEncryptedOrHiddenStored;
+    }
     if (ownerPhoneEncryptedOrHiddenStored != null) {
       updateMap['ownerPhoneEncryptedOrHiddenStored'] =
           ownerPhoneEncryptedOrHiddenStored;

@@ -42,6 +42,8 @@ class PropertyDto {
       locationUrl: data['locationUrl'] as String?,
       coverImageUrl: data['coverImageUrl'] as String?,
       imageUrls: List<String>.from((data['imageUrls'] as List?) ?? const []),
+      ownerNameEncryptedOrHiddenStored:
+          data['ownerNameEncryptedOrHiddenStored'] as String?,
       ownerPhoneEncryptedOrHiddenStored:
           data['ownerPhoneEncryptedOrHiddenStored'] as String?,
       securityNumberEncryptedOrHiddenStored:
@@ -73,6 +75,7 @@ class PropertyDto {
     'locationUrl': p.locationUrl,
     'coverImageUrl': p.coverImageUrl,
     'imageUrls': p.imageUrls,
+    'ownerNameEncryptedOrHiddenStored': p.ownerNameEncryptedOrHiddenStored,
     'ownerPhoneEncryptedOrHiddenStored': p.ownerPhoneEncryptedOrHiddenStored,
     'securityNumberEncryptedOrHiddenStored':
         p.securityNumberEncryptedOrHiddenStored,
